@@ -1063,26 +1063,26 @@ if st.session_state.get('data_generated'):
         d1_houses[house_num].append(abbr)
 
     # -------------------------------------------------------------------------
-    # 🧘‍♂️ ACHARYA VYAS LIVE VEDIC BOT CONSULTATION TRIGGER BAR
+    # ACHARYA VYAS LIVE VEDIC CONSULTATION TRIGGER BAR
     # -------------------------------------------------------------------------
     col_bot_bar1, col_bot_bar2 = st.columns([3.5, 1.5])
     with col_bot_bar1:
         st.markdown(f"""
         <div style="background: linear-gradient(135deg, rgba(240, 192, 90, 0.15) 0%, rgba(14, 23, 42, 0.95) 100%);
                     border: 1px solid rgba(240, 192, 90, 0.4); border-radius: 12px; padding: 10px 16px; display: flex; align-items: center; gap: 14px;">
-            <div style="font-size: 2.1rem; line-height: 1;">🧙‍♂️</div>
+            <div style="font-size: 1.8rem; line-height: 1; color: #f0c05a; font-weight: 800; border: 1.5px solid #f0c05a; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">ॐ</div>
             <div>
                 <div style="font-weight: 800; color: #f0c05a; font-size: 1.02rem;">
-                    आचार्य व्यास • वैदिक AI ज्योतिषी (Live Chat Consultation)
+                    आचार्य व्यास • प्रत्यक्ष वैदिक संवाद (Live Consultation)
                 </div>
                 <div style="color: #cbd5e1; font-size: 0.82rem; margin-top: 2px;">
-                    आपकी कुण्डली, चालू विंशोत्तरी दशा व तात्कालिक गोचर पर आधारित प्रत्यक्ष वैदिक संवाद
+                    आपकी कुण्डली, चालू विंशोत्तरी दशा व तात्कालिक गोचर पर आधारित सीधा समाधान
                 </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
     with col_bot_bar2:
-        if st.button("💬 परामर्श प्रारंभ करें (Chat Now)", key="open_acharya_bot_bar_btn", use_container_width=True):
+        if st.button("परामर्श प्रारंभ करें (Chat Now)", key="open_acharya_bot_bar_btn", use_container_width=True):
             st.session_state["show_acharya_dialog"] = True
 
     # -------------------------------------------------------------------------
@@ -2906,38 +2906,38 @@ if st.session_state.get('data_generated'):
         st.markdown(f"""
         <div style="background: linear-gradient(135deg, rgba(240, 192, 90, 0.2) 0%, rgba(14, 23, 42, 0.95) 100%);
                     border: 1px solid rgba(240, 192, 90, 0.5); border-radius: 14px; padding: 12px 18px; margin-bottom: 12px; display: flex; align-items: center; gap: 16px;">
-            <div style="font-size: 2.8rem; background: rgba(240,192,90,0.15); border: 2px solid #f0c05a; border-radius: 50%; width: 62px; height: 62px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(240,192,90,0.3);">
-                🧙‍♂️
+            <div style="font-size: 2.2rem; background: rgba(240,192,90,0.15); border: 2px solid #f0c05a; border-radius: 50%; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(240,192,90,0.3); color: #f0c05a; font-weight: bold;">
+                ॐ
             </div>
             <div style="flex-grow: 1;">
                 <div style="font-size: 1.15rem; font-weight: 800; color: #f0c05a; display: flex; align-items: center; gap: 8px;">
-                    आचार्य व्यास <span style="font-size: 0.75rem; background: #166534; color: #bbf7d0; padding: 2px 8px; border-radius: 12px; font-weight: 600;">🟢 ऑनलाइन उपस्थित</span>
+                    आचार्य व्यास <span style="font-size: 0.75rem; background: #166534; color: #bbf7d0; padding: 2px 8px; border-radius: 12px; font-weight: 600;">ऑनलाइन उपस्थित</span>
                 </div>
-                <div style="font-size: 0.82rem; color: #e2e8f0; margin-top: 2px;">
-                    प्रधान वैदिक ज्योतिषाचार्य • <b>{constants.SIGNS_HI[ch.ascendant_sign]} लग्न</b>, <b>{constants.SIGNS_HI[ch.planets['Moon'].sign_index]} राशि</b> • दशा: <b>{c_dasha.get('full_path', 'दशा') if isinstance(c_dasha, dict) else str(c_dasha)}</b>
+                <div style="font-size: 0.85rem; color: #e2e8f0; margin-top: 2px;">
+                    <b>{constants.SIGNS_HI[ch.ascendant_sign]} लग्न</b>, <b>{constants.SIGNS_HI[ch.planets['Moon'].sign_index]} राशि</b>
                 </div>
-                <div style="font-size: 0.76rem; color: #94a3b8; margin-top: 2px;">
-                    📖 महर्षि पाराशर, भृगु एवं जैमिनी सिद्धांत • गोचर एवं ग्रह दृष्टियों के सूक्ष्म गणितीय समन्वय से उत्तर
+                <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 2px;">
+                    महर्षि पाराशर, भृगु एवं जैमिनी ज्योतिष सिद्धांतों पर आधारित प्रामाणिक संवाद
                 </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
         # Quick chips inside popup
-        st.markdown("<div style='font-size: 0.84rem; color: #f0c05a; font-weight: 700; margin-bottom: 4px;'>⚡ त्वरित प्रश्न चयन करें:</div>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size: 0.84rem; color: #f0c05a; font-weight: 700; margin-bottom: 4px;'>त्वरित प्रश्न:</div>", unsafe_allow_html=True)
         suggested_queries = [
-            "करियर, नौकरी एवं प्रमोशन के क्या योग हैं?",
-            "आर्थिक स्थिति और धन लाभ का श्रेष्ठ समय कब है?",
+            "करियर, नौकरी एवं पदोन्नति के क्या योग हैं?",
+            "प्रतियोगी परीक्षा / आरएचजेएस (RHJS) में सफलता की क्या संभावना है?",
+            "आर्थिक स्थिति और धन संचय का समय कैसा रहेगा?",
             "विवाह व दांपत्य जीवन के ग्रह क्या संकेत दे रहे हैं?",
-            "स्वास्थ्य रक्षा हेतु कौन से सात्विक उपाय करें?",
-            "शनि की साढ़े साती अथवा ढैय्या का क्या प्रभाव है?"
+            "स्वास्थ्य रक्षा हेतु कौन से सात्विक उपाय करें?"
         ]
         
         chip_cols = st.columns(len(suggested_queries))
         chosen_chip = None
         for i, q_chip in enumerate(suggested_queries):
             with chip_cols[i]:
-                if st.button(q_chip[:20] + "...", key=f"dialog_chip_{i}", use_container_width=True):
+                if st.button(q_chip[:22] + "...", key=f"dialog_chip_{i}", use_container_width=True):
                     chosen_chip = q_chip
 
         # Initialize session state for dialog chat history
@@ -2945,15 +2945,15 @@ if st.session_state.get('data_generated'):
             st.session_state["dialog_chat_history"] = [
                 {
                     "role": "assistant",
-                    "content": f"**ॐ नमो भगवते वासुदेवाय। सादर प्रणाम {b_info.get('name', 'जातक')} जी!**\n\nमैं **आचार्य व्यास** हूँ। आपकी जन्म कुंडली ({constants.SIGNS_HI[ch.ascendant_sign]} लग्न, {constants.SIGNS_HI[ch.planets['Moon'].sign_index]} राशि) एवं प्रभावी दशा ({c_dasha.get('full_path', 'दशा') if isinstance(c_dasha, dict) else str(c_dasha)}) मेरे समक्ष खुली है। आप आजीविका, धन, परिवार, स्वास्थ्य या किसी भी उलझन के संबंध में निसंकोच प्रश्न पूछें।"
+                    "content": f"सादर प्रणाम {b_info.get('name', 'जातक')} जी।\n\nमैं **आचार्य व्यास** हूँ। आपकी जन्म कुंडली मेरे समक्ष खुली है। आप आजीविका, परीक्षा, आर्थिक स्थिति, दांपत्य, स्वास्थ्य अथवा जीवन के किसी भी संशय के विषय में सीधे प्रश्न पूछ सकते हैं।"
                 }
             ]
 
         # Chat message log container
-        chat_container = st.container(height=340)
+        chat_container = st.container(height=360)
         with chat_container:
             for msg in st.session_state["dialog_chat_history"]:
-                with st.chat_message(msg["role"], avatar="🧙‍♂️" if msg["role"] == "assistant" else "👤"):
+                with st.chat_message(msg["role"]):
                     st.markdown(msg["content"])
 
         # Chat Input inside popup
@@ -2993,15 +2993,15 @@ if st.session_state.get('data_generated'):
     # Floating Bottom-Right Launcher Widget
     st.markdown("""
     <div class="floating-bot-anchor">
-        <div style="font-size: 0.72rem; text-align: center; color: #ffd700; background: rgba(0,0,0,0.85); border-radius: 8px; padding: 2px 6px; margin-bottom: 4px; border: 1px solid rgba(255,215,0,0.4);">
-            🧙‍♂️ आचार्य व्यास ज्योतिषी
+        <div style="font-size: 0.74rem; text-align: center; color: #ffd700; background: rgba(0,0,0,0.85); border-radius: 8px; padding: 3px 8px; margin-bottom: 4px; border: 1px solid rgba(255,215,0,0.4);">
+            आचार्य व्यास • लाइव संवाद
         </div>
     </div>
     """, unsafe_allow_html=True)
 
     with st.sidebar:
         st.markdown("---")
-        if st.button("🧙‍♂️ आचार्य व्यास जी से बात करें (Live AI Consultation)", key="open_acharya_bot_sidebar_btn", use_container_width=True):
+        if st.button("आचार्य व्यास जी से परामर्श करें (Live Consultation)", key="open_acharya_bot_sidebar_btn", use_container_width=True):
             st.session_state["show_acharya_dialog"] = True
             st.rerun()
 
