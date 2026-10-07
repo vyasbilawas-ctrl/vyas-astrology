@@ -48,6 +48,7 @@ from vyas import btr as vyas_btr
 from vyas import varga_predictions as vyas_vp
 from vyas import match as vyas_match
 from vyas.chatbot import vyas_chatbot
+from vyas import city_search
 
 def render_kundli(svg_str: str):
     """Render astrological SVG cleanly via base64 data URI to prevent DOMPurify stripping."""
@@ -926,23 +927,43 @@ with st.sidebar:
         time_val = now.time()
 
     st.subheader("Birth Place / जन्म स्थान" if is_hi else "Birth Place")
-    city_name = st.text_input("City Name / नगर" if is_hi else "City Name", default_city)
     
-    if st.button("🔍 Search City / नगर खोजें" if is_hi else "🔍 Search City", use_container_width=True):
-        if city_name:
-            geolocator = Nominatim(user_agent="vyas_astro_software_v4")
-            try:
-                location = geolocator.geocode(city_name, timeout=5)
-                if location:
-                    st.session_state['lat'] = round(location.latitude, 4)
-                    st.session_state['lon'] = round(location.longitude, 4)
-                    st.success(f"Found: {location.address}")
-                else:
-                    st.warning("City not found. You can adjust Latitude/Longitude directly below.")
-            except Exception as e:
-                st.warning(f"Online city search unavailable ({e}). You can enter Latitude/Longitude directly below.")
-        else:
-            st.error("Please enter a city name.")
+    # Instant town & city search across 565,000+ Indian & Global locations
+    city_query = st.text_input("नगर/कस्बा खोजें (Type City / Town / Tehsil to search):", value=default_city, key="city_search_input")
+    
+    matched_cities = city_search.search_cities(city_query, limit=40)
+    city_options = {}
+    if matched_cities:
+        for c in matched_cities:
+            city_options[c["label"]] = c
+    else:
+        # Default fallback option
+        fallback_label = f"{city_query or default_city} (स्थान)"
+        city_options[fallback_label] = {
+            "label": fallback_label,
+            "name": city_query or default_city,
+            "lat": float(st.session_state.get('lat', default_lat)),
+            "lon": float(st.session_state.get('lon', default_lon))
+        }
+
+    selected_city_label = st.selectbox(
+        "नगर चुनें (Select Town / City from List):",
+        options=list(city_options.keys()),
+        index=0,
+        key="selected_city_dropdown"
+    )
+
+    # Automatically set lat/lon from selected town/city
+    sel_city_data = city_options.get(selected_city_label)
+    if sel_city_data and ('lat' in sel_city_data) and ('lon' in sel_city_data):
+        # Update session state if user selects a different city from search
+        if st.session_state.get('_last_chosen_city') != selected_city_label:
+            st.session_state['lat'] = sel_city_data['lat']
+            st.session_state['lon'] = sel_city_data['lon']
+            st.session_state['city_name'] = sel_city_data['name']
+            st.session_state['_last_chosen_city'] = selected_city_label
+
+    city_name = st.session_state.get('city_name', sel_city_data.get('name', default_city) if sel_city_data else default_city)
             
     coord_col1, coord_col2 = st.columns(2)
     lat = coord_col1.number_input("Latitude (°N) / अक्षांश" if is_hi else "Latitude (°N)", value=float(st.session_state.get('lat', default_lat)), format="%.4f", step=0.01)
