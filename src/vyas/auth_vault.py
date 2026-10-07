@@ -194,11 +194,12 @@ def get_user_by_id(user_id: int) -> Optional[Dict]:
             now = datetime.now()
             days_left = max(0, (vip_exp - now).days)
             is_vip = vip_exp > now
+            tier_val = row["tier"] if "tier" in row.keys() else "VIP_TRIAL"
             return {
                 "id": row["id"],
                 "email": row["email"],
                 "name": row["name"],
-                "tier": row.get("tier", "VIP_TRIAL") if is_vip else "FREE",
+                "tier": tier_val if is_vip else "FREE",
                 "vip_expiry": vip_exp.strftime("%d/%m/%Y"),
                 "days_left": days_left,
                 "is_vip": is_vip
@@ -219,11 +220,12 @@ def login_or_register_google(email: str, name: str) -> Tuple[bool, str, Optional
                 now = datetime.now()
                 days_left = max(0, (vip_exp - now).days)
                 is_vip = vip_exp > now
+                tier_val = row["tier"] if "tier" in row.keys() else "VIP_TRIAL"
                 user_data = {
                     "id": row["id"],
                     "email": email,
                     "name": row["name"],
-                    "tier": row.get("tier", "VIP_TRIAL") if is_vip else "FREE",
+                    "tier": tier_val if is_vip else "FREE",
                     "vip_expiry": vip_exp.strftime("%d/%m/%Y"),
                     "days_left": days_left,
                     "is_vip": is_vip
