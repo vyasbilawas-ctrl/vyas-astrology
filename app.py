@@ -668,7 +668,11 @@ with st.sidebar:
         
         # 2. If not in query param, check permanent active_session in SQLite DB
         if not restored_user:
-            restored_user = auth_vault.get_last_active_user()
+            try:
+                if hasattr(auth_vault, "get_last_active_user"):
+                    restored_user = auth_vault.get_last_active_user()
+            except Exception:
+                restored_user = None
 
         if restored_user:
             st.session_state["user"] = restored_user
@@ -1272,7 +1276,11 @@ if st.session_state.get('data_generated'):
                 </div>
                 """, unsafe_allow_html=True)
 
-            tab_ch1, tab_ch2, tab_ch3 = st.tabs(["☀️ दिन का चौघड़िया", "🌙 रात्रि का चौघड़िया", "🪐 24 कालहोरा चक्र (Planetary Horas)"])
+            tab_ch1, tab_ch2, tab_ch3, tab_ch4 = st.tabs([
+                "☀️ दिन का चौघड़िया", "🌙 रात्रि का चौघड़िया", 
+                "🪐 24 कालहोरा चक्र (Planetary Horas)", 
+                "🌟 शास्त्रोक्त शुभ-अशुभ मुहूर्त (Drik Muhurtas)"
+            ])
             with tab_ch1:
                 day_chs = daily_res.get('chaughadiya_day', [])
                 if day_chs:
@@ -1323,6 +1331,29 @@ if st.session_state.get('data_generated'):
                             "प्रकृति": h["nature"]
                         } for h in h_night])
                         st.dataframe(h_ndf, use_container_width=True, hide_index=True)
+
+            with tab_ch4:
+                col_m_shubh, col_m_ashubh = st.columns(2)
+                with col_m_shubh:
+                    st.markdown("##### 🟢 शास्त्रोक्त शुभ मुहूर्त (Auspicious Timings)")
+                    m_shubh_data = [
+                        {"मुहूर्त नाम": "ब्रह्म मुहूर्त (Brahma Muhurta)", "समय सीमा": daily_res.get("brahma_muhurta", "-"), "महत्व": "ध्यान, योग, अध्ययन एवं ईश-स्मरण हेतु सर्वश्रेष्ठ"},
+                        {"मुहूर्त नाम": "प्रातः संध्या (Pratah Sandhya)", "समय सीमा": daily_res.get("pratah_sandhya", "-"), "महत्व": "गायत्री जप एवं सूर्योपासना का मुख्य काल"},
+                        {"मुहूर्त नाम": "अभिजीत मुहूर्त (Abhijit)", "समय सीमा": daily_res.get("amrit_vela", "-"), "महत्व": "सर्वकार्य सिद्धिदायक (बुधवार को शास्त्रानुसार वर्जित)"},
+                        {"मुहूर्त नाम": "विजय मुहूर्त (Vijaya)", "समय सीमा": daily_res.get("vijaya_muhurta", "-"), "महत्व": "मुकदमे, प्रतिस्पर्धा व यात्रा में विजय कारक"},
+                        {"मुहूर्त नाम": "गोधूलि मुहूर्त (Godhuli)", "समय सीमा": daily_res.get("godhuli_muhurta", "-"), "महत्व": "गृह प्रवेश व मांगलिक वार्तालाप हेतु शुभ"},
+                        {"मुहूर्त नाम": "अमृत कालम् (Amrit Kalam)", "समय सीमा": daily_res.get("amrit_kalam", "-"), "महत्व": "विशेष अनुबंध, क्रय-विक्रय व नवीन कार्य"},
+                        {"मुहूर्त नाम": "निशिता मुहूर्त (Nishita)", "समय सीमा": daily_res.get("nishita_muhurta", "-"), "महत्व": "मध्यरात्रि शिव-पूजा एवं तांत्रिक साधना"}
+                    ]
+                    st.dataframe(pd.DataFrame(m_shubh_data), use_container_width=True, hide_index=True)
+                with col_m_ashubh:
+                    st.markdown("##### 🔴 शास्त्रोक्त अशुभ/वर्जित काल (Inauspicious Windows)")
+                    m_ashubh_data = [
+                        {"वर्जित काल": "राहु काल (Rahu Kaal)", "समय सीमा": daily_res.get("rahu_kalam", "-"), "नियम": "नया व्यापार, क्रय एवं यात्रा सर्वथा वर्जित"},
+                        {"वर्जित काल": "यमगण्ड (Yamaganda)", "समय सीमा": daily_res.get("yamaganda", "-"), "नियम": "अप्रिय परिणाम सूचक, महत्वपूर्ण निर्णय टालें"},
+                        {"वर्जित काल": "गुलिक काल (Gulika Kalam)", "समय सीमा": daily_res.get("gulika_kalam", "-"), "नियम": "शनि-पुत्र गुलिक का समय, बाधा कारक"}
+                    ]
+                    st.dataframe(pd.DataFrame(m_ashubh_data), use_container_width=True, hide_index=True)
 
         # In-depth Comprehensive Daily Forecast (4 Life Pillars & Gochar Synthesis)
         narrs = daily_res.get("narratives", {})
@@ -2526,9 +2557,10 @@ if st.session_state.get('data_generated'):
                         <b>सूर्योदय:</b> <span style="color: #fde047;">{panch_obj.sunrise}</span> | <b>सूर्यास्त:</b> <span style="color: #fde047;">{panch_obj.sunset}</span><br>
                         <b>दिनमान:</b> {panch_obj.day_length}<br>
                         <b>अभिजीत मुहूर्त:</b> {'<span style="color: #ef4444; font-weight: 700; background: rgba(239, 68, 68, 0.15); padding: 2px 6px; border-radius: 4px;">🚫 कोई नहीं (बुधवार को अभिजीत मुहूर्त नहीं होता)</span>' if ('कोई नहीं' in panch_obj.abhijit_muhurta or 'वर्जित' in panch_obj.abhijit_muhurta or 'Prohibited' in panch_obj.abhijit_muhurta or 'बुधवार' in panch_obj.abhijit_muhurta) else f'<span style="color: #38bdf8; font-weight: 700;">{panch_obj.abhijit_muhurta}</span>'}<br>
+                        <b>ब्रह्म मुहूर्त:</b> <span style="color: #4ade80; font-weight: 600;">{panch_obj.brahma_muhurta}</span><br>
+                        <b>विजय मुहूर्त:</b> <span style="color: #4ade80; font-weight: 600;">{panch_obj.vijaya_muhurta}</span> | <b>गोधूलि:</b> <span style="color: #4ade80; font-weight: 600;">{panch_obj.godhuli_muhurta}</span><br>
                         <b>राहु काल:</b> <span style="color: #ef4444; font-weight: 700;">{panch_obj.rahu_kalam}</span><br>
-                        <b>यमगण्ड:</b> <span style="color: #f59e0b; font-weight: 700;">{panch_obj.yamaganda}</span><br>
-                        <b>गुलिक काल:</b> {panch_obj.gulika_kalam}
+                        <b>यमगण्ड:</b> <span style="color: #f59e0b; font-weight: 700;">{panch_obj.yamaganda}</span> | <b>गुलिक काल:</b> {panch_obj.gulika_kalam}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)

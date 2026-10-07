@@ -183,6 +183,13 @@ class Panchang:
     yamaganda: str = "-"
     gulika_kalam: str = "-"
     abhijit_muhurta: str = "-"
+    brahma_muhurta: str = "-"
+    pratah_sandhya: str = "-"
+    vijaya_muhurta: str = "-"
+    godhuli_muhurta: str = "-"
+    sayahna_sandhya: str = "-"
+    amrit_kalam: str = "-"
+    nishita_muhurta: str = "-"
     chaughadiya_day: list = field(default_factory=list)
     chaughadiya_night: list = field(default_factory=list)
     horas_day: list = field(default_factory=list)
@@ -280,16 +287,52 @@ def get_muhurta_and_chaughadiya(date_local, lat: float = 28.6139, lon: float = 7
     yama_str = _fmt_span(rise + timedelta(seconds=y_idx * day_part), rise + timedelta(seconds=(y_idx + 1) * day_part))
     guli_str = _fmt_span(rise + timedelta(seconds=g_idx * day_part), rise + timedelta(seconds=(g_idx + 1) * day_part))
 
-    # Abhijit Muhurta: 8th Muhurta of the day (day length / 15 * 7th to 8th)
+    # Classical 30 Muhurtas (15 Day + 15 Night):
+    # Day Muhurta length = day_secs / 15.0
+    # Night Muhurta length = night_secs / 15.0
+    d_muhurta = day_secs / 15.0
+    n_muhurta = night_secs / 15.0
+
+    # 1. Brahma Muhurta: 2 Muhurtas before sunrise (14th Muhurta of night = sunrise - 96 min to sunrise - 48 min)
+    brahma_s = rise - timedelta(seconds=2 * n_muhurta)
+    brahma_e = rise - timedelta(seconds=1 * n_muhurta)
+    brahma_str = _fmt_span(brahma_s, brahma_e)
+
+    # 2. Pratah Sandhya: 1 Muhurta before sunrise until sunrise
+    pratah_sandhya_str = _fmt_span(rise - timedelta(seconds=1 * n_muhurta), rise)
+
+    # 3. Abhijit Muhurta: 8th Muhurta of the day (day length / 15 * 7th to 8th)
     # शास्त्रोक्त प्रमाण (मुहूर्त चिंतामणि):
     # 'बुधेऽभिजित्प्रदोषोऽस्ति' अर्थात् बुधवार को अभिजीत मुहूर्त सर्वथा अनुपस्थित/अमान्य होता है।
     if wd == 3:
         abhijit_str = "कोई नहीं (बुधवार को अभिजीत मुहूर्त नहीं होता)"
     else:
-        muhurta_span = day_secs / 15.0
-        abhijit_s = rise + timedelta(seconds=7 * muhurta_span)
-        abhijit_e = rise + timedelta(seconds=8 * muhurta_span)
+        abhijit_s = rise + timedelta(seconds=7 * d_muhurta)
+        abhijit_e = rise + timedelta(seconds=8 * d_muhurta)
         abhijit_str = _fmt_span(abhijit_s, abhijit_e)
+
+    # 4. Vijaya Muhurta: 11th Muhurta of the day (day length / 15 * 10th to 11th)
+    vijaya_s = rise + timedelta(seconds=10 * d_muhurta)
+    vijaya_e = rise + timedelta(seconds=11 * d_muhurta)
+    vijaya_str = _fmt_span(vijaya_s, vijaya_e)
+
+    # 5. Godhuli Muhurta: 24 minutes around sunset (sunset - 12m to sunset + 12m)
+    godhuli_s = sset - timedelta(minutes=12)
+    godhuli_e = sset + timedelta(minutes=12)
+    godhuli_str = _fmt_span(godhuli_s, godhuli_e)
+
+    # 6. Sayahna Sandhya: sunset to 1 Muhurta after sunset
+    sayahna_str = _fmt_span(sset, sset + timedelta(seconds=1 * n_muhurta))
+
+    # 7. Amrit Kalam: 12th Muhurta of the day
+    amrit_kalam_s = rise + timedelta(seconds=11 * d_muhurta)
+    amrit_kalam_e = rise + timedelta(seconds=12 * d_muhurta)
+    amrit_kalam_str = _fmt_span(amrit_kalam_s, amrit_kalam_e)
+
+    # 8. Nishita Muhurta: 8th Muhurta of night (midnight apex: night length / 15 * 7th to 8th)
+    nishita_s = sset + timedelta(seconds=7 * n_muhurta)
+    nishita_e = sset + timedelta(seconds=8 * n_muhurta)
+    nishita_str = _fmt_span(nishita_s, nishita_e)
 
     # 7 Chaughadiya types: Udveg (Sun), Char (Ven), Labh (Mer), Amrit (Moon), Kaal (Sat), Shubh (Jup), Rog (Mars)
     # Cycle order: Udveg -> Char -> Labh -> Amrit -> Kaal -> Shubh -> Rog
@@ -449,8 +492,21 @@ def get_muhurta_and_chaughadiya(date_local, lat: float = 28.6139, lon: float = 7
         "yamaganda": yama_str,
         "gulika_kalam": guli_str,
         "abhijit_muhurta": abhijit_str,
+        "brahma_muhurta": brahma_str,
+        "pratah_sandhya": pratah_sandhya_str,
+        "vijaya_muhurta": vijaya_str,
+        "godhuli_muhurta": godhuli_str,
+        "sayahna_sandhya": sayahna_str,
+        "amrit_kalam": amrit_kalam_str,
+        "nishita_muhurta": nishita_str,
         "muhurtas": {
             "abhijit": abhijit_str,
+            "brahma": brahma_str,
+            "vijaya": vijaya_str,
+            "godhuli": godhuli_str,
+            "sayahna": sayahna_str,
+            "amrit_kalam": amrit_kalam_str,
+            "nishita": nishita_str,
             "rahu_kaal": rahu_str,
             "yamaganda": yama_str,
             "gulika": guli_str
@@ -587,6 +643,13 @@ def compute(dt_local, lat: float, lon: float, tz_hours: float,
         yamaganda=muh_ch["yamaganda"],
         gulika_kalam=muh_ch["gulika_kalam"],
         abhijit_muhurta=muh_ch["abhijit_muhurta"],
+        brahma_muhurta=muh_ch.get("brahma_muhurta", "-"),
+        pratah_sandhya=muh_ch.get("pratah_sandhya", "-"),
+        vijaya_muhurta=muh_ch.get("vijaya_muhurta", "-"),
+        godhuli_muhurta=muh_ch.get("godhuli_muhurta", "-"),
+        sayahna_sandhya=muh_ch.get("sayahna_sandhya", "-"),
+        amrit_kalam=muh_ch.get("amrit_kalam", "-"),
+        nishita_muhurta=muh_ch.get("nishita_muhurta", "-"),
         chaughadiya_day=muh_ch["chaughadiya_day"],
         chaughadiya_night=muh_ch["chaughadiya_night"],
         horas_day=muh_ch.get("horas_day", []),

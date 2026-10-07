@@ -143,6 +143,8 @@ def generate_35_page_publication_html(
     # Panchang & Avakhada
     panch_obj = panchang.compute(birth_dt, lat, lon, tz, chart.ascendant_longitude)
     avakhada = panch_obj.avakhada
+    asc_sign_lord_hi = constants.PLANETS_HI.get(constants.SIGN_LORD[asc_sign_idx], constants.SIGN_LORD[asc_sign_idx])
+    rashi_lord_hi = constants.PLANETS_HI.get(constants.SIGN_LORD[moon_sign_idx], constants.SIGN_LORD[moon_sign_idx])
     panch = {
         'vara': panch_obj.vara,
         'tithi': panch_obj.tithi,
@@ -150,7 +152,13 @@ def generate_35_page_publication_html(
         'yoga': panch_obj.yoga,
         'karana': panch_obj.karana,
         'sunrise': panch_obj.sunrise,
-        'sunset': panch_obj.sunset
+        'sunset': panch_obj.sunset,
+        'ayanamsa': f"{panch_obj.ayanamsa} ({panch_obj.ayanamsa_value})",
+        'abhijit': panch_obj.abhijit_muhurta,
+        'brahma': panch_obj.brahma_muhurta,
+        'rahu_kaal': panch_obj.rahu_kalam,
+        'lagna_lord': asc_sign_lord_hi,
+        'rashi_lord': rashi_lord_hi
     }
 
     # Prepare D1 & D9 print SVGs
@@ -375,9 +383,57 @@ def generate_35_page_publication_html(
 
     pages = []
 
-    # =========================================================================
-    # PAGE 1: Avakhada Chakra, Ghatak Chakra & Anukool Bindu (AstroSage Page 1)
-    # =========================================================================
+    # Classical Ghatak Chakra mapped by Moon Rashi (0=Aries .. 11=Pisces)
+    GHATAK_BY_RASHI = {
+        0: {"day": "रविवार (Sun)", "nak": "मघा (Magha)", "tithi": "1, 6, 11 (नंदा)", "masa": "कार्तिक", "prahar": "प्रथम प्रहर", "lagna": "मेष", "graha": "सूर्य"},
+        1: {"day": "शनिवार (Sat)", "nak": "हस्त (Hasta)", "tithi": "5, 10, 15 (पूर्णा)", "masa": "मार्गशीर्ष", "prahar": "द्वितीय प्रहर", "lagna": "वृषभ", "graha": "बृहस्पति"},
+        2: {"day": "सोमवार (Mon)", "nak": "स्वाति (Swati)", "tithi": "2, 7, 12 (भद्रा)", "masa": "पौष", "prahar": "तृतीय प्रहर", "lagna": "मिथुन", "graha": "चन्द्र"},
+        3: {"day": "बुधवार (Wed)", "nak": "अनुराधा (Anuradha)", "tithi": "2, 7, 12 (भद्रा)", "masa": "माघ", "prahar": "द्वितीय प्रहर", "lagna": "कर्क", "graha": "बुध"},
+        4: {"day": "शनिवार (Sat)", "nak": "मूल (Mula)", "tithi": "3, 8, 13 (जया)", "masa": "फाल्गुन", "prahar": "प्रथम प्रहर", "lagna": "सिंह", "graha": "शनि"},
+        5: {"day": "शनिवार (Sat)", "nak": "श्रवण (Shravana)", "tithi": "4, 9, 14 (रिक्ता)", "masa": "चैत्र", "prahar": "चतुर्थ प्रहर", "lagna": "कन्या", "graha": "शनि"},
+        6: {"day": "गुरुवार (Thu)", "nak": "शतभिषा (Shatabhisha)", "tithi": "4, 9, 14 (रिक्ता)", "masa": "वैशाख", "prahar": "तृतीय प्रहर", "lagna": "धनु", "graha": "बृहस्पति"},
+        7: {"day": "शुक्रवार (Fri)", "nak": "रेवती (Revati)", "tithi": "1, 6, 11 (नंदा)", "masa": "आश्विन", "prahar": "प्रथम प्रहर", "lagna": "वृश्चिक", "graha": "बुध"},
+        8: {"day": "शुक्रवार (Fri)", "nak": "भरणी (Bharani)", "tithi": "3, 8, 13 (जया)", "masa": "ज्येष्ठ", "prahar": "तृतीय प्रहर", "lagna": "कुम्भ", "graha": "शुक्र"},
+        9: {"day": "मंगलवार (Tue)", "nak": "रोहिणी (Rohini)", "tithi": "4, 9, 14 (रिक्ता)", "masa": "आषाढ़", "prahar": "प्रथम प्रहर", "lagna": "सिंह", "graha": "मंगल"},
+        10: {"day": "गुरुवार (Thu)", "nak": "आर्द्रा (Ardra)", "tithi": "3, 8, 13 (जया)", "masa": "श्रावण", "prahar": "द्वितीय प्रहर", "lagna": "धनु", "graha": "बृहस्पति"},
+        11: {"day": "शुक्रवार (Fri)", "nak": "अश्लेषा (Ashlesha)", "tithi": "2, 7, 12 (भद्रा)", "masa": "भाद्रपद", "prahar": "द्वितीय प्रहर", "lagna": "कुम्भ", "graha": "शुक्र"}
+    }
+    ghatak = GHATAK_BY_RASHI.get(moon_sign_idx, GHATAK_BY_RASHI[7])
+
+    # Dynamic Numerology & Lucky Indicators
+    def _sum_digits(n: int) -> int:
+        while n > 9:
+            n = sum(int(d) for d in str(n))
+        return n
+
+    mulank = _sum_digits(birth_dt.day)
+    bhagyank = _sum_digits(birth_dt.day + birth_dt.month + birth_dt.year)
+    lucky_gems_map = {
+        "Sun": ("माणिक्य (Ruby)", "तांबा / स्वर्ण"),
+        "Moon": ("मोती (Pearl)", "चाँदी (Silver)"),
+        "Mars": ("मूँगा (Red Coral)", "तांबा (Copper)"),
+        "Mercury": ("पन्ना (Emerald)", "कांस्य / स्वर्ण"),
+        "Jupiter": ("पुखराज (Yellow Sapphire)", "स्वर्ण (Gold)"),
+        "Venus": ("हीरा / ओपल (Diamond)", "श्वेत स्वर्ण / प्लैटिनम"),
+        "Saturn": ("नीलम (Blue Sapphire)", "लोहा / अष्टधातु")
+    }
+    r_gem, r_metal = lucky_gems_map.get(constants.SIGN_LORD[moon_sign_idx], ("पुखराज", "स्वर्ण"))
+
+    p1_lucky_html = f"""
+        <div class="col-half">
+            <div class="sec-title"><span>अनुकूल बिन्दु (Lucky Indicators)</span></div>
+            <table class="astro-table table-left">
+                <tr><td><b>मूलांक (Radix Number)</b></td><td>{mulank}</td></tr>
+                <tr><td><b>भाग्यांक (Destiny Number)</b></td><td>{bhagyank}</td></tr>
+                <tr><td><b>शुभ अंक (Lucky Numbers)</b></td><td>{mulank}, {(mulank*2)%9 or 9}, {(mulank+3)%9 or 9}</td></tr>
+                <tr><td><b>भाग्यशाली वार (Lucky Day)</b></td><td>{constants.PLANETS_HI.get(constants.SIGN_LORD[moon_sign_idx])}वार</td></tr>
+                <tr><td><b>शुभ रत्न (Lucky Gemstone)</b></td><td>{r_gem}</td></tr>
+                <tr><td><b>शुभ धातु (Lucky Metal)</b></td><td>{r_metal}</td></tr>
+                <tr><td><b>इष्ट दिशा (Auspicious Direction)</b></td><td>{'पूर्व (East)' if moon_sign_idx in [0,4,8] else ('दक्षिण (South)' if moon_sign_idx in [1,5,9] else ('पश्चिम (West)' if moon_sign_idx in [2,6,10] else 'उत्तर (North)'))}</td></tr>
+            </table>
+        </div>
+    """
+
     p1 = f"""
     <div class="page">
         {masthead_html()}
@@ -389,7 +445,7 @@ def generate_35_page_publication_html(
                     <tr><td><b>नाम (Name)</b></td><td>{name}</td></tr>
                     <tr><td><b>दिनांक (Date)</b></td><td>{birth_dt.strftime('%d/%m/%Y')}</td></tr>
                     <tr><td><b>समय (Time)</b></td><td>{birth_dt.strftime('%H:%M:%S')}</td></tr>
-                    <tr><td><b>दिन (Day)</b></td><td>Shukravar (Fri)</td></tr>
+                    <tr><td><b>वार (Day)</b></td><td>{panch['vara']}</td></tr>
                     <tr><td><b>जन्म स्थान (Place)</b></td><td>{city}</td></tr>
                     <tr><td><b>अक्षांश (Latitude)</b></td><td>{lat:.4f}° N</td></tr>
                     <tr><td><b>रेखांश (Longitude)</b></td><td>{lon:.4f}° E</td></tr>
@@ -405,7 +461,7 @@ def generate_35_page_publication_html(
                     <tr><td><b>करण (Karana)</b></td><td>{panch['karana']}</td></tr>
                     <tr><td><b>सूर्योदय (Sunrise)</b></td><td>{panch['sunrise']}</td></tr>
                     <tr><td><b>सूर्यास्त (Sunset)</b></td><td>{panch['sunset']}</td></tr>
-                    <tr><td><b>अयनांश (Ayanamsa)</b></td><td>Lahiri (23°38'46")</td></tr>
+                    <tr><td><b>अयनांश (Ayanamsa)</b></td><td>{panch['ayanamsa']}</td></tr>
                     <tr><td><b>दशा भोग्य (Balance)</b></td><td>{dasha_engine.balance_str}</td></tr>
                 </table>
             </div>
@@ -415,36 +471,25 @@ def generate_35_page_publication_html(
             <div class="col-half">
                 <div class="sec-title"><span>अवकहड़ा चक्र (Avakhada Chakra)</span></div>
                 <table class="astro-table table-left">
-                    <tr><td><b>पाया (नक्षत्र आधारित)</b></td><td>चाँदी (Silver Paya)</td></tr>
-                    <tr><td><b>वर्ण (Varna)</b></td><td>{avakhada.get('varna', 'Brahmin')}</td></tr>
-                    <tr><td><b>योनि (Yoni)</b></td><td>{avakhada.get('yoni', 'Mrig')}</td></tr>
-                    <tr><td><b>गण (Gana)</b></td><td>{avakhada.get('gana', 'Deva')}</td></tr>
-                    <tr><td><b>वश्य (Vashya)</b></td><td>{avakhada.get('vashya', 'Keet')}</td></tr>
-                    <tr><td><b>नाड़ी (Nadi)</b></td><td>{avakhada.get('nadi', 'Madhya')}</td></tr>
-                    <tr><td><b>लग्न एवं राशि स्वामी</b></td><td>मङ्गल (Mars)</td></tr>
+                    <tr><td><b>पाया (नक्षत्र आधारित)</b></td><td>{avakhada.get('Paya', 'रजत / चाँदी (Silver)')}</td></tr>
+                    <tr><td><b>वर्ण (Varna)</b></td><td>{avakhada.get('Varna', avakhada.get('varna', 'ब्राह्मण'))}</td></tr>
+                    <tr><td><b>योनि (Yoni)</b></td><td>{avakhada.get('Yoni', avakhada.get('yoni', 'मृग'))}</td></tr>
+                    <tr><td><b>गण (Gana)</b></td><td>{avakhada.get('Gana', avakhada.get('gana', 'देव'))}</td></tr>
+                    <tr><td><b>वश्य (Vashya)</b></td><td>{avakhada.get('Vashya', avakhada.get('vashya', 'कीट'))}</td></tr>
+                    <tr><td><b>नाड़ी (Nadi)</b></td><td>{avakhada.get('Nadi', avakhada.get('nadi', 'मध्य'))}</td></tr>
+                    <tr><td><b>लग्न एवं राशि स्वामी</b></td><td>{panch['lagna_lord']} / {panch['rashi_lord']}</td></tr>
                 </table>
             </div>
-            <div class="col-half">
-                <div class="sec-title"><span>अनुकूल बिन्दु (Lucky Indicators)</span></div>
-                <table class="astro-table table-left">
-                    <tr><td><b>भाग्यांक (Destiny Number)</b></td><td>4</td></tr>
-                    <tr><td><b>शुभ अंक (Lucky Numbers)</b></td><td>2, 4, 5, 8</td></tr>
-                    <tr><td><b>अशुभ अंक (Unfavorable)</b></td><td>1, 7, 9</td></tr>
-                    <tr><td><b>शुभ वर्ष (Favorable Years)</b></td><td>13, 22, 31, 40, 49, 58</td></tr>
-                    <tr><td><b>भाग्यशाली दिन (Lucky Days)</b></td><td>गुरुवार, मंगलवार</td></tr>
-                    <tr><td><b>शुभ रत्न (Lucky Gemstone)</b></td><td>मूंगा (Red Coral), पुखराज</td></tr>
-                    <tr><td><b>शुभ धातु (Lucky Metal)</b></td><td>स्वर्ण (Gold), तांबा (Copper)</td></tr>
-                </table>
-            </div>
+            {p1_lucky_html}
         </div>
 
-        <div class="sec-title"><span>घातक चक्र (Ghatak Chakra - संवेदनशीलता विचार)</span></div>
+        <div class="sec-title"><span>घातक चक्र (Ghatak Chakra - जन्म राशि अनुसार संवेदनशीलता)</span></div>
         <table class="astro-table">
             <tr>
-                <th>घातक दिन</th><th>घातक नक्षत्र</th><th>घातक तिथि</th><th>घातक मास</th><th>घातक प्रहर</th><th>घातक लग्न</th><th>घातक ग्रह</th>
+                <th>घातक वार</th><th>घातक नक्षत्र</th><th>घातक तिथि</th><th>घातक मास</th><th>घातक प्रहर</th><th>घातक लग्न</th><th>घातक ग्रह</th>
             </tr>
             <tr>
-                <td>शुक्रवार</td><td>रेवती</td><td>1, 6, 11</td><td>आश्विन</td><td>प्रथम प्रहर</td><td>वृश्चिक</td><td>बुध</td>
+                <td>{ghatak['day']}</td><td>{ghatak['nak']}</td><td>{ghatak['tithi']}</td><td>{ghatak['masa']}</td><td>{ghatak['prahar']}</td><td>{ghatak['lagna']}</td><td>{ghatak['graha']}</td>
             </tr>
         </table>
         {footer_html(1)}
