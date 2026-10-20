@@ -17,3 +17,6 @@ data/google_oauth_config.json
 VYAS_*.pdf
 *.bak
 
+
+packages.txt
+
