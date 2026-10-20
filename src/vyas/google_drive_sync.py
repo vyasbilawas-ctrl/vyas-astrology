@@ -52,25 +52,53 @@ def detect_runtime_redirect_uri() -> str:
     work without manual secret editing.
 
     Google requires a byte-exact match against the Authorized redirect URIs
-    registered on the OAuth client, so the result is verified against
-    ``REGISTERED_REDIRECT_URIS`` and falls back to the canonical default when
-    the detected host is not registered (a mismatch here is worse than
-    falling back).
+    registered on the OAuth client, so every candidate is checked against
+    ``REGISTERED_REDIRECT_URIS``. Streamlit exposes the current request URL
+    directly, which is preferred over header sniffing because it is exactly
+    the origin the browser is using.
     """
+    candidates = []
+
+    # 1. The live request URL — the most faithful source of the public origin.
+    try:
+        import streamlit as st
+        req_url = ""
+        try:
+            req_url = str(getattr(st.context, "url", "") or "")
+        except Exception:
+            req_url = ""
+        if not req_url:
+            headers = getattr(st.context, "headers", None)
+            if headers:
+                proto = (headers.get("X-Forwarded-Proto") or "https").split(",")[0].strip()
+                fwd_host = (headers.get("X-Forwarded-Host") or headers.get("Host") or "").strip()
+                if fwd_host:
+                    req_url = f"{proto}://{fwd_host.split(',')[0].strip()}/"
+        if req_url:
+            parsed = urllib.parse.urlparse(req_url)
+            if parsed.scheme and parsed.netloc:
+                candidates.append(f"{parsed.scheme}://{parsed.netloc}")
+    except Exception:
+        pass
+
+    # 2. Header-only fallback (covers older Streamlit versions).
     try:
         import streamlit as st
         headers = getattr(st, "context", None) and st.context.headers
-        host = ""
         if headers:
             host = (headers.get("X-Forwarded-Host") or headers.get("Host") or "").strip()
-        if host:
-            host = host.split(",")[0].strip()
-            if "localhost" not in host and "127.0.0.1" not in host:
-                candidate = f"https://{host}".rstrip("/")
-                if candidate in REGISTERED_REDIRECT_URIS:
-                    return candidate
+            if host:
+                host = host.split(",")[0].strip()
+                proto = (headers.get("X-Forwarded-Proto") or "").split(",")[0].strip()
+                scheme = proto or ("http" if "localhost" in host or host.startswith("127.") else "https")
+                candidates.append(f"{scheme}://{host}".rstrip("/"))
     except Exception:
         pass
+
+    for cand in candidates:
+        cand = cand.rstrip("/")
+        if cand in REGISTERED_REDIRECT_URIS:
+            return cand
     return DEFAULT_REDIRECT_URI
 
 

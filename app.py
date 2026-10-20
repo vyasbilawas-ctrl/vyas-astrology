@@ -5,6 +5,7 @@ import os
 import shutil
 import platform
 import re
+import urllib.parse
 import pandas as pd
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
@@ -1032,6 +1033,41 @@ GOOGLE_CLIENT_SECRET = "GOCSPX-आपका-secret"
                 4. जिस Gmail से लॉगिन करना है उसे <b>Audience → Test users</b> में जोड़ें (या app Publish करें)।
             </div>
             """, unsafe_allow_html=True)
+
+            # ---- OAuth diagnostics ----
+            # `redirect_uri_mismatch` (Error 400) is the single most common login
+            # failure and Google's message never says WHICH value differed. This
+            # panel shows the exact strings this deployment will send, so the
+            # Console list can be compared byte-for-byte.
+            with st.expander("🔍 OAuth Debug (redirect URI जाँचें)", expanded=False):
+                _eff_redirect = google_drive_sync.resolve_redirect_uri(
+                    google_drive_sync.load_google_config().get("redirect_uri", "")
+                )
+                _auth_url = google_drive_sync.get_google_auth_url()
+                _sent_redirect = ""
+                try:
+                    _qs = urllib.parse.parse_qs(urllib.parse.urlparse(_auth_url).query)
+                    _sent_redirect = (_qs.get("redirect_uri") or [""])[0]
+                except Exception:
+                    pass
+
+                st.code(
+                    "Effective redirect_uri : " + repr(_eff_redirect) + "\n"
+                    + "Sent in auth URL     : " + repr(_sent_redirect) + "\n"
+                    + "Match (code side)    : "
+                    + ("OK" if _eff_redirect == _sent_redirect else "MISMATCH!") + "\n"
+                    + "Registered in code   : " + repr(sorted(google_drive_sync.REGISTERED_REDIRECT_URIS)) + "\n"
+                    + "st.context.url       : " + repr(str(getattr(st.context, "url", "") or "")) + "\n"
+                    + "X-Forwarded-Host     : " + repr(st.context.headers.get("X-Forwarded-Host")) + "\n"
+                    + "X-Forwarded-Proto    : " + repr(st.context.headers.get("X-Forwarded-Proto")) + "\n"
+                    + "Host                 : " + repr(st.context.headers.get("Host")),
+                    language="text",
+                )
+                st.caption(
+                    "Google Console → Clients → VYAS Astra → Authorized redirect URIs में "
+                    "ऊपर की 'Sent in auth URL' वाली value बिल्कुल वैसी ही होनी चाहिए "
+                    "(trailing slash, http vs https, www — कुछ भी अलग नहीं)।"
+                )
 
     # ---------------- SAVED KUNDLIS VAULT (FULL MANAGEMENT) ----------------
     saved_list = auth_vault.get_saved_kundlis(u["id"])
