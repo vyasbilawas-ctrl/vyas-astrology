@@ -10,3 +10,10 @@ venv/
 # Large temporary files
 cloudflared.exe
 *.log
+
+# Secrets & local artifacts
+.streamlit/secrets.toml
+data/google_oauth_config.json
+VYAS_*.pdf
+*.bak
+

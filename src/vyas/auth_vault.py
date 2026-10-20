@@ -60,6 +60,24 @@ def init_db():
                 updated_at TIMESTAMP NOT NULL
             )
         """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS google_tokens (
+                user_id INTEGER PRIMARY KEY,
+                access_token TEXT,
+                refresh_token TEXT,
+                updated_at TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )
+        """)
+        # Ensure default seeker guest account exists
+        cursor.execute("SELECT id FROM users WHERE id = 1")
+        if not cursor.fetchone():
+            now = datetime.now()
+            vip_expiry = now + timedelta(days=365)
+            cursor.execute("""
+                INSERT OR IGNORE INTO users (id, email, name, password_hash, created_at, vip_expiry, tier)
+                VALUES (1, 'seeker@vyasastro.com', 'नया जातक (Seeker)', '', ?, ?, 'VIP_TRIAL')
+            """, (now.isoformat(), vip_expiry.isoformat()))
         conn.commit()
 
 def set_active_session_user(user_id: int):
@@ -86,7 +104,12 @@ def clear_active_session():
         pass
 
 def get_last_active_user() -> Optional[Dict]:
-    """Retrieves the last logged-in user profile automatically on startup."""
+    """Retrieves the last logged-in user profile automatically on startup.
+
+    Only honors an explicit active_user_id set by a login. The old fallback
+    (auto-login as the latest registered user) was removed: it silently
+    re-logged-in the previous account right after a manual logout.
+    """
     try:
         with _get_connection() as conn:
             cursor = conn.cursor()
@@ -94,12 +117,9 @@ def get_last_active_user() -> Optional[Dict]:
             row = cursor.fetchone()
             if row:
                 uid = int(row["value"])
+                if uid == 1:
+                    return None  # guest account — treat as "not logged in"
                 return get_user_by_id(uid)
-            # If no active_user_id set yet, fallback to the latest registered user in the DB
-            cursor.execute("SELECT id FROM users ORDER BY id DESC LIMIT 1")
-            u_row = cursor.fetchone()
-            if u_row:
-                return get_user_by_id(u_row["id"])
     except Exception:
         pass
     return None
@@ -255,6 +275,41 @@ def login_or_register_google(email: str, name: str) -> Tuple[bool, str, Optional
     except Exception as e:
         return False, f"Google लॉगिन त्रुटि: {str(e)}", None
 
+def save_google_tokens(user_id: int, access_token: str, refresh_token: str = "") -> bool:
+    """Stores or updates Google OAuth access & refresh tokens for a user."""
+    try:
+        with _get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO google_tokens (user_id, access_token, refresh_token, updated_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET
+                    access_token=excluded.access_token,
+                    refresh_token=CASE WHEN excluded.refresh_token != '' THEN excluded.refresh_token ELSE google_tokens.refresh_token END,
+                    updated_at=excluded.updated_at
+            """, (user_id, access_token, refresh_token, datetime.now().isoformat()))
+            conn.commit()
+            return True
+    except Exception:
+        return False
+
+def get_google_tokens(user_id: int) -> Optional[Dict[str, str]]:
+    """Retrieves stored Google OAuth tokens for a user."""
+    try:
+        with _get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT access_token, refresh_token FROM google_tokens WHERE user_id = ?", (user_id,))
+            row = cursor.fetchone()
+            if row:
+                return {
+                    "access_token": row["access_token"],
+                    "refresh_token": row["refresh_token"] or ""
+                }
+    except Exception:
+        pass
+    return None
+
+
 def save_kundli(user_id: int, kundli_dict: Dict) -> Tuple[bool, str]:
     """Saves a horoscope profile into the user vault."""
     try:
@@ -263,9 +318,19 @@ def save_kundli(user_id: int, kundli_dict: Dict) -> Tuple[bool, str]:
             cursor.execute("SELECT vip_expiry FROM users WHERE id = ?", (user_id,))
             user_row = cursor.fetchone()
             if not user_row:
-                return False, "यूज़र नहीं मिला।"
-            
-            is_vip = datetime.fromisoformat(user_row["vip_expiry"]) > datetime.now()
+                if user_id == 1:
+                    now_dt = datetime.now()
+                    vip_exp = now_dt + timedelta(days=365)
+                    cursor.execute("""
+                        INSERT OR IGNORE INTO users (id, email, name, password_hash, created_at, vip_expiry, tier)
+                        VALUES (1, 'seeker@vyasastro.com', 'नया जातक (Seeker)', '', ?, ?, 'VIP_TRIAL')
+                    """, (now_dt.isoformat(), vip_exp.isoformat()))
+                    conn.commit()
+                    is_vip = True
+                else:
+                    return False, "यूज़र नहीं मिला।"
+            else:
+                is_vip = datetime.fromisoformat(user_row["vip_expiry"]) > datetime.now()
             
             cursor.execute("SELECT COUNT(*) as cnt FROM saved_kundlis WHERE user_id = ?", (user_id,))
             cnt = cursor.fetchone()["cnt"]
@@ -310,6 +375,46 @@ def get_saved_kundlis(user_id: int) -> List[Dict]:
     except Exception:
         pass
     return kundlis
+
+def delete_kundli(user_id: int, kundli_id: int) -> Tuple[bool, str]:
+    """Deletes a saved kundli by its ID."""
+    try:
+        with _get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM saved_kundlis WHERE id = ? AND user_id = ?", (kundli_id, user_id))
+            conn.commit()
+            return True, "कुण्डली सफलतापूर्वक हटा दी गई।"
+    except Exception as e:
+        return False, f"हटाने में त्रुटि: {str(e)}"
+
+def update_kundli(user_id: int, kundli_id: int, kundli_dict: Dict) -> Tuple[bool, str]:
+    """Updates an existing saved kundli."""
+    try:
+        with _get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE saved_kundlis 
+                SET name = ?, dob = ?, tob = ?, city = ?, lat = ?, lon = ?, tz = ?, ayanamsa = ?, gender = ?, notes = ?, relationship = ?
+                WHERE id = ? AND user_id = ?
+            """, (
+                kundli_dict.get("name", "Unknown"),
+                kundli_dict.get("dob", "1990-01-01"),
+                kundli_dict.get("tob", "12:00:00"),
+                kundli_dict.get("city", "New Delhi, India"),
+                float(kundli_dict.get("lat", 28.6139)),
+                float(kundli_dict.get("lon", 77.2090)),
+                float(kundli_dict.get("tz", 5.5)),
+                kundli_dict.get("ayanamsa", "KP"),
+                kundli_dict.get("gender", "Male"),
+                kundli_dict.get("notes", ""),
+                kundli_dict.get("relationship", "Self"),
+                kundli_id,
+                user_id
+            ))
+            conn.commit()
+            return True, "कुण्डली सफलतापूर्वक अपडेट हो गई।"
+    except Exception as e:
+        return False, f"अपडेट त्रुटि: {str(e)}"
 
 def upgrade_vip(user_id: int, plan_type: str, txn_id: str) -> Tuple[bool, str]:
     """Extends user VIP access based on payment plan."""

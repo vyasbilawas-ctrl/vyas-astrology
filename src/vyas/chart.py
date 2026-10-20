@@ -116,3 +116,14 @@ class Chart:
         
     def get_planets_in_house(self, house_num: int) -> List[str]:
         return [p.name for p in self.planets.values() if self.get_house_of_planet(p.name) == house_num]
+
+    def get_houses_ruled_by_planet(self, planet_name: str) -> List[int]:
+        """Returns the house numbers (1-12) ruled by the given planet."""
+        asc_sign = self.ascendant_sign
+        ruled = []
+        for h in range(1, 13):
+            sign_idx = (asc_sign + h - 1) % 12
+            if constants.SIGN_LORD[sign_idx] == planet_name:
+                ruled.append(h)
+        return ruled
+

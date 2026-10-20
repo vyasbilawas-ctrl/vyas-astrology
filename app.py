@@ -49,6 +49,7 @@ from vyas import varga_predictions as vyas_vp
 from vyas import match as vyas_match
 from vyas.chatbot import vyas_chatbot
 from vyas import city_search
+from vyas import google_drive_sync
 
 def render_kundli(svg_str: str):
     """Render astrological SVG cleanly via base64 data URI to prevent DOMPurify stripping."""
@@ -59,9 +60,71 @@ def render_kundli(svg_str: str):
 
 st.set_page_config(page_title="VYAS • Vedic Yield Astrology Systems", page_icon="☸️", layout="wide", initial_sidebar_state="expanded")
 
+# ---------------- GOOGLE OAUTH 2.0 CALLBACK HANDLING ----------------
+# Rules:
+#  1. Google errors (redirect_uri_mismatch, access_denied...) are surfaced, never ignored.
+#  2. `state` must match the per-session nonce generated at login (CSRF protection).
+#  3. A code is processed exactly once — success OR failure — so a consumed
+#     single-use code is never re-sent to Google on every rerun (invalid_grant loop).
+_oauth_code = st.query_params.get("code")
+_oauth_state = st.query_params.get("state")
+_oauth_error = st.query_params.get("error")
+_oauth_err_desc = st.query_params.get("error_description")
+
+if _oauth_error:
+    # Google bounced back with an error — show it and clean the URL.
+    st.session_state["user_google_processed"] = True
+    st.error(f"Google लॉगिन विफल: {_oauth_error} — {_oauth_err_desc or 'कृपया पुनः प्रयास करें।'}"
+             f" (सामान्य कारण: Google Cloud Console में Redirect URI "
+             f"`{google_drive_sync.load_google_config().get('redirect_uri', 'http://localhost:8501')}` दर्ज नहीं है।)")
+    st.query_params.clear()
+
+elif _oauth_code and not st.session_state.get("user_google_processed"):
+    st.session_state["user_google_processed"] = True  # mark BEFORE any network call
+
+    expected_state = st.session_state.get("oauth_state")
+    if expected_state and _oauth_state != expected_state:
+        st.error("लॉगिन सुरक्षा जाँच विफल (state mismatch)। कृपया पेज रीफ़्रेश करके दोबारा लॉगिन करें।")
+        st.query_params.clear()
+    else:
+        with st.spinner("Google से प्रमाणीकरण एवं Google Drive सिंक किया जा रहा है..."):
+            ok_tok, msg_tok, tok_data = google_drive_sync.exchange_code_for_tokens(_oauth_code)
+            _login_err = None
+            if not ok_tok or not tok_data:
+                _login_err = f"चरण 1 (टोकन प्राप्ति) विफल: {msg_tok}"
+            else:
+                acc_tok = tok_data.get("access_token")
+                ref_tok = tok_data.get("refresh_token", "")
+                ok_ui, msg_ui, u_info = google_drive_sync.get_user_info(acc_tok)
+                if not ok_ui or not u_info:
+                    _login_err = f"चरण 2 (प्रोफ़ाइल प्राप्ति) विफल: {msg_ui}"
+                else:
+                    ok_log, msg_log, u_obj = auth_vault.login_or_register_google(u_info["email"], u_info["name"])
+                    if not ok_log or not u_obj:
+                        _login_err = f"चरण 3 (खाता) विफल: {msg_log}"
+                    elif not auth_vault.save_google_tokens(u_obj["id"], acc_tok, ref_tok):
+                        _login_err = ("लॉगिन सफल हुआ, परंतु Drive टोकन सुरक्षित नहीं हो सका "
+                                      "(डेटाबेस त्रुटि)। Drive सिंक काम नहीं करेगा।")
+                    else:
+                        st.session_state["user"] = u_obj
+                        st.session_state["google_access_token"] = acc_tok
+                        auth_vault.set_active_session_user(u_obj["id"])
+
+            if _login_err:
+                st.error(f"Google लॉगिन विफल — {_login_err}")
+            else:
+                st.toast(f"Google से सफल लॉगिन: {u_obj['name']}! Google Drive कनेक्ट हो गया।", icon="☁️")
+            st.query_params.clear()
+            st.session_state.pop("oauth_state", None)
+            st.rerun()
+
 # Global Luxury Vedic Styling
 st.markdown("""
 <style>
+    /* @import MUST come before every other rule (incl. @font-face), otherwise
+       browsers ignore it — that is why Noto Sans Devanagari never loaded and
+       mixed Hindi/Latin headings rendered with collapsed word spacing. */
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Tiro+Devanagari+Sanskrit&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
     @font-face {
         font-family: 'Material Symbols Rounded';
         font-style: normal;
@@ -69,7 +132,6 @@ st.markdown("""
         font-display: block;
         src: url(https://fonts.gstatic.com/s/materialsymbolsrounded/v376/syl0-zNym6YjUruM-QrEh7-nyTnjDwKNJ_190FjpZIvDmUSVOK7BDB_Qb9vUSzq3wzLK-P0J-V_Zs-QtQth3-jOcbTCVpeRL2w5rwZu2rIelXxI.ttf) format('truetype');
     }
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Tiro+Devanagari+Sanskrit&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 
     :root {
         --gold-primary: #e5a93c;
@@ -171,19 +233,25 @@ st.markdown("""
     }
 
     .section-title {
-        font-family: 'Cinzel', 'Noto Sans Devanagari', serif;
+        /* Devanagari-capable fonts FIRST: Cinzel is Latin-only, so a heading that
+           mixes Hindi + Latin ("... प्रबंध (AstroSage PDF)") fell back to a
+           different font mid-line, collapsing the space and making words look
+           glued together ("प्रबंधPDF"). */
+        font-family: 'Nirmala UI', 'Noto Sans Devanagari', 'Mangal',
+                     'Tiro Devanagari Sanskrit', 'Segoe UI', 'Cinzel', sans-serif;
         font-size: 1.25rem;
         font-weight: 700;
         color: #f1f5f9;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
+        letter-spacing: 0.2px;
+        word-spacing: 0.08em;
+        line-height: 1.5;
+        text-transform: none;
         border-bottom: 1px solid rgba(229, 169, 60, 0.25);
         padding-bottom: 10px;
         margin-top: 10px;
         margin-bottom: 18px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
+        display: block;
+        overflow-wrap: break-word;
     }
 
     /* Domain Suite Pills (Segmented Navigation Selector from reference) */
@@ -201,8 +269,11 @@ st.markdown("""
         border-radius: 8px !important;
         padding: 8px 16px !important;
         color: #94a3b8 !important;
+        font-family: 'Nirmala UI', 'Noto Sans Devanagari', 'Mangal', 'Segoe UI', sans-serif !important;
         font-weight: 500 !important;
         font-size: 0.88rem !important;
+        letter-spacing: 0 !important;
+        word-spacing: 0.08em !important;
         transition: all 0.22s ease !important;
         cursor: pointer !important;
     }
@@ -443,7 +514,9 @@ st.markdown("""
         }
         .section-title {
             font-size: 1.05rem !important;
-            letter-spacing: 0.5px !important;
+            letter-spacing: 0 !important;
+            word-spacing: 0.04em !important;
+            line-height: 1.55 !important;
         }
         div[data-testid="stRadio"] > div {
             gap: 4px !important;
@@ -472,12 +545,79 @@ st.markdown("""
             max-width: 100% !important;
             height: auto !important;
         }
+        /* Streamlit >=1.40 renders columns as stColumn (old data-testid="column" is dead) */
+        div[data-testid="stColumn"],
         div[data-testid="column"] {
             min-width: 100% !important;
+            width: 100% !important;
+            flex: 1 1 100% !important;
             margin-bottom: 10px !important;
+        }
+        /* Expander headers: .streamlit-expanderHeader is deprecated */
+        .streamlit-expanderHeader,
+        [data-testid="stExpander"] summary,
+        [data-testid="stExpander"] details > summary {
+            font-size: 0.9rem !important;
+            padding: 8px 10px !important;
+            white-space: normal !important;
+            line-height: 1.4 !important;
+            overflow-wrap: anywhere !important;
+        }
+        [data-testid="stExpander"] details {
+            border-radius: 10px !important;
+        }
+        /* Keep wide dataframes/tables scrollable instead of breaking layout */
+        [data-testid="stDataFrame"],
+        [data-testid="stTable"],
+        .as-table-wrap {
+            max-width: 100% !important;
+            overflow-x: auto !important;
+        }
+        div.stButton > button {
+            min-height: 42px !important;
+            white-space: normal !important;
+            line-height: 1.25 !important;
         }
         .block-container {
             padding: 1rem 0.5rem 3rem 0.5rem !important;
+        }
+    }
+
+    /* Small phones (iPhone SE / Android ~360px) */
+    @media (max-width: 480px) {
+        .section-title {
+            font-size: 0.98rem !important;
+        }
+        .glass-card {
+            padding: 10px 10px !important;
+            border-radius: 10px !important;
+        }
+        div[data-testid="stRadio"] label {
+            padding: 5px 8px !important;
+            font-size: 0.74rem !important;
+        }
+        .stTabs [data-baseweb="tab"], .stTabs button[role="tab"] {
+            font-size: 0.75rem !important;
+            padding: 5px 9px !important;
+        }
+        .block-container {
+            padding: 0.6rem 0.35rem 2.5rem 0.35rem !important;
+        }
+        h1 { font-size: 1.35rem !important; }
+        h2 { font-size: 1.15rem !important; }
+        h3 { font-size: 1.02rem !important; }
+        .kundli-container svg {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .section-title { font-size: 0.9rem !important; }
+        .block-container { padding: 0.5rem 0.25rem 2.2rem 0.25rem !important; }
+        table.as-table, .as-table td, .as-table th {
+            font-size: 7.2pt !important;
+            padding: 2px 3px !important;
         }
     }
 </style>
@@ -658,26 +798,22 @@ with st.sidebar:
     
     # ---------------- USER AUTH & 30-DAY VIP TRIAL VAULT ----------------
     if "user" not in st.session_state:
-        # 1. Check query param for persistent login across page refreshes
-        uid_param = st.query_params.get("uid")
+        # Restore session ONLY from the server-side active_user_id (set on a
+        # real OAuth / verified login). The old `?uid=` URL-param login let
+        # anyone become any user via a crafted link — removed.
         restored_user = None
-        if uid_param:
-            try:
-                restored_user = auth_vault.get_user_by_id(int(uid_param))
-            except Exception:
-                restored_user = None
-        
-        # 2. If not in query param, check permanent active_session in SQLite DB
-        if not restored_user:
-            try:
-                if hasattr(auth_vault, "get_last_active_user"):
-                    restored_user = auth_vault.get_last_active_user()
-            except Exception:
-                restored_user = None
+        try:
+            if hasattr(auth_vault, "get_last_active_user"):
+                restored_user = auth_vault.get_last_active_user()
+        except Exception:
+            restored_user = None
+
+        # A stale `uid` param must never log anyone in; scrub it from the URL.
+        if st.query_params.get("uid"):
+            st.query_params.clear()
 
         if restored_user:
             st.session_state["user"] = restored_user
-            st.query_params["uid"] = str(restored_user["id"])
         else:
             st.session_state["user"] = {
                 "id": 1,
@@ -768,66 +904,47 @@ with st.sidebar:
             </a>
             """, unsafe_allow_html=True)
 
-    with st.expander("👤 User Account / Login / Register (लॉगिन व खाता)", expanded=False):
-        # 1-Click Google Sign-in option
-        st.markdown("""
-        <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(240, 192, 90, 0.3); border-radius: 8px; padding: 10px; text-align: center; margin-bottom: 12px;">
-            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; color: #f8fafc; font-size: 0.88rem;">
-                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-                Google से त्वरित लॉगिन (1-Click Google Auth)
+    # ---------------- USER AUTHENTICATION & SESSION ----------------
+    is_logged_in = (u["email"] != "seeker@vyasastro.com")
+    
+    with st.expander("👤 मेरा खाता / Account & Login", expanded=not is_logged_in):
+        if is_logged_in:
+            u_tokens = auth_vault.get_google_tokens(u["id"])
+            has_gdrive = bool(u_tokens and u_tokens.get("access_token"))
+            gdrive_status_html = """
+            <div style="font-size: 0.8rem; color: #6ee7b7; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+                <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></span>
+                <b>Google Drive:</b> सक्रिय ('VYAS Kundli & Horoscopes' सिंक चालू)
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-        g_col1, g_col2 = st.columns([1.5, 1])
-        with g_col1:
-            google_email = st.text_input("Google Email", "user@gmail.com", key="g_email_in")
-        with g_col2:
-            st.write("")
-            st.write("")
-            if st.button("🚀 Google Sign-In", use_container_width=True):
-                ok, msg, u_data = auth_vault.login_or_register_google(google_email, google_email.split("@")[0])
-                if ok and u_data:
-                    st.session_state["user"] = u_data
-                    auth_vault.set_active_session_user(u_data["id"])
-                    st.query_params["uid"] = str(u_data["id"])
-                    st.success(msg)
-                    st.rerun()
-                else:
-                    st.error(msg)
+            """ if has_gdrive else """
+            <div style="font-size: 0.8rem; color: #facc15; margin-top: 6px;">
+                ⚠️ Google Drive कनेक्ट नहीं है (नीचे से कनेक्ट करें)
+            </div>
+            """
 
-        st.markdown("<div style='text-align: center; color: #94a3b8; font-size: 0.78rem; margin: 8px 0;'>— या ईमेल द्वारा लॉगिन करें —</div>", unsafe_allow_html=True)
-        auth_mode = st.radio("Account Action", ["Login (लॉगिन)", "Register (नया खाता)"], horizontal=True)
-        if "Register" in auth_mode or "खाता" in auth_mode:
-            reg_name = st.text_input("Full Name (पूरा नाम)", "New Seeker")
-            reg_email = st.text_input("Email (ईमेल)", "seeker@example.com")
-            reg_pwd = st.text_input("Password (पासवर्ड)", type="password")
-            if st.button("Activate 30-Day Free VIP Trial", use_container_width=True):
-                ok, msg, u_data = auth_vault.register_user(reg_email, reg_name, reg_pwd)
-                if ok and u_data:
-                    st.session_state["user"] = u_data
-                    auth_vault.set_active_session_user(u_data["id"])
-                    st.query_params["uid"] = str(u_data["id"])
-                    st.success(msg)
-                    st.rerun()
-                else:
-                    st.error(msg)
-        else:
-            log_email = st.text_input("Registered Email (ईमेल)", "inikhilvyas@gmail.com")
-            log_pwd = st.text_input("Password (पासवर्ड)", type="password", key="log_pwd")
-            if st.button("Login (लॉगिन करें)", use_container_width=True):
-                ok, msg, u_data = auth_vault.login_user(log_email, log_pwd)
-                if ok and u_data:
-                    st.session_state["user"] = u_data
-                    auth_vault.set_active_session_user(u_data["id"])
-                    st.query_params["uid"] = str(u_data["id"])
-                    st.success(msg)
-                    st.rerun()
-                else:
-                    st.error(msg)
+            st.markdown(f"""
+            <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; border-radius: 8px; padding: 10px; margin-bottom: 8px;">
+                <div style="font-weight: 700; color: #34d399;">सफलतापूर्वक लॉगिन: {u['name']}</div>
+                <div style="font-size: 0.8rem; color: #cbd5e1;">{u['email']}</div>
+                {gdrive_status_html}
+            </div>
+            """, unsafe_allow_html=True)
 
-        # Logout button
-        if st.session_state.get("user") and st.session_state["user"].get("email") != "seeker@vyasastro.com":
-            if st.button("🚪 Logout (लॉगआउट करें)", key="logout_btn", use_container_width=True):
+            if not has_gdrive:
+                auth_url = google_drive_sync.get_google_auth_url()
+                if auth_url:
+                    st.markdown(f"""
+                    <div style="margin-bottom: 8px;">
+                        <a href="{auth_url}" target="_self" style="text-decoration: none;">
+                            <button style="width: 100%; background: #ffffff; color: #3c4043; border: 1px solid #dadce0; border-radius: 6px; padding: 6px 12px; font-weight: 600; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                                <svg width="15" height="15" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                                <span>🔗 Google Drive से कनेक्ट करें</span>
+                            </button>
+                        </a>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            if st.button("🚪 Logout (लॉगआउट)", key="sidebar_logout_btn", use_container_width=True):
                 auth_vault.clear_active_session()
                 st.query_params.clear()
                 st.session_state["user"] = {
@@ -838,31 +955,101 @@ with st.sidebar:
                     "days_left": 30,
                     "is_vip": True
                 }
-                st.session_state.pop("loaded_profile", None)
-                st.success("सफलतापूर्वक लॉगआउट हुआ।")
+                # Clear every OAuth/session artifact so the next Google login
+                # callback is processed (stale flags used to silently block it).
+                for _sk in ("loaded_profile", "google_access_token", "user_google_processed",
+                            "oauth_state", "gdrive_last_link", "saved_k_picker"):
+                    st.session_state.pop(_sk, None)
+                st.success("लॉगआउट हुआ।")
                 st.rerun()
+        else:
+            auth_url = google_drive_sync.get_google_auth_url()
+            if auth_url:
+                st.markdown(f"""
+                <div style="margin-bottom: 12px; text-align: center;">
+                    <a href="{auth_url}" target="_self" style="text-decoration: none;">
+                        <button style="width: 100%; background: #ffffff; color: #3c4043; border: 1px solid #dadce0; border-radius: 8px; padding: 10px 14px; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.18); transition: transform 0.2s ease;">
+                            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                            <span>Sign in with Google</span>
+                        </button>
+                    </a>
+                    <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 5px;">(Google Drive में कुण्डलियाँ स्वतः सुरक्षित होंगी)</div>
+                </div>
+                <div style="text-align: center; color: #94a3b8; font-size: 0.76rem; margin-bottom: 8px;">— अथवा ईमेल से 1-क्लिक लॉगिन —</div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown("<small style='color: #eedc9a;'>1-क्लिक में अपना ईमेल दर्ज करके तुरंत लॉगिन करें:</small>", unsafe_allow_html=True)
 
-    # Saved Kundlis Vault (Always visible & prominent at top of sidebar)
+            quick_email = st.text_input("ईमेल / Google Email", value="", key="quick_email_in", placeholder="aapka.name@gmail.com")
+            quick_name = st.text_input("आपका नाम (Name)", value="", key="quick_name_in", placeholder="आपका नाम")
+            if st.button("⚡ तुरंत लॉगिन करें (1-Click Login)", key="quick_login_btn", use_container_width=True):
+                if quick_email and "@" in quick_email:
+                    ok, msg, u_data = auth_vault.login_or_register_google(quick_email, quick_name)
+                    if ok and u_data:
+                        st.session_state["user"] = u_data
+                        st.session_state["user_google_processed"] = True
+                        auth_vault.set_active_session_user(u_data["id"])
+                        st.success(f"नमस्ते {u_data['name']} जी! लॉगिन सफल हुआ।")
+                        st.rerun()
+                    else:
+                        st.error(msg)
+                else:
+                    st.warning("कृपया मान्य ईमेल दर्ज करें।")
+
+        with st.expander("⚙️ Google Cloud API Credentials", expanded=False):
+            g_cfg = google_drive_sync.load_google_config()
+            cfg_cid = st.text_input("Google Client ID", value=g_cfg.get("client_id", ""), key="cfg_cid_in", placeholder="...apps.googleusercontent.com")
+            cfg_csec = st.text_input("Google Client Secret", value=g_cfg.get("client_secret", ""), type="password", key="cfg_csec_in")
+            cfg_ruri = st.text_input("Redirect URI", value=g_cfg.get("redirect_uri", "http://localhost:8501"), key="cfg_ruri_in")
+            if st.button("💾 Save Credentials", key="save_g_cfg_btn", use_container_width=True):
+                if google_drive_sync.save_google_config(cfg_cid, cfg_csec, cfg_ruri):
+                    st.success("Google OAuth सेटिंग्स सुरक्षित हुईं!")
+                    st.rerun()
+                else:
+                    st.error("सेव करने में त्रुटि।")
+            st.markdown("""
+            <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 4px; line-height: 1.45;">
+                <b>क्रेडेंशियल्स प्राप्त करने का तरीका:</b><br/>
+                1. <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #60a5fa;">Google Cloud Console</a> में जाएं।<br/>
+                2. <b>Google Drive API</b> को Enable करें।<br/>
+                3. OAuth 2.0 Web Client ID बनाएं और Authorized redirect URIs में <code>http://localhost:8501</code> जोड़ें (अंत में स्लैश नहीं — Google में यह byte-exact मैच होना चाहिए)।
+            </div>
+            """, unsafe_allow_html=True)
+
+    # ---------------- SAVED KUNDLIS VAULT (FULL MANAGEMENT) ----------------
     saved_list = auth_vault.get_saved_kundlis(u["id"])
-    st.markdown(f"""
-    <div style="background: rgba(14, 165, 233, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; padding: 10px 14px; margin: 10px 0;">
-        <div style="color: #38bdf8; font-weight: 800; font-size: 0.95rem;">📁 मेरी सेव की गई कुंडलियां (Saved Kundlis: {len(saved_list)})</div>
-        <div style="color: #cbd5e1; font-size: 0.78rem;">यहाँ से अपनी पहले से सुरक्षित की हुई कोई भी कुंडली 1-क्लिक में खोलें।</div>
-    </div>
-    """, unsafe_allow_html=True)
-    if saved_list:
-        k_names = [f"🔮 {k['name']} — {k['dob']} ({k.get('city', '')})" for k in saved_list]
-        selected_k_idx = st.selectbox("खोलें सुरक्षित कुंडली (Select Kundli to Open)", range(len(saved_list)), format_func=lambda i: k_names[i])
-        col_load1, col_load2 = st.columns([1.5, 1])
-        with col_load1:
-            if st.button("⚡ कुंडली लोड करें (Open Chart)", key="load_saved_k_btn", use_container_width=True):
-                sk = saved_list[selected_k_idx]
-                st.session_state['loaded_profile'] = sk
-                st.session_state['data_generated'] = False
-                st.success(f"'{sk['name']}' की कुंडली लोड हो गई!")
-                st.rerun()
-    else:
-        st.info("💡 अभी कोई कुंडली सेव नहीं है। नीचे जन्म विवरण भरकर **'💾 Save Profile to Vault'** बटन दबाएं।")
+    
+    with st.expander(f"📁 मेरी सुरक्षित कुण्डलियाँ ({len(saved_list)})", expanded=True):
+        if saved_list:
+            k_display_map = {f"{k['name']} ({k['dob']} - {k.get('city', '')})": k for k in saved_list}
+            chosen_k_label = st.selectbox("कुण्डली चुनें:", list(k_display_map.keys()), key="saved_k_picker")
+            chosen_k = k_display_map[chosen_k_label]
+
+            col_kv1, col_kv2 = st.columns(2)
+            with col_kv1:
+                if st.button("📂 खोलें (Open)", key="open_k_btn", use_container_width=True):
+                    st.session_state['loaded_profile'] = chosen_k
+                    st.session_state['lat'] = float(chosen_k.get('lat', 28.6139))
+                    st.session_state['lon'] = float(chosen_k.get('lon', 77.2090))
+                    st.session_state['city_name'] = chosen_k.get('city', 'New Delhi, India')
+                    st.session_state['city_search_input'] = chosen_k.get('city', 'New Delhi, India')
+                    st.session_state['_last_chosen_city'] = chosen_k.get('city', 'New Delhi, India')
+                    st.session_state.pop('selected_city_dropdown', None)
+                    st.session_state['data_generated'] = False
+                    st.success(f"'{chosen_k['name']}' की कुण्डली लोड हो गई!")
+                    st.rerun()
+            with col_kv2:
+                if st.button("🗑️ हटाएं (Delete)", key="del_k_btn", use_container_width=True):
+                    ok_del, del_msg = auth_vault.delete_kundli(u["id"], chosen_k["id"])
+                    if ok_del:
+                        if st.session_state.get('loaded_profile', {}).get('id') == chosen_k["id"]:
+                            st.session_state.pop('loaded_profile', None)
+                        st.success(del_msg)
+                        st.rerun()
+                    else:
+                        st.error(del_msg)
+        else:
+            st.info("💡 अभी कोई कुण्डली सुरक्षित नहीं है। नीचे जन्म विवरण भरकर **'💾 कुण्डली सुरक्षित करें'** बटन दबाएं।")
 
     ui_lang = st.radio("🌐 भाषा / Language", ["हिन्दी (Hindi)", "English"], horizontal=True)
     is_hi = "हिन्दी" in ui_lang
@@ -980,7 +1167,7 @@ with st.sidebar:
         node_choice = st.selectbox("राहु-केतु नोड (Rahu Node)", ["Mean (औसत)", "True (स्पष्ट)"], index=0)
 
     # Save to vault button
-    if st.button("💾 Save Profile to Vault / वॉल्ट में सेव करें", use_container_width=True):
+    if st.button("💾 कुण्डली सुरक्षित करें (Save Profile to Vault)", use_container_width=True):
         k_payload = {
             "name": name,
             "dob": date_val.strftime("%Y-%m-%d"),
@@ -993,7 +1180,8 @@ with st.sidebar:
         }
         ok, s_msg = auth_vault.save_kundli(u["id"], k_payload)
         if ok:
-            st.success(s_msg)
+            st.success(f"'{name}' की कुण्डली सुरक्षित हो गई! यह ऊपर 'मेरी सुरक्षित कुण्डलियाँ' में उपलब्ध है।")
+            st.rerun()
         else:
             st.warning(s_msg)
     
@@ -1001,7 +1189,15 @@ with st.sidebar:
     generate = st.button(btn_lbl, type="primary", use_container_width=True)
 
 # Calculate Core Structures
-if generate or 'data_generated' not in st.session_state:
+# Input signature: the cached chart must be invalidated whenever ANY birth-input
+# changes. Previously only the Generate button could refresh it, so users who
+# edited dob/tob/place and re-rendered kept seeing the OLD chart silently.
+_birth_input_sig = (
+    date_val.isoformat(), time_val.isoformat(), round(float(lat), 6),
+    round(float(lon), 6), round(float(tz_offset), 4), ayan_choice, node_choice,
+)
+if (generate or 'data_generated' not in st.session_state
+        or st.session_state.get('_birth_input_sig') != _birth_input_sig):
     dt = datetime.combine(date_val, time_val)
     dt_utc = dt - timedelta(hours=tz_offset)
     dt_utc = dt_utc.replace(tzinfo=timezone.utc)
@@ -1028,6 +1224,7 @@ if generate or 'data_generated' not in st.session_state:
             st.session_state['dasha_engine'] = dasha_eng
             st.session_state['vargas_matrix'] = vargas_matrix
             st.session_state['data_generated'] = True
+            st.session_state['_birth_input_sig'] = _birth_input_sig
             for k in ('panchang', 'gochar', 'predictions'):
                 st.session_state.pop(k, None)
         except Exception as e:
@@ -1091,7 +1288,7 @@ if st.session_state.get('data_generated'):
     suite_options = [
         "व्यक्तिगत दैनिक राशिफल" if is_hi else "Daily Horoscope & Timing",
         "कुण्डली एवं षोडशवर्ग" if is_hi else "Birth Charts & 16 Vargas",
-        "वैदिक फलित एवं 12,000+ सूत्र" if is_hi else "Vedic Forecast & 12,000+ Sutras",
+        "वैदिक फलित एवं शास्त्रीय सूत्र" if is_hi else "Vedic Forecast & Classical Sutras",
         "अष्टकूट मिलान एवं परिहार" if is_hi else "Compatibility & Dosha Parihara",
         "लाल किताब सम्पूर्ण" if is_hi else "Lal Kitab System & Remedies",
         "दशा, गोचर एवं वर्षफल" if is_hi else "Dasha, Transits & Varshphal",
@@ -1144,9 +1341,9 @@ if st.session_state.get('data_generated'):
         
         st.markdown(f"""
         <div class="glass-card" style="border: 2px solid #f0c05a; background: linear-gradient(135deg, rgba(229, 169, 60, 0.15) 0%, rgba(11, 18, 32, 0.95) 100%);">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 1.15rem; font-weight: 800; color: #f0c05a;">🔮 प्रश्न कुण्डली फलित एवं निर्णय (Prashna Tantra Decision)</span>
-                <span style="background: {'#10b981' if verdict_positive else '#f59e0b'}; color: black; font-weight: 800; padding: 4px 14px; border-radius: 20px; font-size: 0.85rem;">
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center;">
+                <span style="font-size: 1.15rem; font-weight: 800; color: #f0c05a; min-width: 0;">🔮 प्रश्न कुण्डली फलित एवं निर्णय (Prashna Tantra Decision)</span>
+                <span style="background: {'#10b981' if verdict_positive else '#f59e0b'}; color: black; font-weight: 800; padding: 4px 14px; border-radius: 20px; font-size: 0.85rem; white-space: normal;">
                     {'कार्य सिद्धि के प्रबल योग (Success Likely)' if verdict_positive else 'प्रयास व समय की आवश्यकता (Requires Effort)'}
                 </span>
             </div>
@@ -1558,7 +1755,7 @@ if st.session_state.get('data_generated'):
             "लग्न एवं नवमांश (D1 & D9 Charts)" if is_hi else "D1 & D9 Natal Charts",
             "षोडशवर्ग 16 चक्र (All 16 Vargas)" if is_hi else "All 16 Divisional Charts",
             "षष्ट्यंश देवता (D60 Shashtyamsha & Deities)" if is_hi else "D60 Shashtyamsha Deities",
-            "📜 12,000+ शास्त्रीय सूत्र फलादेश (AI Knowledge Bank)" if is_hi else "12,000+ Classical Sutras Bank"
+            "📜 प्रामाणिक शास्त्रीय सूत्र फलादेश (Classical Sutras)" if is_hi else "Classical Vedic Sutras"
         ])
 
         with sub_tab1:
@@ -1717,18 +1914,17 @@ if st.session_state.get('data_generated'):
             st.dataframe(pd.DataFrame(d60_table), use_container_width=True, hide_index=True)
 
         with sub_tab4:
-            total_kb_all = len(vyas_knowledge_engine.load_knowledge_bank())
-            st.markdown(f'<div class="section-title">{"🔮 " + f"{total_kb_all:,}+ AI ज्योतिष ज्ञानकोष एवं शास्त्रीय सूत्र महा-डेटाबैंक" if is_hi else f"{total_kb_all:,}+ Classical Vedic & Nadi Sutras Knowledge Bank"}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="section-title">{"🔮 प्रामाणिक वैदिक एवं नाड़ी सूत्र फलादेश" if is_hi else "Classical Vedic & Nadi Sutras"}</div>', unsafe_allow_html=True)
             
             # Evaluate from knowledge bank
             kb_eval = vyas_knowledge_engine.evaluate_chart_sutras(chart)
             st.markdown(f"""
             <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(234, 179, 8, 0.4); border-radius: 10px; padding: 14px; margin-bottom: 20px;">
                 <div style="color: #facc15; font-size: 1.15rem; font-weight: bold;">
-                    ✨ आपकी जन्म कुण्डली पर AI ज्ञानकोष ({total_kb_all:,}+ शास्त्रीय सूत्रों के महा-संग्रह) से {len(kb_eval)} प्रामाणिक सूत्र सक्रिय पाए गए!
+                    ✨ आपकी जन्म कुण्डली पर सक्रिय प्रामाणिक शास्त्रीय सूत्र एवं योग ({len(kb_eval)} सूत्र सक्रिय)
                 </div>
                 <div style="color: #cbd5e1; font-size: 0.95rem; margin-top: 4px;">
-                    यह इंजन भृगु सूत्रम् (432 भाव-फल), पाराशरी भावाधिपति (144 भाव सम्बंध), 210 शास्त्रीय राज/धन/रोग योग, जैमिनी उपदेश सूत्र, केपी नक्षत्र सिद्धांत, अष्टकवर्ग, लाल किताब एवं भृगु नंदी नाड़ी सूत्रों का स्वचालित गणितीय मिलान करके केवल आपकी कुंडली पर लागू होने वाले सूत्रों का सटीक फलित प्रदर्शित करता है।
+                    यह विश्लेषण भृगु सूत्रम्, पाराशरी भावाधिपति फल, नाड़ी योग, केपी नक्षत्र सिद्धांत, अष्टकवर्ग, लाल किताब एवं भृगु नंदी नाड़ी सूत्रों का प्रत्यक्ष समन्वय करके फलित प्रदर्शित करता है।
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -2047,7 +2243,12 @@ if st.session_state.get('data_generated'):
 
         with b_tab2:
             st.markdown(f'<div class="section-title">{"षड्बल एवं भावबल विश्लेषण (Six-Fold Planetary Strengths)" if is_hi else "Shadbala Six-Fold Strengths"}</div>', unsafe_allow_html=True)
-            shad_res, bhava_res = vyas_shadbala.compute_shadbala(chart, asc_sign_idx)
+            # 2nd param is is_day_birth:bool (Sun in houses 1-6 = above horizon);
+            # 3rd is paksha. The old call passed asc_sign_idx here.
+            _sun_h = (chart.planets['Sun'].sign_index - asc_sign_idx + 12) % 12 + 1
+            _is_day_birth = 1 <= _sun_h <= 6
+            _pk = "Shukla" if ((chart.planets['Moon'].longitude - chart.planets['Sun'].longitude) % 360.0) < 180.0 else "Krishna"
+            shad_res, bhava_res = vyas_shadbala.compute_shadbala(chart, _is_day_birth, _pk)
             shad_table = []
             for p, s in shad_res.items():
                 shad_table.append({
@@ -2371,7 +2572,7 @@ if st.session_state.get('data_generated'):
             # BNN Deep 4-Pillar Life Predictions
             bnn_life = forensic_predictor.compute_bnn_detailed_life_predictions(chart)
             st.markdown(f"""
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; margin-top: 15px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px; margin-top: 15px; margin-bottom: 20px;">
                 <div class="glass-card" style="border-left: 4px solid #eab308;">
                     <div style="font-weight: bold; color: #facc15; font-size: 1.05rem;">🧬 जीव कारक (Jeeva Karaka - देवगुरु)</div>
                     <p style="font-size: 0.95rem; line-height: 1.6; color: #f8fafc; margin-top: 6px;">{bnn_life['jeeva_karaka_hi']}</p>
@@ -2847,52 +3048,131 @@ if st.session_state.get('data_generated'):
     # SUITE 6: 📄 43+ PAGE PUBLICATION PDF (AstroSage-Class Publication)
     # =========================================================================
     elif "PDF" in selected_suite or "शोध प्रबंध" in selected_suite:
-        st.markdown(f'<div class="section-title">{"📄 43+ पेज सम्पूर्ण वैदिक ज्योतिष शोध प्रबंध PDF" if is_hi else "📄 43+ Page Executive Vedic Thesis PDF"}</div>', unsafe_allow_html=True)
-        st.info("यह रिपोर्ट एस्ट्रोसेज की 35-पेज प्रीमियम कुण्डली से कहीं अधिक समृद्ध, 43 पृष्ठों के शोध-स्तरीय कलेवर, 100% शुद्ध देवनागरी (Chrome HarfBuzz) और 13 विस्तृत जीवन अध्यायों से युक्त है।")
+        st.markdown(f'<div class="section-title">{"📄 56-पेज सम्पूर्ण वैदिक कुण्डली महा-शोध प्रबंध (AstroSage Gold Standard PDF)" if is_hi else "📄 56-Page Executive Vedic Kundli Dossier (AstroSage Gold Standard PDF)"}</div>', unsafe_allow_html=True)
+        st.info("यह रिपोर्ट एस्ट्रोसेज की 56-पृष्ठ प्रीमियम कुण्डली के समकक्ष व उससे भी अधिक शुद्ध गणितीय गणनाओं, पाश्चात्य दृष्टि तालिकाओं, षोडशवर्ग चक्रों, सूक्ष्म प्रत्यंतर दशाओं और 100% प्रामाणिक वैदिक फलित से युक्त है।")
         
-        pdf_out_path = os.path.join(os.path.dirname(__file__), "VYAS_Executive_Publication_Thesis.pdf")
+        # Unique per-run output path. The old fixed filename meant a FAILED
+        # Chrome run silently "succeeded" by serving the previously generated
+        # PDF (same report regardless of input data — the reported bug).
+        _pdf_stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        pdf_out_path = os.path.join(os.path.dirname(__file__), f"VYAS_AstroSage_Standard_Kundli_56_Pages_{_pdf_stamp}.pdf")
         
         col_gen1, col_gen2 = st.columns([1, 1.2])
         with col_gen1:
+            pdf_lang_opt = st.radio(
+                "रिपोर्ट की भाषा चुनें (Select Report Language):",
+                ["English (AstroSage Gold Standard)", "Hindi (हिंदी)"],
+                index=0,
+                horizontal=True,
+                key="suite6_pdf_lang"
+            )
+            selected_pdf_lang = "en" if "English" in pdf_lang_opt else "hi"
+
             varsh_choice_pdf = st.number_input(
                 "वर्षफल वर्ष का चयन (Varshphal Year in PDF):" if is_hi else "Varshphal Year in PDF:",
                 min_value=birth['local'].year,
                 max_value=birth['local'].year + 100,
-                value=2026,
+                value=max(2026, birth['local'].year),
                 step=1,
                 key="suite6_varsh_year"
             )
-            if st.button("🚀 43-पेज सम्पूर्ण शोध प्रबंध PDF तैयार करें (Generate 43-Page Thesis)", type="primary", use_container_width=True):
-                with st.spinner("Compiling 43-Page Master Thesis with High-Resolution SVG Charts, 13 Life Chapters & Chrome HarfBuzz Typography..."):
+            if st.button("🚀 56-पेज AstroSage स्टैंडर्ड महा-रिपोर्ट PDF तैयार करें", type="primary", use_container_width=True):
+                with st.spinner("Compiling 56-Page AstroSage Gold Standard Dossier with Crisp Diamond Charts, Pratyantar Matrices & Western Aspects..."):
                     success = publication_engine.build_publication_pdf(
-                        chart, birth, kp_cusps, dasha_engine, vargas_matrix, pdf_out_path, target_varsh_year=int(varsh_choice_pdf)
+                        chart, birth, kp_cusps, dasha_engine, vargas_matrix, pdf_out_path, target_varsh_year=int(varsh_choice_pdf), lang=selected_pdf_lang
                     )
                     if success and os.path.exists(pdf_out_path):
-                        st.session_state['pdf_ready'] = True
-                        st.success(f"🎉 43-पेज शोध प्रबंध PDF सफलतापूर्वक तैयार हो गया है! (आकार: {os.path.getsize(pdf_out_path)/1024/1024:.2f} MB)")
+                        # Retire the previous session PDF (unique per-run name).
+                        _old_pdf = st.session_state.get('pdf_out_path')
+                        if _old_pdf and _old_pdf != pdf_out_path and os.path.exists(_old_pdf):
+                            try:
+                                os.remove(_old_pdf)
+                            except OSError:
+                                pass
+                        st.session_state['pdf_out_path'] = pdf_out_path
+                        st.session_state['pdf_input_sig'] = st.session_state.get('_birth_input_sig')
+                        st.success(f"🎉 56-पेज AstroSage स्टैंडर्ड कुण्डली PDF सफलतापूर्वक तैयार हो गया है! (आकार: {os.path.getsize(pdf_out_path)/1024/1024:.2f} MB)")
                     else:
                         st.error("PDF generation encountered an issue. Please verify Chrome headless availability.")
 
-            if os.path.exists(pdf_out_path):
-                with open(pdf_out_path, "rb") as f:
-                    pdf_bytes = f.read()
-                st.download_button(
-                    label="📥 सम्पूर्ण 43-पेज वैदिक शोध प्रबंध PDF डाउनलोड करें",
-                    data=pdf_bytes,
-                    file_name=f"VYAS_Thesis_{birth.get('name', 'Native').replace(' ', '_')}_43_Pages.pdf",
-                    mime="application/pdf",
-                    use_container_width=True
-                )
+        # Only offer the download when it was generated for the CURRENT inputs.
+        _dl_path = st.session_state.get('pdf_out_path')
+        _dl_ok = (
+            _dl_path and os.path.exists(_dl_path)
+            and st.session_state.get('pdf_input_sig') == st.session_state.get('_birth_input_sig')
+        )
+        if _dl_ok:
+                pdf_out_path = _dl_path
+                col_btn1, col_btn2 = st.columns(2)
+                with col_btn1:
+                    with open(pdf_out_path, "rb") as f:
+                        pdf_bytes = f.read()
+                    st.download_button(
+                        label="📥 PDF डाउनलोड (Local)",
+                        data=pdf_bytes,
+                        file_name=f"VYAS_Kundli_{birth.get('name', 'Native').replace(' ', '_')}_56_Pages_{selected_pdf_lang}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
+                with col_btn2:
+                    if st.button("☁️ Save to Google Drive", type="secondary", use_container_width=True):
+                        u_curr = st.session_state.get("user", {})
+                        u_toks = auth_vault.get_google_tokens(u_curr.get("id", 1))
+                        active_tok = st.session_state.get("google_access_token") or (u_toks.get("access_token") if u_toks else None)
+                        
+                        if not active_tok:
+                            auth_g_url = google_drive_sync.get_google_auth_url()
+                            if auth_g_url:
+                                st.warning("पहले Google से लॉगिन करें ताकि कुण्डली आपके Google Drive में सुरक्षित हो सके:")
+                                st.markdown(f'<a href="{auth_g_url}" target="_self"><button style="background: #ffffff; color: #3c4043; border: 1px solid #dadce0; border-radius: 6px; padding: 6px 12px; font-weight: 700; width: 100%; cursor: pointer;">🔗 Connect Google Drive</button></a>', unsafe_allow_html=True)
+                            else:
+                                st.info("कृपया साइडबार के '⚙️ Google Cloud API Credentials' में अपनी Google Client ID दर्ज करें।")
+                        else:
+                            with st.spinner("Google Drive पर फ़ोल्डर 'VYAS Kundli & Horoscopes' में अपलोड किया जा रहा है..."):
+                                f_display = f"VYAS_Kundli_{birth.get('name', 'Native').replace(' ', '_')}_56_Pages_{selected_pdf_lang}.pdf"
+                                ok_up, msg_up, res_up = google_drive_sync.upload_pdf_to_google_drive(
+                                    active_tok, pdf_out_path, file_display_name=f_display
+                                )
+                                # If token expired, try refresh
+                                if not ok_up and u_toks and u_toks.get("refresh_token"):
+                                    new_tok = google_drive_sync.refresh_access_token(u_toks["refresh_token"])
+                                    if new_tok:
+                                        auth_vault.save_google_tokens(u_curr["id"], new_tok)
+                                        st.session_state["google_access_token"] = new_tok
+                                        ok_up, msg_up, res_up = google_drive_sync.upload_pdf_to_google_drive(
+                                            new_tok, pdf_out_path, file_display_name=f_display
+                                        )
+                                if ok_up and res_up:
+                                    st.session_state["gdrive_last_link"] = res_up.get("web_view_link")
+                                    st.toast("Google Drive पर सुरक्षित हो गया!", icon="☁️")
+                                    st.rerun()
+                                else:
+                                    st.error(f"Google Drive अपलोड विफल: {msg_up}")
+
+                if st.session_state.get("gdrive_last_link"):
+                    st.markdown(f"""
+                    <div style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; border-radius: 8px; padding: 10px 14px; margin-top: 10px; text-align: center;">
+                        <div style="color: #6ee7b7; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px;">🎉 कुण्डली Google Drive पर सुरक्षित हो गई है!</div>
+                        <a href="{st.session_state['gdrive_last_link']}" target="_blank" style="color: #f0c05a; font-weight: 800; text-decoration: underline; font-size: 0.95rem;">
+                            📂 Google Drive में खोलें (Open in Google Drive)
+                        </a>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+        if (not _dl_ok) and st.session_state.get('pdf_out_path') and os.path.exists(st.session_state['pdf_out_path']):
+            st.caption("⚠️ पिछली बार बना PDF अलग इनपुट का है — नया रिपोर्ट देखने के लिए ऊपर फिर से जनरेट करें।")
 
         with col_gen2:
             st.markdown("""
             <div class="glass-card">
-                <div style="font-weight: bold; color: #f0c05a; font-size: 1.1rem;">43-पेज शोध प्रबंध की प्रमुख विशिष्टताएँ:</div>
-                <ul style="color: #cbd5e1; font-size: 0.95rem; margin-top: 6px; line-height: 1.6;">
-                    <li><b>शुद्ध देवनागरी टंकण:</b> गूगल क्रोम के हार्फबज़ (HarfBuzz) इंजन द्वारा 100% सही मात्राएं, संयुक्ताक्षर व मुद्रण सौंदर्य।</li>
-                    <li><b>43 पृष्ठों का अखंड महा-ग्रंथ:</b> अवकहड़ा, घातक, लग्न, नवमांश, षोडशवर्ग (16 चक्र), मंगल दोष, शनि साढ़े साती (46 चक्र), कालसर्प, वर्षफल (वर्ष 2026/चयनित), योगिनी दशा (36 वर्ष चक्र), चर दशा, लाल किताब (9 ग्रह व अचूक उपाय), केपी पद्धति, अष्टकवर्ग व प्रस्तराष्टकवर्ग।</li>
-                    <li><b>समग्र जीवन महा-फलादेश (13 विस्तृत अध्याय):</b> व्यक्तित्व, मानसिकता, विद्या, आजीविका, धन, दांपत्य, संतान, भाग्य, स्वास्थ्य, शत्रु निवारण, विदेश योग, मोक्ष (D60 प्रारब्ध), एवं आगामी 5 वर्षों की रणनीतिक योजना।</li>
-                    <li><b>शोधकर्ता एवं परामर्शदाता:</b> निखिल व्यास (एम.ए. ज्योतिष - स्नातकोत्तर / M.A. Jyotish) • 9414121172</li>
+                <div style="font-weight: bold; color: #f0c05a; font-size: 1.1rem;">56-पेज AstroSage गोल्ड स्टैंडर्ड की प्रमुख सामग्री:</div>
+                <ul style="color: #cbd5e1; font-size: 0.92rem; margin-top: 6px; line-height: 1.55;">
+                    <li><b>पारंपरिक चक्र एवं ग्रह स्थिति:</b> अवकहड़ा चक्र, बेसिक विवरण, अनुकूल बिन्दु, घातक चक्र, पारंपरिक लग्न व नवमांश डायमंड चार्ट, चलित सारणी।</li>
+                    <li><b>जीवन एवं ग्रह फलित:</b> लग्न फल, नक्षत्र फल, 4-पृष्ठ सम्पूर्ण जीवन फलित (चरित्र, करियर, आजीविका, स्वास्थ्य, वित्त, शिक्षा)।</li>
+                    <li><b>दोष एवं दशा चक्र:</b> मंगल दोष विस्तृत विवेचन, साढ़े साती सम्पूर्ण 46-अवधि तालिका व फलित, कालसर्प योग, ताजिक वर्षफल (मुन्था व मुद्धा दशा), विंशोत्तरी महादशा फल, योगिनी दशा (36 वर्ष चक्र)।</li>
+                    <li><b>जैमिनी, गोचर एवं लाल किताब:</b> जैमिनी कारकांश व स्वांश चार्ट, चर महादशा व 12 अंतर्दशाएं, आज का गोचर (Transit Today), लाल किताब 9 ग्रह फल व उपाय, 35-साला लाल किताब दशा।</li>
+                    <li><b>सूक्ष्म गणित एवं वर्ग चक्र:</b> षोडशवर्ग सारणी व 16 वर्ग चक्र (D1-D60), केपी कस्प व कारकत्व, 60 अंतर्दशाओं की संपूर्ण विंशोत्तरी प्रत्यंतर सारणियां, पंचधा मैत्री, षड्बल व भावबल, पाश्चात्य दृष्टि चक्र (Western Aspects, भाव मध्य व केपी कस्प), अष्टकवर्ग व संपूर्ण 7-ग्रह प्रस्तराष्टकवर्ग।</li>
+                    <li><b>सिस्टम प्रणेता:</b> निखिल व्यास (एम.ए. ज्योतिष) • 9414121172 • inikhilvyas@gmail.com</li>
                 </ul>
             </div>
             """, unsafe_allow_html=True)
@@ -2986,8 +3266,10 @@ if st.session_state.get('data_generated'):
                 st.session_state["dialog_chat_history"] = []
                 st.rerun()
 
-    # Trigger Dialog if requested
+    # Trigger Dialog if requested (one-shot: clear the flag after opening, else
+    # the next rerun re-opens the popup even after the user closed it).
     if st.session_state.get("show_acharya_dialog"):
+        st.session_state["show_acharya_dialog"] = False
         show_acharya_consultation_dialog(chart, birth, cur_dasha, st.session_state.get('prashna_meta'))
 
     # Floating Bottom-Right Launcher Widget
