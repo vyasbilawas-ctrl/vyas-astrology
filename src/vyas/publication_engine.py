@@ -57,42 +57,14 @@ from vyas import astrosage_content
 def find_chrome() -> str:
     """Locates a Chromium/Chrome executable on the host system.
 
-    Streamlit Community Cloud runs on Linux and has no browser by default, so
-    ``packages.txt`` installs the distro ``chromium`` package. The order below
-    prefers an explicit override, then the platform-native paths, then PATH.
+    Delegates to :mod:`vyas.chrome_runtime`, which also auto-provisions a
+    portable Chrome-for-Testing build on hosted Linux containers where no
+    browser is pre-installed (Streamlit Community Cloud). Keeping the
+    provisioning outside ``packages.txt`` avoids apt failures that would take
+    the entire app down.
     """
-    # 1. Explicit override wins (useful for custom containers / CI).
-    for env_var in ("CHROME_BIN", "CHROMIUM_BIN", "GOOGLE_CHROME_SHIM"):
-        candidate = (os.environ.get(env_var) or "").strip()
-        if candidate and os.path.exists(candidate):
-            return candidate
-
-    # 2. Well-known installation paths, Windows first then Linux/macOS.
-    common_paths = [
-        # Windows
-        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-        os.path.expanduser(r"~\AppData\Local\Google\Chrome\Application\chrome.exe"),
-        # Linux (Streamlit Community Cloud uses the distro chromium package)
-        "/usr/bin/chromium",
-        "/usr/bin/chromium-browser",
-        "/usr/bin/google-chrome",
-        "/usr/bin/google-chrome-stable",
-        "/snap/bin/chromium",
-        # macOS
-        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-    ]
-    for p in common_paths:
-        if os.path.exists(p):
-            return p
-
-    # 3. Fall back to PATH lookup (shutil.which handles .exe on Windows).
-    for name in ("chromium", "chromium-browser", "google-chrome",
-                 "google-chrome-stable", "chrome"):
-        found = shutil.which(name)
-        if found:
-            return found
-    return "chrome"
+    from vyas import chrome_runtime
+    return chrome_runtime.find_chrome()
 
 
 def render_astrosage_diamond_svg(houses_data: dict, size: int = 300, chart_title: str = "") -> str:

@@ -3,6 +3,7 @@ from datetime import datetime, timezone, timedelta, time as d_time
 import sys
 import os
 import shutil
+import platform
 import re
 import pandas as pd
 from geopy.geocoders import Nominatim
@@ -3082,24 +3083,30 @@ if st.session_state.get('data_generated'):
                         st.session_state['pdf_input_sig'] = st.session_state.get('_birth_input_sig')
                         st.success(f"🎉 56-पेज AstroSage स्टैंडर्ड कुण्डली PDF सफलतापूर्वक तैयार हो गया है! (आकार: {os.path.getsize(pdf_out_path)/1024/1024:.2f} MB)")
                     else:
+                        from vyas import chrome_runtime
                         _chrome = publication_engine.find_chrome()
+                        _present = bool(_chrome) and os.path.exists(_chrome)
                         st.error(
                             "PDF तैयार नहीं हो सका — HTML→PDF engine (Chromium) उपलब्ध नहीं है।\n\n"
-                            f"लेकिन मिला: `{_chrome}`\n\n"
-                            "**ठीक करने के लिए:** Streamlit Cloud पर `packages.txt` में `chromium` "
-                            "package होना चाहिए (repo में मौजूद है — app को Reboot करें), या "
-                            "Environment variable `CHROME_BIN` में browser का पूरा path दें।"
+                            f"Resolved binary: `{_chrome}`  \n"
+                            f"File मौजूद: **{'हाँ' if _present else 'नहीं'}**\n\n"
+                            "**ठीक करने के लिए:**\n"
+                            "1. Streamlit Cloud → Settings → **Secrets** में `VYAS_AUTO_CHROME = \"1\"` जोड़ें "
+                            "(app खुद portable Chromium download कर लेगा), या\n"
+                            "2. `CHROME_BIN` में browser का पूरा path दें, या\n"
+                            "3. Local par Google Chrome install करें।"
                         )
                         with st.expander("तकनीकी विवरण (Debug)"):
                             st.code(
                                 "find_chrome() -> " + repr(_chrome) + "\n"
-                                + "exists    -> " + str(os.path.exists(_chrome) if isinstance(_chrome, str) else "n/a") + "\n"
-                                + "platform  -> " + sys.platform + "\n"
-                                + "CHROME_BIN-> " + repr(os.environ.get("CHROME_BIN")) + "\n"
+                                + "exists        -> " + str(_present) + "\n"
+                                + "platform      -> " + sys.platform + " / " + platform.machine() + "\n"
+                                + "CHROME_BIN    -> " + repr(os.environ.get("CHROME_BIN")) + "\n"
+                                + "VYAS_AUTO_CHROME -> " + repr(os.environ.get("VYAS_AUTO_CHROME")) + "\n"
+                                + "cache dir     -> " + repr(os.environ.get("VYAS_CHROME_CACHE")) + "\n"
                                 + "shutil.which(chromium) -> " + repr(shutil.which("chromium")) + "\n"
-                                + "shutil.which(chromium-browser) -> " + repr(shutil.which("chromium-browser")) + "\n"
                                 + "shutil.which(google-chrome) -> " + repr(shutil.which("google-chrome")) + "\n"
-                                + "PATH dirs -> " + repr(os.environ.get("PATH", "")[:300]),
+                                + "PATH (first 300) -> " + repr(os.environ.get("PATH", "")[:300]),
                                 language="text",
                             )
 

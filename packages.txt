@@ -1,0 +1,26 @@
+# System libraries required by headless Chromium (Streamlit Cloud, Debian).
+#
+# IMPORTANT: every name here must exist in the app image. A single unknown
+# package makes apt-get fail and takes the WHOLE APP DOWN (this happened with
+# "chromium-driver"). These names are all present in the standard Debian
+# bookworm repositories that Streamlit Community Cloud uses.
+#
+# The browser binary itself is NOT installed here - see src/vyas/chrome_runtime.py,
+# which auto-provisions a portable Chrome-for-Testing build at runtime.
+libnss3
+libxss1
+libgbm1
+libasound2
+libatk-bridge2.0-0
+libatk1.0-0
+libcups2
+libdrm2
+libxcomposite1
+libxdamage1
+libxfixes3
+libxkbcommon0
+libpango-1.0-0
+libcairo2
+fonts-noto
+fonts-noto-color-emoji
+fonts-deva
