@@ -32,6 +32,44 @@ CONFIG_FILE_PATH = os.path.join(
 DEFAULT_REDIRECT_URI = "http://localhost:8501"
 
 
+def detect_runtime_redirect_uri() -> str:
+    """Best-effort redirect URI for the CURRENT runtime host.
+
+    Streamlit Cloud serves the app from a public host, so defaulting to
+    ``http://localhost:8501`` makes Google bounce back to the developer's
+    machine (or fail with redirect_uri_mismatch). Deriving the public
+    ``https://<host>`` keeps local dev on localhost while cloud deployments
+    work without manual secret editing.
+    """
+    try:
+        import streamlit as st
+        headers = getattr(st, "context", None) and st.context.headers
+        host = ""
+        if headers:
+            host = (headers.get("X-Forwarded-Host") or headers.get("Host") or "").strip()
+        if host and "localhost" not in host and "127.0.0.1" not in host:
+            host = host.split(",")[0].strip()
+            scheme = "https" if not host.startswith(("localhost", "127.", "0.0.0.0")) else "http"
+            return f"{scheme}://{host}".rstrip("/")
+    except Exception:
+        pass
+    return DEFAULT_REDIRECT_URI
+
+
+def resolve_redirect_uri(configured: str = "") -> str:
+    """Picks the effective redirect URI: explicit config first, else runtime."""
+    configured = (configured or "").strip()
+    if configured:
+        normalized = normalize_redirect_uri(configured)
+        # A configured localhost URI is meaningless on a hosted deployment.
+        if "localhost" in normalized or "127.0.0.1" in normalized:
+            detected = detect_runtime_redirect_uri()
+            if detected != DEFAULT_REDIRECT_URI:
+                return detected
+        return normalized
+    return detect_runtime_redirect_uri()
+
+
 def normalize_redirect_uri(uri: str) -> str:
     """Strips whitespace and trailing slashes so auth URL, token exchange and
     saved config all use the exact same redirect_uri string."""
@@ -123,7 +161,7 @@ def get_google_auth_url(redirect_uri: Optional[str] = None, state: Optional[str]
     """
     cfg = load_google_config()
     client_id = cfg.get("client_id", "")
-    r_uri = normalize_redirect_uri(redirect_uri or cfg.get("redirect_uri", DEFAULT_REDIRECT_URI))
+    r_uri = normalize_redirect_uri(redirect_uri) if redirect_uri else resolve_redirect_uri(cfg.get("redirect_uri", ""))
     state_val = state or _get_or_create_oauth_state()
 
     if not client_id:
@@ -135,7 +173,9 @@ def get_google_auth_url(redirect_uri: Optional[str] = None, state: Optional[str]
         "response_type": "code",
         "scope": " ".join(GOOGLE_OAUTH_SCOPES),
         "access_type": "offline",
-        "prompt": "consent",
+        # "select_account" still shows the account chooser but does NOT force a
+        # fresh consent screen every single login (better UX, fewer 403s).
+        "prompt": "select_account",
         "state": state_val
     }
     return f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
@@ -146,7 +186,7 @@ def exchange_code_for_tokens(code: str, redirect_uri: Optional[str] = None) -> T
     cfg = load_google_config()
     client_id = cfg.get("client_id", "")
     client_secret = cfg.get("client_secret", "")
-    r_uri = normalize_redirect_uri(redirect_uri or cfg.get("redirect_uri", DEFAULT_REDIRECT_URI))
+    r_uri = normalize_redirect_uri(redirect_uri) if redirect_uri else resolve_redirect_uri(cfg.get("redirect_uri", ""))
 
     if not client_id or not client_secret:
         return False, "Google Client ID या Client Secret कॉन्फ़िगर नहीं है।", None

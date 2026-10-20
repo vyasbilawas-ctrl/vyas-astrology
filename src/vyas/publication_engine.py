@@ -36,6 +36,7 @@ Page 56: Back Cover / Astrologer Consultation & Life Summary
 """
 import os
 import math
+import shutil
 import subprocess
 import tempfile
 import time
@@ -54,18 +55,43 @@ from vyas import astrosage_content
 
 
 def find_chrome() -> str:
-    """Locates Google Chrome executable on the host system."""
+    """Locates a Chromium/Chrome executable on the host system.
+
+    Streamlit Community Cloud runs on Linux and has no browser by default, so
+    ``packages.txt`` installs the distro ``chromium`` package. The order below
+    prefers an explicit override, then the platform-native paths, then PATH.
+    """
+    # 1. Explicit override wins (useful for custom containers / CI).
+    for env_var in ("CHROME_BIN", "CHROMIUM_BIN", "GOOGLE_CHROME_SHIM"):
+        candidate = (os.environ.get(env_var) or "").strip()
+        if candidate and os.path.exists(candidate):
+            return candidate
+
+    # 2. Well-known installation paths, Windows first then Linux/macOS.
     common_paths = [
+        # Windows
         r"C:\Program Files\Google\Chrome\Application\chrome.exe",
         r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
         os.path.expanduser(r"~\AppData\Local\Google\Chrome\Application\chrome.exe"),
-        "chrome",
-        "google-chrome",
-        "chromium"
+        # Linux (Streamlit Community Cloud uses the distro chromium package)
+        "/usr/bin/chromium",
+        "/usr/bin/chromium-browser",
+        "/usr/bin/google-chrome",
+        "/usr/bin/google-chrome-stable",
+        "/snap/bin/chromium",
+        # macOS
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     ]
     for p in common_paths:
         if os.path.exists(p):
             return p
+
+    # 3. Fall back to PATH lookup (shutil.which handles .exe on Windows).
+    for name in ("chromium", "chromium-browser", "google-chrome",
+                 "google-chrome-stable", "chrome"):
+        found = shutil.which(name)
+        if found:
+            return found
     return "chrome"
 
 
@@ -2567,30 +2593,67 @@ def build_publication_pdf(
         temp_html = f.name
 
     chrome_exe = find_chrome()
-    cmd = [
-        chrome_exe,
-        "--headless=new",
+    # A usable writable profile dir avoids Chrome failing on locked/read-only
+    # homes inside managed containers.
+    temp_profile = tempfile.mkdtemp(prefix="vyas_chrome_profile_")
+    base_flags = [
         "--disable-gpu",
+        "--no-sandbox",              # required in most container runtimes
+        "--disable-dev-shm-usage",   # /dev/shm is tiny inside containers
+        "--hide-scrollbars",
+        "--mute-audio",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--disable-extensions",
+        "--disable-background-networking",
+        f"--user-data-dir={temp_profile}",
         "--no-pdf-header-footer",
-        f"--print-to-pdf={output_pdf_path}",
-        temp_html
     ]
 
-    try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    def _attempt(headless_flag: str):
+        cmd = [
+            chrome_exe,
+            headless_flag,
+            *base_flags,
+            f"--print-to-pdf={output_pdf_path}",
+            temp_html,
+        ]
+        last_err = ""
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            last_err = (res.stderr or "") + (res.stdout or "")
+        except FileNotFoundError:
+            last_err = f"Executable not found: {chrome_exe}"
+        except subprocess.TimeoutExpired:
+            last_err = "Chrome headless timed out after 120s."
+        except Exception as e:  # pragma: no cover - defensive
+            last_err = f"{type(e).__name__}: {e}"
+
         if (os.path.exists(output_pdf_path)
                 and os.path.getsize(output_pdf_path) > 50000
                 and os.path.getmtime(output_pdf_path) >= t_build_start - 1.0):
-            return True
-        else:
-            print("Chrome PDF generation returned no file or small file:", res.stderr)
-            return False
-    except Exception as e:
-        print(f"Error invoking Chrome headless: {e}")
+            return True, ""
+        return False, last_err
+
+    # "--headless=new" is unavailable on older Chromium builds (e.g. Debian's
+    # packaged chromium), so fall back to the legacy "--headless" flag.
+    last_error = ""
+    try:
+        for flag in ("--headless=new", "--headless"):
+            ok, err = _attempt(flag)
+            if ok:
+                return True
+            last_error = err or last_error
+        print(f"Chrome PDF generation failed (exe={chrome_exe!r}): {last_error[:2000]}")
         return False
     finally:
+        for path in (temp_html,):
+            try:
+                if os.path.exists(path):
+                    os.remove(path)
+            except Exception:
+                pass
         try:
-            if os.path.exists(temp_html):
-                os.remove(temp_html)
+            shutil.rmtree(temp_profile, ignore_errors=True)
         except Exception:
             pass

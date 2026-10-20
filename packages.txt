@@ -1,0 +1,17 @@
+# System packages for Streamlit Community Cloud (Debian-based image).
+# Chromium is required for the 56-page publication PDF (HTML -> PDF).
+# "chromium" provides the binary; the font packages keep Devanagari + Latin
+# glyphs crisp in the rendered PDF.
+chromium
+chromium-driver
+fonts-noto
+fonts-noto-cjk
+fonts-noto-color-emoji
+fonts-deva
+fonts-dejavu-core
+libgbm1
+libnss3
+libxss1
+libasound2
+libatk-bridge2.0-0
+libgtk-3-0

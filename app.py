@@ -2,6 +2,7 @@ import streamlit as st
 from datetime import datetime, timezone, timedelta, time as d_time
 import sys
 import os
+import shutil
 import re
 import pandas as pd
 from geopy.geocoders import Nominatim
@@ -975,26 +976,14 @@ with st.sidebar:
                     </a>
                     <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 5px;">(Google Drive में कुण्डलियाँ स्वतः सुरक्षित होंगी)</div>
                 </div>
-                <div style="text-align: center; color: #94a3b8; font-size: 0.76rem; margin-bottom: 8px;">— अथवा ईमेल से 1-क्लिक लॉगिन —</div>
                 """, unsafe_allow_html=True)
             else:
-                st.markdown("<small style='color: #eedc9a;'>1-क्लिक में अपना ईमेल दर्ज करके तुरंत लॉगिन करें:</small>", unsafe_allow_html=True)
-
-            quick_email = st.text_input("ईमेल / Google Email", value="", key="quick_email_in", placeholder="aapka.name@gmail.com")
-            quick_name = st.text_input("आपका नाम (Name)", value="", key="quick_name_in", placeholder="आपका नाम")
-            if st.button("⚡ तुरंत लॉगिन करें (1-Click Login)", key="quick_login_btn", use_container_width=True):
-                if quick_email and "@" in quick_email:
-                    ok, msg, u_data = auth_vault.login_or_register_google(quick_email, quick_name)
-                    if ok and u_data:
-                        st.session_state["user"] = u_data
-                        st.session_state["user_google_processed"] = True
-                        auth_vault.set_active_session_user(u_data["id"])
-                        st.success(f"नमस्ते {u_data['name']} जी! लॉगिन सफल हुआ।")
-                        st.rerun()
-                    else:
-                        st.error(msg)
-                else:
-                    st.warning("कृपया मान्य ईमेल दर्ज करें।")
+                st.warning(
+                    "Google Login उपलब्ध नहीं है — Google Client ID/Secret कॉन्फ़िगर नहीं हैं। "
+                    "नीचे '⚙️ Google Cloud API Credentials' में credentials भरें "
+                    "(या Streamlit Cloud → Settings → Secrets में GOOGLE_CLIENT_ID / "
+                    "GOOGLE_CLIENT_SECRET / GOOGLE_REDIRECT_URI सेट करें)।"
+                )
 
         with st.expander("⚙️ Google Cloud API Credentials", expanded=False):
             g_cfg = google_drive_sync.load_google_config()
@@ -3093,7 +3082,26 @@ if st.session_state.get('data_generated'):
                         st.session_state['pdf_input_sig'] = st.session_state.get('_birth_input_sig')
                         st.success(f"🎉 56-पेज AstroSage स्टैंडर्ड कुण्डली PDF सफलतापूर्वक तैयार हो गया है! (आकार: {os.path.getsize(pdf_out_path)/1024/1024:.2f} MB)")
                     else:
-                        st.error("PDF generation encountered an issue. Please verify Chrome headless availability.")
+                        _chrome = publication_engine.find_chrome()
+                        st.error(
+                            "PDF तैयार नहीं हो सका — HTML→PDF engine (Chromium) उपलब्ध नहीं है।\n\n"
+                            f"लेकिन मिला: `{_chrome}`\n\n"
+                            "**ठीक करने के लिए:** Streamlit Cloud पर `packages.txt` में `chromium` "
+                            "package होना चाहिए (repo में मौजूद है — app को Reboot करें), या "
+                            "Environment variable `CHROME_BIN` में browser का पूरा path दें।"
+                        )
+                        with st.expander("तकनीकी विवरण (Debug)"):
+                            st.code(
+                                "find_chrome() -> " + repr(_chrome) + "\n"
+                                + "exists    -> " + str(os.path.exists(_chrome) if isinstance(_chrome, str) else "n/a") + "\n"
+                                + "platform  -> " + sys.platform + "\n"
+                                + "CHROME_BIN-> " + repr(os.environ.get("CHROME_BIN")) + "\n"
+                                + "shutil.which(chromium) -> " + repr(shutil.which("chromium")) + "\n"
+                                + "shutil.which(chromium-browser) -> " + repr(shutil.which("chromium-browser")) + "\n"
+                                + "shutil.which(google-chrome) -> " + repr(shutil.which("google-chrome")) + "\n"
+                                + "PATH dirs -> " + repr(os.environ.get("PATH", "")[:300]),
+                                language="text",
+                            )
 
         # Only offer the download when it was generated for the CURRENT inputs.
         _dl_path = st.session_state.get('pdf_out_path')
