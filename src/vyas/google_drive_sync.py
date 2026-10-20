@@ -31,6 +31,16 @@ CONFIG_FILE_PATH = os.path.join(
 # authorization request, the token exchange, and the Console registration.
 DEFAULT_REDIRECT_URI = "http://localhost:8501"
 
+# Every redirect URI registered on the OAuth client ("VYAS Astra", Web
+# application). A URI that is NOT in this set makes Google reject the flow
+# with redirect_uri_mismatch, so detection only ever returns a member.
+# Adding a new deployment host? Register it in Google Cloud Console first,
+# then add the exact string here.
+REGISTERED_REDIRECT_URIS = frozenset({
+    "http://localhost:8501",
+    "https://vyas-astrology-111.streamlit.app",
+})
+
 
 def detect_runtime_redirect_uri() -> str:
     """Best-effort redirect URI for the CURRENT runtime host.
@@ -40,6 +50,12 @@ def detect_runtime_redirect_uri() -> str:
     machine (or fail with redirect_uri_mismatch). Deriving the public
     ``https://<host>`` keeps local dev on localhost while cloud deployments
     work without manual secret editing.
+
+    Google requires a byte-exact match against the Authorized redirect URIs
+    registered on the OAuth client, so the result is verified against
+    ``REGISTERED_REDIRECT_URIS`` and falls back to the canonical default when
+    the detected host is not registered (a mismatch here is worse than
+    falling back).
     """
     try:
         import streamlit as st
@@ -47,17 +63,24 @@ def detect_runtime_redirect_uri() -> str:
         host = ""
         if headers:
             host = (headers.get("X-Forwarded-Host") or headers.get("Host") or "").strip()
-        if host and "localhost" not in host and "127.0.0.1" not in host:
+        if host:
             host = host.split(",")[0].strip()
-            scheme = "https" if not host.startswith(("localhost", "127.", "0.0.0.0")) else "http"
-            return f"{scheme}://{host}".rstrip("/")
+            if "localhost" not in host and "127.0.0.1" not in host:
+                candidate = f"https://{host}".rstrip("/")
+                if candidate in REGISTERED_REDIRECT_URIS:
+                    return candidate
     except Exception:
         pass
     return DEFAULT_REDIRECT_URI
 
 
 def resolve_redirect_uri(configured: str = "") -> str:
-    """Picks the effective redirect URI: explicit config first, else runtime."""
+    """Picks the effective redirect URI: explicit config first, else runtime.
+
+    Any candidate that is not in ``REGISTERED_REDIRECT_URIS`` would be rejected
+    by Google with redirect_uri_mismatch, so it falls back to the canonical
+    default instead (see ``detect_runtime_redirect_uri``).
+    """
     configured = (configured or "").strip()
     if configured:
         normalized = normalize_redirect_uri(configured)
@@ -66,7 +89,8 @@ def resolve_redirect_uri(configured: str = "") -> str:
             detected = detect_runtime_redirect_uri()
             if detected != DEFAULT_REDIRECT_URI:
                 return detected
-        return normalized
+        if normalized in REGISTERED_REDIRECT_URIS:
+            return normalized
     return detect_runtime_redirect_uri()
 
 
@@ -87,6 +111,40 @@ def _get_or_create_oauth_state() -> str:
     except Exception:
         # Non-Streamlit callers (tests/scripts): single-use static fallback
         return "vyas_oauth"
+
+
+def _pkce_pair() -> Tuple[str, str]:
+    """Creates a PKCE (verifier, challenge) pair for this session.
+
+    PKCE binds the authorization code to this exact session, so an intercepted
+    code cannot be redeemed elsewhere. It also lets the flow remain secure
+    even if the client secret is ever exposed, and is required for public
+    (secret-less) OAuth clients.
+    """
+    import base64
+    import hashlib
+    import secrets as _secrets
+
+    verifier = _secrets.token_urlsafe(64)[:96]
+    digest = hashlib.sha256(verifier.encode("ascii")).digest()
+    challenge = base64.urlsafe_b64encode(digest).decode("ascii").rstrip("=")
+    return verifier, challenge
+
+
+def _store_pkce_verifier(verifier: str) -> None:
+    try:
+        import streamlit as st
+        st.session_state["oauth_code_verifier"] = verifier
+    except Exception:
+        pass
+
+
+def _pop_pkce_verifier() -> str:
+    try:
+        import streamlit as st
+        return st.session_state.pop("oauth_code_verifier", "") or ""
+    except Exception:
+        return ""
 
 
 def load_google_config() -> Dict[str, str]:
@@ -127,6 +185,9 @@ def load_google_config() -> Dict[str, str]:
     except Exception:
         pass
 
+    # Bundled defaults used to ship here; secrets must NEVER be committed
+    # (GitHub push protection blocks Google OAuth secrets). Operators provide
+    # credentials via Streamlit secrets / env vars / the in-app form instead.
     config = {}
     for key in ("client_id", "client_secret", "redirect_uri"):
         config[key] = env_cfg[key] or saved_cfg.get(key, "") or secrets_cfg[key]
@@ -167,6 +228,10 @@ def get_google_auth_url(redirect_uri: Optional[str] = None, state: Optional[str]
     if not client_id:
         return ""
 
+    # PKCE: bind the authorization code to this session.
+    verifier, challenge = _pkce_pair()
+    _store_pkce_verifier(verifier)
+
     params = {
         "client_id": client_id,
         "redirect_uri": r_uri,
@@ -176,7 +241,9 @@ def get_google_auth_url(redirect_uri: Optional[str] = None, state: Optional[str]
         # "select_account" still shows the account chooser but does NOT force a
         # fresh consent screen every single login (better UX, fewer 403s).
         "prompt": "select_account",
-        "state": state_val
+        "state": state_val,
+        "code_challenge": challenge,
+        "code_challenge_method": "S256",
     }
     return f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
 
@@ -199,6 +266,10 @@ def exchange_code_for_tokens(code: str, redirect_uri: Optional[str] = None) -> T
         "redirect_uri": r_uri,
         "grant_type": "authorization_code"
     }
+    # Send the PKCE verifier when this session started the flow with a challenge.
+    _verifier = _pop_pkce_verifier()
+    if _verifier:
+        data["code_verifier"] = _verifier
 
     try:
         resp = requests.post(token_url, data=data, timeout=15)

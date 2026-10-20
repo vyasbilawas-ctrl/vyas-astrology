@@ -979,12 +979,35 @@ with st.sidebar:
                 </div>
                 """, unsafe_allow_html=True)
             else:
-                st.warning(
-                    "Google Login उपलब्ध नहीं है — Google Client ID/Secret कॉन्फ़िगर नहीं हैं। "
-                    "नीचे '⚙️ Google Cloud API Credentials' में credentials भरें "
-                    "(या Streamlit Cloud → Settings → Secrets में GOOGLE_CLIENT_ID / "
-                    "GOOGLE_CLIENT_SECRET / GOOGLE_REDIRECT_URI सेट करें)।"
+                st.markdown(
+                    '<div style="background: rgba(250,204,21,0.10); border:1px solid #facc15; '
+                    'border-radius:8px; padding:10px 12px; font-size:0.82rem; line-height:1.5;">'
+                    '<b>🔑 Google Login एक बार सेट करना है</b><br/>'
+                    'Google Client ID / Secret अभी कॉन्फ़िगर नहीं हैं। एक बार सेट करने के बाद '
+                    'यह संदेश हमेशा के लिए हट जाएगा।'
+                    '</div>',
+                    unsafe_allow_html=True
                 )
+                with st.expander("📋 सेटअप के steps (2 मिनट)", expanded=True):
+                    st.markdown("""
+**Streamlit Cloud पर (deployed app):**
+
+1. [share.streamlit.io](https://share.streamlit.io) → app **vyas-astrology-111** → **⋮ → Settings → Secrets**
+2. ये lines paste करें और **Save** दबाएँ:
+```toml
+GOOGLE_CLIENT_ID = "आपका-client-id.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET = "GOCSPX-आपका-secret"
+```
+3. App अपने आप reboot होगा — "Sign in with Google" button आ जाएगा।
+
+**Local पर:** नीचे **⚙️ Google Cloud API Credentials** में भरकर **💾 Save Credentials** दबाएँ।
+                    """)
+                    _cfg_now = google_drive_sync.load_google_config()
+                    st.caption(
+                        f"Current: client_id={'सेट है' if _cfg_now.get('client_id') else 'खाली'}, "
+                        f"client_secret={'सेट है' if _cfg_now.get('client_secret') else 'खाली'}, "
+                        f"redirect_uri={_cfg_now.get('redirect_uri', '')}"
+                    )
 
         with st.expander("⚙️ Google Cloud API Credentials", expanded=False):
             g_cfg = google_drive_sync.load_google_config()
@@ -1000,9 +1023,13 @@ with st.sidebar:
             st.markdown("""
             <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 4px; line-height: 1.45;">
                 <b>क्रेडेंशियल्स प्राप्त करने का तरीका:</b><br/>
-                1. <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #60a5fa;">Google Cloud Console</a> में जाएं।<br/>
+                1. <a href="https://console.cloud.google.com/auth/clients" target="_blank" style="color: #60a5fa;">Google Cloud Console → Google Auth Platform → Clients</a> में जाएं।<br/>
                 2. <b>Google Drive API</b> को Enable करें।<br/>
-                3. OAuth 2.0 Web Client ID बनाएं और Authorized redirect URIs में <code>http://localhost:8501</code> जोड़ें (अंत में स्लैश नहीं — Google में यह byte-exact मैच होना चाहिए)।
+                3. OAuth 2.0 Web Client बनाएं और <b>Authorized redirect URIs</b> में ये दोनों जोड़ें
+                (अंत में स्लैश नहीं — Google में byte-exact मैच होना चाहिए):<br/>
+                <code>http://localhost:8501</code> (local के लिए)<br/>
+                <code>https://vyas-astrology-111.streamlit.app</code> (live app के लिए)<br/>
+                4. जिस Gmail से लॉगिन करना है उसे <b>Audience → Test users</b> में जोड़ें (या app Publish करें)।
             </div>
             """, unsafe_allow_html=True)
 
