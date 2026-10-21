@@ -2607,6 +2607,49 @@ def build_publication_pdf(
             return True, ""
         return False, last_err
 
+    chrome_exe = find_chrome()
+    # A usable writable profile dir avoids Chrome failing on locked/read-only
+    # homes inside managed containers.
+    temp_profile = tempfile.mkdtemp(prefix="vyas_chrome_profile_")
+    base_flags = [
+        "--disable-gpu",
+        "--no-sandbox",              # required in most container runtimes
+        "--disable-dev-shm-usage",   # /dev/shm is tiny inside containers
+        "--hide-scrollbars",
+        "--mute-audio",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--disable-extensions",
+        "--disable-background-networking",
+        f"--user-data-dir={temp_profile}",
+        "--no-pdf-header-footer",
+    ]
+
+    def _attempt(headless_flag: str):
+        cmd = [
+            chrome_exe,
+            headless_flag,
+            *base_flags,
+            f"--print-to-pdf={output_pdf_path}",
+            temp_html,
+        ]
+        last_err = ""
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            last_err = (res.stderr or "") + (res.stdout or "")
+        except FileNotFoundError:
+            last_err = f"Executable not found: {chrome_exe}"
+        except subprocess.TimeoutExpired:
+            last_err = "Chrome headless timed out after 120s."
+        except Exception as e:  # pragma: no cover - defensive
+            last_err = f"{type(e).__name__}: {e}"
+
+        if (os.path.exists(output_pdf_path)
+                and os.path.getsize(output_pdf_path) > 50000
+                and os.path.getmtime(output_pdf_path) >= t_build_start - 1.0):
+            return True, ""
+        return False, last_err
+
     # "--headless=new" is unavailable on older Chromium builds (e.g. Debian's
     # packaged chromium), so fall back to the legacy "--headless" flag.
     last_error = ""
@@ -2617,6 +2660,32 @@ def build_publication_pdf(
                 return True
             last_error = err or last_error
         print(f"Chrome PDF generation failed (exe={chrome_exe!r}): {last_error[:2000]}")
+
+        # ---------------------------------------------------------------
+        # FALLBACK: pure-Python renderer (xhtml2pdf / pisa).
+        # Chrome is the preferred engine (crisp CSS, exact layout) but on
+        # Streamlit Community Cloud the downloaded binary often cannot run
+        # because OS-level shared libs (libnss3, libatk, libgbm, ...) are
+        # missing. xhtml2pdf is pure Python and needs no apt packages, so
+        # it guarantees a PDF is always produced. Styling is simpler but
+        # the content (56 pages, charts, tables) still renders.
+        # ---------------------------------------------------------------
+        try:
+            from xhtml2pdf import pisa
+            with open(output_pdf_path, "wb") as _pdf_fh:
+                _pisa_res = pisa.CreatePDF(
+                    src=html_content, dest=_pdf_fh, encoding="utf-8"
+                )
+            if (not _pisa_res.err
+                    and os.path.exists(output_pdf_path)
+                    and os.path.getsize(output_pdf_path) > 10000):
+                print("[vyas_pdf] Chrome failed; rendered via xhtml2pdf fallback.")
+                return True
+            _pisa_err = getattr(_pisa_res, "log", None) or "pisa reported errors"
+            print(f"[vyas_pdf] xhtml2pdf fallback failed: {_pisa_err}")
+        except Exception as _e:  # pragma: no cover - defensive
+            print(f"[vyas_pdf] xhtml2pdf fallback exception: {type(_e).__name__}: {_e}")
+
         return False
     finally:
         for path in (temp_html,):

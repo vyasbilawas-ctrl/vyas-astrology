@@ -3700,20 +3700,37 @@ if st.session_state.get('data_generated'):
                         from vyas import chrome_runtime
                         _chrome = publication_engine.find_chrome()
                         _present = bool(_chrome) and os.path.exists(_chrome)
+                        # Try to capture the real failure reason (missing shared lib,
+                        # sandbox error, etc.) by invoking the binary once.
+                        _diag = ""
+                        try:
+                            import subprocess as _sp
+                            _r = _sp.run(
+                                [_chrome, "--version"], capture_output=True, text=True, timeout=20
+                            )
+                            _diag = (_r.stderr or "") + (_r.stdout or "")
+                        except Exception as _e:
+                            _diag = repr(_e)
                         st.error(
-                            "PDF तैयार नहीं हो सका — HTML→PDF engine (Chromium) उपलब्ध नहीं है।\n\n"
+                            "PDF तैयार नहीं हो सका — HTML→PDF engine (Chromium) चल नहीं पा रहा है।\n\n"
                             f"Resolved binary: `{_chrome}`  \n"
                             f"File मौजूद: **{'हाँ' if _present else 'नहीं'}**\n\n"
-                            "**ठीक करने के लिए:**\n"
-                            "1. Streamlit Cloud → Settings → **Secrets** में `VYAS_AUTO_CHROME = \"1\"` जोड़ें "
-                            "(app खुद portable Chromium download कर लेगा), या\n"
-                            "2. `CHROME_BIN` में browser का पूरा path दें, या\n"
-                            "3. Local par Google Chrome install करें।"
+                            "**संभावित कारण:** Chromium को चलाने के लिए OS-level shared libraries "
+                            "(libnss3, libatk, libgbm, libasound आदि) चाहिए होती हैं, जो Streamlit "
+                            "Cloud base image में default नहीं होतीं।\n\n"
+                            "**ठीक करने के लिए (कोई एक):**\n"
+                            "1. Repo root mein `packages.txt` banayein jisme sirf `chromium` likha ho "
+                            "(Streamlit Cloud apt se install karega; auto-download fallback bhi kaam karega), या\n"
+                            "2. `CHROME_BIN` secret mein ek working browser ka full path dein, या\n"
+                            "3. Local machine par Chrome install karke wahan PDF generate karein.\n\n"
+                            "Note: ab app pure-Python fallback (xhtml2pdf) bhi try karta hai, isliye "
+                            "Chrome na ho tab bhi PDF generate hona chahiye."
                         )
                         with st.expander("तकनीकी विवरण (Debug)"):
                             st.code(
                                 "find_chrome() -> " + repr(_chrome) + "\n"
                                 + "exists        -> " + str(_present) + "\n"
+                                + "chrome --version -> " + repr(_diag.strip()) + "\n"
                                 + "platform      -> " + sys.platform + " / " + platform.machine() + "\n"
                                 + "CHROME_BIN    -> " + repr(os.environ.get("CHROME_BIN")) + "\n"
                                 + "VYAS_AUTO_CHROME -> " + repr(os.environ.get("VYAS_AUTO_CHROME")) + "\n"
