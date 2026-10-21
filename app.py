@@ -85,8 +85,7 @@ if _oauth_error:
 elif _oauth_code and not st.session_state.get("user_google_processed"):
     st.session_state["user_google_processed"] = True  # mark BEFORE any network call
 
-    expected_state = st.session_state.get("oauth_state")
-    if expected_state and _oauth_state != expected_state:
+    if not google_drive_sync.verify_oauth_state(_oauth_state):
         st.error("लॉगिन सुरक्षा जाँच विफल (state mismatch)। कृपया पेज रीफ़्रेश करके दोबारा लॉगिन करें।")
         st.query_params.clear()
     else:
@@ -938,7 +937,7 @@ with st.sidebar:
                 if auth_url:
                     st.markdown(f"""
                     <div style="margin-bottom: 8px;">
-                        <a href="{auth_url}" target="_self" style="text-decoration: none;">
+                        <a href="{auth_url}" target="_top" rel="noopener" style="text-decoration: none;">
                             <button style="width: 100%; background: #ffffff; color: #3c4043; border: 1px solid #dadce0; border-radius: 6px; padding: 6px 12px; font-weight: 600; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                                 <svg width="15" height="15" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
                                 <span>🔗 Google Drive से कनेक्ट करें</span>
@@ -961,22 +960,44 @@ with st.sidebar:
                 # Clear every OAuth/session artifact so the next Google login
                 # callback is processed (stale flags used to silently block it).
                 for _sk in ("loaded_profile", "google_access_token", "user_google_processed",
-                            "oauth_state", "gdrive_last_link", "saved_k_picker"):
+                            "oauth_state", "gdrive_last_link", "saved_k_picker",
+                            "oauth_code_verifier"):
                     st.session_state.pop(_sk, None)
+                # Drop the durable OAuth copies too, otherwise a stale nonce or
+                # verifier from before the logout could satisfy a later callback.
+                for _dk in ("oauth_state", "oauth_code_verifier"):
+                    try:
+                        auth_vault.pop_app_state(_dk)
+                    except Exception:
+                        pass
                 st.success("लॉगआउट हुआ।")
                 st.rerun()
         else:
             auth_url = google_drive_sync.get_google_auth_url()
             if auth_url:
+                # Streamlit Cloud renders the app inside a cross-site iframe.
+                # Google refuses to render its login page inside an embedded
+                # frame ("To protect your security, accounts.google.com will not
+                # allow ... if another site has embedded it"), which surfaces as
+                # the opaque "403. That's an error. ... That's all we know."
+                # Escaping to the TOP-LEVEL window fixes it. `_top` handles the
+                # plain case; the JS handler covers iframes carrying a sandbox
+                # attribute, where target=_top is silently ignored.
                 st.markdown(f"""
                 <div style="margin-bottom: 12px; text-align: center;">
-                    <a href="{auth_url}" target="_self" style="text-decoration: none;">
+                    <a href="{auth_url}" target="_top" rel="noopener"
+                       onclick="try{{window.top.location.href=this.href;return false;}}catch(e){{return true;}}"
+                       style="text-decoration: none;">
                         <button style="width: 100%; background: #ffffff; color: #3c4043; border: 1px solid #dadce0; border-radius: 8px; padding: 10px 14px; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.18); transition: transform 0.2s ease;">
                             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
                             <span>Sign in with Google</span>
                         </button>
                     </a>
                     <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 5px;">(Google Drive में कुण्डलियाँ स्वतः सुरक्षित होंगी)</div>
+                    <div style="font-size: 0.7rem; color: #64748b; margin-top: 4px;">
+                        अगर Google लॉगिन पेज न खुले तो
+                        <a href="{auth_url}" target="_blank" rel="noopener" style="color: #60a5fa;">यहाँ नए टैब में खोलें</a>।
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
             else:
@@ -3202,7 +3223,7 @@ if st.session_state.get('data_generated'):
                             auth_g_url = google_drive_sync.get_google_auth_url()
                             if auth_g_url:
                                 st.warning("पहले Google से लॉगिन करें ताकि कुण्डली आपके Google Drive में सुरक्षित हो सके:")
-                                st.markdown(f'<a href="{auth_g_url}" target="_self"><button style="background: #ffffff; color: #3c4043; border: 1px solid #dadce0; border-radius: 6px; padding: 6px 12px; font-weight: 700; width: 100%; cursor: pointer;">🔗 Connect Google Drive</button></a>', unsafe_allow_html=True)
+                                st.markdown(f'<a href="{auth_g_url}" target="_top" rel="noopener"><button style="background: #ffffff; color: #3c4043; border: 1px solid #dadce0; border-radius: 6px; padding: 6px 12px; font-weight: 700; width: 100%; cursor: pointer;">🔗 Connect Google Drive</button></a>', unsafe_allow_html=True)
                             else:
                                 st.info("कृपया साइडबार के '⚙️ Google Cloud API Credentials' में अपनी Google Client ID दर्ज करें।")
                         else:

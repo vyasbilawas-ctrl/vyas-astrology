@@ -129,16 +129,72 @@ def normalize_redirect_uri(uri: str) -> str:
 
 
 def _get_or_create_oauth_state() -> str:
-    """Per-session random nonce for CSRF protection of the OAuth callback."""
+    """Per-session random nonce for CSRF protection of the OAuth callback.
+
+    Persisted to the app_state table as well as session_state: the login button
+    escapes the Streamlit Cloud iframe, so the callback arrives in a NEW session
+    where session_state is empty. Without the durable copy the state check would
+    have nothing to compare against (and PKCE would fail outright).
+    """
     import secrets as _secrets
+    nonce = ""
     try:
         import streamlit as st
-        if not st.session_state.get("oauth_state"):
-            st.session_state["oauth_state"] = _secrets.token_urlsafe(16)
-        return st.session_state["oauth_state"]
+        nonce = st.session_state.get("oauth_state") or ""
     except Exception:
-        # Non-Streamlit callers (tests/scripts): single-use static fallback
-        return "vyas_oauth"
+        nonce = ""
+
+    if not nonce:
+        try:
+            from vyas import auth_vault
+            nonce = auth_vault.get_app_state("oauth_state") or ""
+        except Exception:
+            nonce = ""
+
+    if not nonce:
+        nonce = _secrets.token_urlsafe(16)
+
+    try:
+        import streamlit as st
+        st.session_state["oauth_state"] = nonce
+    except Exception:
+        pass
+    try:
+        from vyas import auth_vault
+        auth_vault.set_app_state("oauth_state", nonce)
+    except Exception:
+        pass
+    return nonce
+
+
+def verify_oauth_state(received: str) -> bool:
+    """True when `received` matches the nonce issued for this login attempt.
+
+    Lenient by design: when no nonce was ever stored (fresh deployment, DB
+    reset, or a browser that never rendered the login button) the callback is
+    accepted rather than locking the user out. A *stored* nonce must match.
+    """
+    if not received:
+        return False
+    expected = ""
+    try:
+        import streamlit as st
+        expected = st.session_state.get("oauth_state") or ""
+    except Exception:
+        expected = ""
+    if not expected:
+        try:
+            from vyas import auth_vault
+            expected = auth_vault.pop_app_state("oauth_state") or ""
+        except Exception:
+            expected = ""
+    else:
+        try:
+            from vyas import auth_vault
+            auth_vault.pop_app_state("oauth_state")
+        except Exception:
+            pass
+    return (not expected) or (received == expected)
 
 
 def _pkce_pair() -> Tuple[str, str]:
@@ -160,19 +216,48 @@ def _pkce_pair() -> Tuple[str, str]:
 
 
 def _store_pkce_verifier(verifier: str) -> None:
+    """Keeps the PKCE verifier for the token exchange.
+
+    Written to BOTH session_state and the app_state table. The Cloud login
+    button leaves the iframe (Google won't render inside an embedded frame), so
+    the callback runs in a fresh session; only the durable copy survives.
+    """
     try:
         import streamlit as st
         st.session_state["oauth_code_verifier"] = verifier
     except Exception:
         pass
+    try:
+        from vyas import auth_vault
+        auth_vault.set_app_state("oauth_code_verifier", verifier)
+    except Exception:
+        pass
 
 
 def _pop_pkce_verifier() -> str:
+    """Consumes the PKCE verifier — single use, always.
+
+    Both copies (session_state and the durable app_state row) are consumed on
+    every call, even when only one holds a value. Leaving the durable copy
+    behind would let a stale verifier be replayed against a later callback.
+    """
+    verifier = ""
     try:
         import streamlit as st
-        return st.session_state.pop("oauth_code_verifier", "") or ""
+        verifier = st.session_state.pop("oauth_code_verifier", "") or ""
     except Exception:
-        return ""
+        verifier = ""
+
+    durable = ""
+    try:
+        from vyas import auth_vault
+        durable = auth_vault.pop_app_state("oauth_code_verifier") or ""
+    except Exception:
+        durable = ""
+
+    # Prefer the session copy (the flow that never left the process) and fall
+    # back to the durable copy written before escaping to accounts.google.com.
+    return verifier or durable
 
 
 def load_google_config() -> Dict[str, str]:

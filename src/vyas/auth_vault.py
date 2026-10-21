@@ -124,6 +124,48 @@ def get_last_active_user() -> Optional[Dict]:
         pass
     return None
 
+def set_app_state(key: str, value: str) -> None:
+    """Persists an arbitrary short-lived value in the app_state table.
+
+    Used for OAuth bookkeeping (state nonce, PKCE verifier) that must survive
+    a full top-level page navigation. Streamlit session_state does not: escaping
+    the Cloud iframe to reach accounts.google.com reloads the app in a brand-new
+    session, which silently dropped the PKCE verifier and broke token exchange.
+    """
+    try:
+        with _get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO app_state (key, value, updated_at) VALUES (?, ?, ?)
+                ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at
+            """, (str(key), str(value), datetime.now().isoformat()))
+            conn.commit()
+    except Exception:
+        pass
+
+def get_app_state(key: str) -> Optional[str]:
+    """Reads a value written by set_app_state (None when absent)."""
+    try:
+        with _get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT value FROM app_state WHERE key = ?", (str(key),))
+            row = cursor.fetchone()
+            return row["value"] if row else None
+    except Exception:
+        return None
+
+def pop_app_state(key: str) -> Optional[str]:
+    """Reads and deletes a value written by set_app_state (single use)."""
+    val = get_app_state(key)
+    try:
+        with _get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM app_state WHERE key = ?", (str(key),))
+            conn.commit()
+    except Exception:
+        pass
+    return val
+
 # Ensure DB is initialized on module import
 init_db()
 
