@@ -703,32 +703,34 @@ st.markdown("""
     }
 
     /* =================================================================
-       PREMIUM POLISH LAYER
+       ROYAL VEDIC THEME POLISH
        =================================================================
-       Same dark-navy + gold identity, but with the "expensive" cues that were
-       missing: a real elevation hierarchy (three card tiers instead of one flat
-       shadow), a barely-there ambient aurora behind the content, hairline
-       gradient borders, and motion that settles instead of bouncing.
-
-       This block is intentionally LAST in the stylesheet so it refines the rules
-       above rather than fighting them.
+       Deep midnight canvas, champagne-gold accents, soft celestial glow.
+       Keeps the existing identity intact but looks far more regal & expensive.
        ================================================================= */
 
     :root {
-        --vyas-gold-1: #fff2cc;
-        --vyas-gold-2: #f0c05a;
-        --vyas-gold-3: #d49429;
-        --vyas-ink-1: #0b1220;
-        --vyas-ink-2: #0e1a2f;
-        --vyas-line: rgba(229, 169, 60, 0.22);
-        /* One easing for the whole app: fast out, soft settle. Bouncing reads
-           as cheap; this reads as deliberate. */
+        --vyas-gold-1: #fff4cc;
+        --vyas-gold-2: #f5d16e;
+        --vyas-gold-3: #b99a3d;
+        --vyas-copper: #d9b75b;
+        --vyas-ink-1: #060914;
+        --vyas-ink-2: #0b1026;
+        --vyas-line: rgba(245, 209, 110, 0.24);
+        --vyas-glow: rgba(245, 209, 110, 0.28);
         --vyas-ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    /* Ambient aurora — two very soft gold/indigo pools behind everything.
-       opacity is kept low so text contrast is untouched; it only stops the
-       background from reading as a flat black rectangle. */
+    /* Deep royal canvas with soft vignette */
+    .stApp {
+        background:
+            radial-gradient(140% 140% at 50% 0%, rgba(245, 209, 110, 0.08) 0%, transparent 38%),
+            radial-gradient(120% 120% at 50% 100%, rgba(76, 110, 245, 0.08) 0%, transparent 42%),
+            radial-gradient(ellipse at top, #121a36 0%, #070b1a 48%, #04050d 100%) !important;
+        background-attachment: fixed !important;
+    }
+
+    /* Subtle celestial aurora */
     .stApp::before {
         content: "";
         position: fixed;
@@ -736,249 +738,361 @@ st.markdown("""
         pointer-events: none;
         z-index: 0;
         background:
-            radial-gradient(60rem 40rem at 12% -5%, rgba(229, 169, 60, 0.10), transparent 60%),
-            radial-gradient(50rem 34rem at 100% 0%, rgba(56, 92, 178, 0.14), transparent 62%),
-            radial-gradient(46rem 40rem at 50% 115%, rgba(229, 169, 60, 0.06), transparent 65%);
+            radial-gradient(70rem 44rem at 15% -8%, rgba(245, 209, 110, 0.14), transparent 62%),
+            radial-gradient(60rem 38rem at 90% -4%, rgba(118, 148, 255, 0.16), transparent 64%),
+            radial-gradient(56rem 48rem at 50% 120%, rgba(245, 209, 110, 0.09), transparent 68%);
+        mix-blend-mode: screen;
     }
 
-    /* --- Elevation tiers ---------------------------------------------------
-       Flat cards everywhere is the single biggest reason the old UI read as
-       "boring". Three tiers give the eye somewhere to go. */
+    /* Tiny star speckles for a celestial feel */
+    .stApp::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        background-image:
+            radial-gradient(1px 1px at 20px 30px, rgba(255, 244, 204, 0.5), transparent),
+            radial-gradient(1px 1px at 90px 80px, rgba(255, 244, 204, 0.4), transparent),
+            radial-gradient(1px 1px at 160px 40px, rgba(255, 244, 204, 0.35), transparent),
+            radial-gradient(1px 1px at 220px 110px, rgba(255, 244, 204, 0.45), transparent),
+            radial-gradient(1px 1px at 320px 60px, rgba(255, 244, 204, 0.3), transparent);
+        background-repeat: repeat;
+        background-size: 380px 150px;
+        opacity: 0.25;
+        filter: blur(0.2px);
+    }
+
+    /* Bring app content above ambient layers */
+    .block-container,
+    header,
+    [data-testid="stHeader"] {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* --- Royal Glass Cards --- */
     .glass-card {
         position: relative;
         background:
-            linear-gradient(180deg, rgba(17, 27, 48, 0.94) 0%, rgba(9, 15, 30, 0.96) 100%);
-        border: 1px solid var(--vyas-line);
-        border-radius: 16px;
-        padding: 22px 26px;
-        margin-bottom: 18px;
+            radial-gradient(160% 160% at 50% 0%, rgba(245, 209, 110, 0.09) 0%, transparent 48%),
+            linear-gradient(180deg, rgba(19, 27, 54, 0.98) 0%, rgba(8, 12, 26, 0.98) 100%);
+        border: 1px solid rgba(245, 209, 110, 0.32);
+        border-radius: 18px;
+        padding: 24px 28px;
+        margin-bottom: 20px;
         box-shadow:
-            0 1px 0 rgba(255, 255, 255, 0.04) inset,
-            0 18px 40px -18px rgba(0, 0, 0, 0.9),
-            0 2px 6px rgba(0, 0, 0, 0.45);
+            0 1px 0 rgba(255, 246, 210, 0.08) inset,
+            0 28px 60px -26px rgba(0, 0, 0, 0.98),
+            0 0 0 1px rgba(245, 209, 110, 0.08);
         transition: transform 0.4s var(--vyas-ease),
                     box-shadow 0.4s var(--vyas-ease),
                     border-color 0.4s var(--vyas-ease);
+        backdrop-filter: blur(18px) saturate(1.08);
+        -webkit-backdrop-filter: blur(18px) saturate(1.08);
     }
-    /* Hairline gradient top edge — the "polished metal" cue. */
+
+    /* Ornamental top glow */
     .glass-card::after {
         content: "";
         position: absolute;
-        top: 0; left: 14px; right: 14px;
+        top: 0;
+        left: 18px;
+        right: 18px;
         height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(240, 192, 90, 0.55), transparent);
-        opacity: 0.7;
+        background: radial-gradient(circle, rgba(255, 244, 204, 0.9) 0%, rgba(245, 209, 110, 0.5) 40%, transparent 100%);
+        opacity: 0.9;
         pointer-events: none;
     }
+
     .glass-card:hover {
-        border-color: rgba(229, 169, 60, 0.45);
+        border-color: rgba(255, 228, 150, 0.6);
         box-shadow:
-            0 1px 0 rgba(255, 255, 255, 0.06) inset,
-            0 26px 60px -20px rgba(0, 0, 0, 0.95),
-            0 0 0 1px rgba(229, 169, 60, 0.10),
-            0 0 34px -6px rgba(229, 169, 60, 0.22);
-        transform: translateY(-3px);
+            0 1px 0 rgba(255, 246, 210, 0.12) inset,
+            0 36px 74px -28px rgba(0, 0, 0, 1),
+            0 0 0 1px rgba(245, 209, 110, 0.16),
+            0 0 46px -10px rgba(245, 209, 110, 0.32);
+        transform: translateY(-4px);
     }
 
-    /* --- Section titles ----------------------------------------------------
-       Gold rule + a soft leading glow so headings anchor the page. */
-    .section-title {
-        font-size: 1.32rem;
-        font-weight: 700;
-        letter-spacing: 0.2px;
-        line-height: 1.45;
-        padding: 2px 0 12px 0;
-        margin-top: 14px;
-        margin-bottom: 20px;
-        border-bottom: 1px solid rgba(229, 169, 60, 0.18);
-        background-image: linear-gradient(90deg, rgba(240, 192, 90, 0.9), rgba(240, 192, 90, 0.25) 45%, transparent 75%);
-        background-repeat: no-repeat;
-        background-size: 100% 1px;
-        background-position: 0 100%;
+    /* --- Royal Micro-interactions --- */
+    div[data-testid="stRadio"] label:focus-visible,
+    div.stButton > button:focus-visible,
+    [data-testid="stExpander"] summary:focus-visible {
+        outline: 1px solid rgba(255, 232, 160, 0.9) !important;
+        outline-offset: 2px;
+        box-shadow: 0 0 0 4px rgba(245, 209, 110, 0.14) !important;
     }
 
-    /* --- Lazy section strips ------------------------------------------------
-       These replaced st.tabs. They are now the primary navigation, so they get
-       the tab-strip treatment: a recessed track with a raised, lit "seal" for
-       the active section. */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* --- Royal Typography Hierarchy --- */
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Cinzel', 'Noto Sans Devanagari', serif !important;
+        letter-spacing: 0.4px !important;
+        text-rendering: optimizeLegibility;
+    }
+
+    h1 {
+        font-size: 2rem !important;
+        font-weight: 900 !important;
+        background: linear-gradient(90deg, #fff4cc 0%, #f5d16e 60%, #b99a3d 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 40px rgba(245, 209, 110, 0.18);
+        margin-bottom: 1rem !important;
+    }
+
+    h2 {
+        font-size: 1.6rem !important;
+        font-weight: 800 !important;
+        color: #fff4cc !important;
+        text-shadow: 0 0 28px rgba(245, 209, 110, 0.16);
+    }
+
+    h3 {
+        font-size: 1.32rem !important;
+        font-weight: 700 !important;
+        color: #f5d16e !important;
+    }
+
+    /* Smoother body text */
+    p, li, label, .stMarkdown {
+        line-height: 1.8 !important;
+        letter-spacing: 0.01em;
+    }
+        font-family: 'Cinzel', 'Noto Sans Devanagari', serif !important;
+        font-size: 1.38rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        line-height: 1.4;
+        padding: 4px 0 14px 0;
+        margin-top: 16px;
+        margin-bottom: 22px;
+        color: #fff4cc;
+        border-bottom: none;
+        background-image:
+            radial-gradient(circle, rgba(255, 228, 150, 0.95) 0%, rgba(245, 209, 110, 0.5) 45%, transparent 75%),
+            linear-gradient(90deg, transparent, rgba(245, 209, 110, 0.24) 25%, rgba(245, 209, 110, 0.24) 75%, transparent);
+        background-repeat: no-repeat, no-repeat;
+        background-size: 100% 1px, 100% 1px;
+        background-position: 0 100%, 0 100%;
+        text-shadow: 0 0 28px rgba(245, 209, 110, 0.22);
+    }
+
+    /* --- Royal Micro-interactions --- */
+    div[data-testid="stRadio"] label:focus-visible,
+    div.stButton > button:focus-visible,
+    [data-testid="stExpander"] summary:focus-visible {
+        outline: 1px solid rgba(255, 232, 160, 0.9) !important;
+        outline-offset: 2px;
+        box-shadow: 0 0 0 4px rgba(245, 209, 110, 0.14) !important;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* --- Royal Navigation Pills --- */
     div[data-testid="stRadio"] > div[role="radiogroup"] {
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 7px;
         background:
-            linear-gradient(180deg, rgba(6, 9, 16, 0.62) 0%, rgba(10, 16, 30, 0.72) 100%);
-        padding: 7px;
-        border-radius: 14px;
-        border: 1px solid rgba(229, 169, 60, 0.16);
-        box-shadow: 0 6px 18px -10px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.03) inset;
-        margin-bottom: 16px;
+            radial-gradient(120% 120% at 50% 0%, rgba(245, 209, 110, 0.1) 0%, transparent 55%),
+            linear-gradient(180deg, rgba(9, 14, 30, 0.9) 0%, rgba(7, 10, 22, 0.95) 100%);
+        padding: 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(245, 209, 110, 0.26);
+        box-shadow:
+            0 10px 28px -16px rgba(0, 0, 0, 0.95),
+            0 1px 0 rgba(255, 246, 210, 0.05) inset;
+        margin-bottom: 18px;
     }
+
     div[data-testid="stRadio"] label {
         position: relative;
-        background: transparent !important;
-        border: 1px solid transparent !important;
-        border-radius: 10px !important;
-        padding: 9px 15px !important;
-        color: #9aa6b8 !important;
-        font-weight: 500 !important;
+        border-radius: 999px !important;
+        padding: 9px 18px !important;
+        color: #b9c0d6 !important;
+        font-weight: 600 !important;
         font-size: 0.88rem !important;
-        transition: color 0.25s var(--vyas-ease),
-                    background 0.25s var(--vyas-ease),
-                    border-color 0.25s var(--vyas-ease),
-                    transform 0.25s var(--vyas-ease) !important;
-        cursor: pointer !important;
+        letter-spacing: 0.3px !important;
+        transition: all 0.28s var(--vyas-ease) !important;
     }
+
     div[data-testid="stRadio"] label:hover {
-        color: #f4e6bf !important;
-        background: rgba(229, 169, 60, 0.09) !important;
-        border-color: rgba(229, 169, 60, 0.28) !important;
+        color: #fff4cc !important;
+        background: radial-gradient(circle, rgba(245, 209, 110, 0.16) 0%, transparent 70%) !important;
         transform: translateY(-1px);
     }
+
     div[data-testid="stRadio"] label[data-checked="true"] {
         background:
-            linear-gradient(135deg, rgba(229, 169, 60, 0.26) 0%, rgba(16, 26, 48, 0.95) 100%) !important;
-        border: 1px solid rgba(240, 192, 90, 0.62) !important;
-        color: #fff2cc !important;
-        font-weight: 700 !important;
+            radial-gradient(circle at 50% 0%, rgba(255, 246, 210, 0.28) 0%, transparent 65%),
+            linear-gradient(135deg, rgba(245, 209, 110, 0.36) 0%, rgba(19, 27, 54, 0.98) 100%) !important;
+        border: 1px solid rgba(255, 232, 160, 0.8) !important;
+        color: #fff6d6 !important;
+        text-shadow: 0 0 18px rgba(245, 209, 110, 0.28);
         box-shadow:
-            0 8px 22px -8px rgba(240, 192, 90, 0.5),
-            0 1px 0 rgba(255, 255, 255, 0.10) inset !important;
+            0 12px 30px -14px rgba(245, 209, 110, 0.7),
+            0 1px 0 rgba(255, 246, 210, 0.16) inset !important;
     }
 
-    /* --- Prediction cards --------------------------------------------------- */
+    /* --- Royal Prediction Cards --- */
     .predict-card {
+        position: relative;
         background:
-            linear-gradient(180deg, rgba(17, 27, 48, 0.9) 0%, rgba(11, 18, 34, 0.95) 100%);
+            radial-gradient(140% 140% at 50% 0%, rgba(245, 209, 110, 0.08) 0%, transparent 48%),
+            linear-gradient(180deg, rgba(18, 26, 52, 0.98) 0%, rgba(9, 13, 28, 0.98) 100%);
         border-left: 4px solid var(--vyas-gold-2);
-        border-top: 1px solid rgba(240, 192, 90, 0.16);
-        border-right: 1px solid rgba(240, 192, 90, 0.16);
-        border-bottom: 1px solid rgba(240, 192, 90, 0.16);
-        border-radius: 12px;
-        padding: 18px 22px;
-        margin-bottom: 14px;
-        box-shadow: 0 14px 32px -18px rgba(0, 0, 0, 0.9);
-        transition: transform 0.35s var(--vyas-ease),
-                    box-shadow 0.35s var(--vyas-ease),
-                    border-left-color 0.35s var(--vyas-ease);
+        border-top: 1px solid rgba(245, 209, 110, 0.24);
+        border-right: 1px solid rgba(245, 209, 110, 0.18);
+        border-bottom: 1px solid rgba(245, 209, 110, 0.18);
+        border-radius: 14px;
+        padding: 20px 24px;
+        margin-bottom: 16px;
+        box-shadow: 0 20px 46px -24px rgba(0, 0, 0, 0.98);
+        transition: transform 0.4s var(--vyas-ease), box-shadow 0.4s var(--vyas-ease), border-left-color 0.4s var(--vyas-ease);
     }
+
+    .predict-card::before {
+        content: "";
+        position: absolute;
+        top: 10px;
+        left: -4px;
+        width: 4px;
+        height: calc(100% - 20px);
+        border-radius: 4px;
+        background: radial-gradient(circle, #fff4cc 0%, var(--vyas-gold-2) 60%, transparent 100%);
+        filter: blur(0.4px);
+        opacity: 0.7;
+    }
+
     .predict-card:hover {
         transform: translateY(-3px);
-        box-shadow: 0 22px 44px -20px rgba(0, 0, 0, 0.95), 0 0 26px -10px rgba(240, 192, 90, 0.35);
-        border-left-color: #ffd97d;
-    }
-    .predict-header {
-        font-size: 1.12rem;
-        font-weight: 700;
-        color: #f0c05a;
-        letter-spacing: 0.2px;
-        margin-bottom: 9px;
+        border-left-color: #fff4cc;
+        box-shadow:
+            0 30px 62px -26px rgba(0, 0, 0, 1),
+            0 0 38px -12px rgba(245, 209, 110, 0.34);
     }
 
-    /* --- Kundli chart frame -------------------------------------------------- */
+    .predict-header {
+        font-family: 'Cinzel', 'Noto Sans Devanagari', serif !important;
+        font-size: 1.14rem;
+        font-weight: 700;
+        color: #fff4cc;
+        letter-spacing: 0.6px;
+        text-shadow: 0 0 22px rgba(245, 209, 110, 0.24);
+        margin-bottom: 10px;
+    }
+
+    /* --- Royal Kundli Frame --- */
     .kundli-container {
         background:
-            radial-gradient(circle at 50% 42%, rgba(24, 38, 70, 0.72) 0%, rgba(6, 10, 20, 0.95) 100%);
-        border: 1px solid rgba(240, 192, 90, 0.30);
-        border-radius: 18px;
+            radial-gradient(circle at 50% 38%, rgba(245, 209, 110, 0.16) 0%, rgba(10, 16, 36, 0.98) 100%);
+        border: 1px solid rgba(245, 209, 110, 0.38);
+        border-radius: 22px;
         box-shadow:
-            0 22px 50px -22px rgba(0, 0, 0, 0.95),
-            inset 0 0 34px rgba(240, 192, 90, 0.07);
-        transition: transform 0.45s var(--vyas-ease), box-shadow 0.45s var(--vyas-ease);
+            0 34px 70px -30px rgba(0, 0, 0, 1),
+            0 0 0 1px rgba(245, 209, 110, 0.12),
+            inset 0 0 48px rgba(245, 209, 110, 0.1);
+        transition: transform 0.5s var(--vyas-ease), box-shadow 0.5s var(--vyas-ease);
     }
+
     .kundli-container:hover {
         transform: scale(1.012);
         box-shadow:
-            0 30px 64px -24px rgba(0, 0, 0, 1),
-            0 0 40px -12px rgba(240, 192, 90, 0.28),
-            inset 0 0 40px rgba(240, 192, 90, 0.10);
+            0 44px 86px -32px rgba(0, 0, 0, 1),
+            0 0 54px -14px rgba(245, 209, 110, 0.36),
+            inset 0 0 56px rgba(245, 209, 110, 0.14);
     }
 
-    /* --- Primary CTA -------------------------------------------------------- */
+    /* --- Royal Gold CTA --- */
     div.stButton > button[kind="primary"],
     div.stButton > button,
     section[data-testid="stSidebar"] div.stButton > button {
-        position: relative;
-        overflow: hidden;
-        border: 1px solid rgba(255, 217, 125, 0.85) !important;
+        background:
+            radial-gradient(circle at 50% 0%, rgba(255, 248, 220, 0.4) 0%, transparent 60%),
+            linear-gradient(135deg, #f5d16e 0%, #b99a3d 48%, #8f7426 100%) !important;
+        color: #1a1305 !important;
+        -webkit-text-fill-color: #1a1305 !important;
+        font-weight: 900 !important;
+        letter-spacing: 0.8px !important;
+        text-transform: uppercase;
+        border: 1px solid rgba(255, 244, 204, 0.9) !important;
+        border-radius: 999px !important;
         box-shadow:
-            0 10px 26px -12px rgba(212, 148, 41, 0.85),
-            0 1px 0 rgba(255, 255, 255, 0.35) inset !important;
-        transition: transform 0.28s var(--vyas-ease),
-                    box-shadow 0.28s var(--vyas-ease),
-                    background 0.28s var(--vyas-ease),
-                    letter-spacing 0.28s var(--vyas-ease) !important;
+            0 16px 38px -16px rgba(245, 209, 110, 0.9),
+            0 1px 0 rgba(255, 248, 220, 0.6) inset !important;
+        transition: all 0.3s var(--vyas-ease) !important;
     }
+
     div.stButton > button:hover,
     section[data-testid="stSidebar"] div.stButton > button:hover {
-        transform: translateY(-2px) !important;
-        letter-spacing: 0.6px !important;
+        background:
+            radial-gradient(circle at 50% 0%, rgba(255, 248, 220, 0.55) 0%, transparent 62%),
+            linear-gradient(135deg, #fff4cc 0%, #f5d16e 48%, #b99a3d 100%) !important;
+        transform: translateY(-3px) scale(1.01) !important;
         box-shadow:
-            0 18px 38px -14px rgba(247, 213, 132, 0.75),
-            0 1px 0 rgba(255, 255, 255, 0.5) inset !important;
-    }
-    div.stButton > button:active,
-    section[data-testid="stSidebar"] div.stButton > button:active {
-        transform: translateY(0) scale(0.985) !important;
+            0 24px 48px -18px rgba(245, 209, 110, 1),
+            0 0 0 1px rgba(255, 244, 204, 0.4),
+            0 1px 0 rgba(255, 248, 220, 0.7) inset !important;
+        letter-spacing: 1px !important;
     }
 
-    /* --- Expanders ---------------------------------------------------------- */
+    /* --- Royal Expanders --- */
     [data-testid="stExpander"] details {
-        border: 1px solid rgba(240, 192, 90, 0.18) !important;
-        border-radius: 12px !important;
-        background: linear-gradient(180deg, rgba(14, 23, 47, 0.72) 0%, rgba(9, 15, 30, 0.85) 100%);
-        box-shadow: 0 10px 26px -18px rgba(0, 0, 0, 0.9);
-        transition: border-color 0.3s var(--vyas-ease), box-shadow 0.3s var(--vyas-ease);
-        margin-bottom: 8px;
-    }
-    [data-testid="stExpander"] details:hover {
-        border-color: rgba(240, 192, 90, 0.34) !important;
-    }
-    .streamlit-expanderHeader,
-    [data-testid="stExpander"] summary {
-        padding: 12px 14px !important;
-        transition: background 0.25s var(--vyas-ease), color 0.25s var(--vyas-ease);
-    }
-    [data-testid="stExpander"] summary:hover {
-        background: rgba(240, 192, 90, 0.06) !important;
-    }
-
-    /* --- Dataframes: give tables the same bordered-panel treatment ---------- */
-    [data-testid="stDataFrame"] {
-        border: 1px solid rgba(229, 169, 60, 0.16);
-        border-radius: 12px;
+        border: 1px solid rgba(245, 209, 110, 0.28) !important;
+        border-radius: 16px !important;
+        background:
+            radial-gradient(140% 140% at 50% 0%, rgba(245, 209, 110, 0.08) 0%, transparent 50%),
+            linear-gradient(180deg, rgba(17, 25, 50, 0.95) 0%, rgba(8, 12, 26, 0.98) 100%);
+        box-shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.98);
         overflow: hidden;
-        box-shadow: 0 12px 30px -20px rgba(0, 0, 0, 0.9);
     }
 
-    /* --- Entry motion: one soft rise on newly rendered sections ------------- */
+    [data-testid="stExpander"] summary:hover {
+        background: radial-gradient(circle at 50% 0%, rgba(245, 209, 110, 0.12) 0%, transparent 70%) !important;
+    }
+
+    /* --- Dataframes --- */
+    [data-testid="stDataFrame"] {
+        border: 1px solid rgba(245, 209, 110, 0.26);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 22px 50px -28px rgba(0, 0, 0, 0.98);
+    }
+
+    /* --- Entry animation --- */
     @keyframes vyasRise {
-        from { opacity: 0; transform: translateY(8px); }
-        to   { opacity: 1; transform: none; }
-    }
-    .glass-card, .predict-card, .section-title, .kundli-container {
-        animation: vyasRise 0.5s var(--vyas-ease) both;
+        from { opacity: 0; transform: translateY(10px); filter: blur(2px); }
+        to   { opacity: 1; transform: none; filter: blur(0); }
     }
 
-    /* --- Respect reduced motion -------------------------------------------- */
+    .glass-card, .predict-card, .section-title, .kundli-container {
+        animation: vyasRise 0.6s var(--vyas-ease) both;
+    }
+
+    /* --- Reduced motion --- */
     @media (prefers-reduced-motion: reduce) {
-        .glass-card, .predict-card, .section-title, .kundli-container {
+        .glass-card, .predict-card, .section-title, .kundli-container,
+        div[data-testid="stRadio"] label, div.stButton > button {
             animation: none !important;
-        }
-        .glass-card, .predict-card, .kundli-container,
-        div[data-testid="stRadio"] label,
-        div.stButton > button {
             transition: none !important;
         }
     }
 
-    /* --- Premium polish on small screens ----------------------------------- */
+    /* --- Mobile tweaks --- */
     @media (max-width: 768px) {
-        .glass-card { padding: 14px 15px !important; border-radius: 14px !important; }
-        .section-title { font-size: 1.1rem !important; }
-        div[data-testid="stRadio"] > div[role="radiogroup"] {
-            border-radius: 12px;
-            gap: 5px;
-        }
-        .stApp::before { opacity: 0.6; }  /* cheaper compositing on phones */
+        .stApp::after { opacity: 0.16; }
+        .glass-card { padding: 16px 18px !important; border-radius: 16px !important; }
+        .section-title { font-size: 1.16rem !important; letter-spacing: 0.6px !important; }
+        div[data-testid="stRadio"] > div[role="radiogroup"] { border-radius: 14px; }
+        .kundli-container { border-radius: 18px !important; }
     }
 </style>
 """, unsafe_allow_html=True)
