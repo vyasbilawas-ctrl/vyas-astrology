@@ -2670,6 +2670,7 @@ def build_publication_pdf(
         # it guarantees a PDF is always produced. Styling is simpler but
         # the content (56 pages, charts, tables) still renders.
         # ---------------------------------------------------------------
+        _fallback_err = ""
         try:
             from xhtml2pdf import pisa
             with open(output_pdf_path, "wb") as _pdf_fh:
@@ -2682,10 +2683,18 @@ def build_publication_pdf(
                 print("[vyas_pdf] Chrome failed; rendered via xhtml2pdf fallback.")
                 return True
             _pisa_err = getattr(_pisa_res, "log", None) or "pisa reported errors"
+            _fallback_err = str(_pisa_err)
             print(f"[vyas_pdf] xhtml2pdf fallback failed: {_pisa_err}")
         except Exception as _e:  # pragma: no cover - defensive
-            print(f"[vyas_pdf] xhtml2pdf fallback exception: {type(_e).__name__}: {_e}")
+            _fallback_err = f"{type(_e).__name__}: {_e}"
+            print(f"[vyas_pdf] xhtml2pdf fallback exception: {_fallback_err}")
 
+        # Store the fallback error globally so the UI can surface it.
+        try:
+            import builtins
+            builtins._vyas_last_pdf_fallback_error = _fallback_err
+        except Exception:
+            pass
         return False
     finally:
         for path in (temp_html,):

@@ -3724,7 +3724,8 @@ if st.session_state.get('data_generated'):
                             "2. `CHROME_BIN` secret mein ek working browser ka full path dein, या\n"
                             "3. Local machine par Chrome install karke wahan PDF generate karein.\n\n"
                             "Note: ab app pure-Python fallback (xhtml2pdf) bhi try karta hai, isliye "
-                            "Chrome na ho tab bhi PDF generate hona chahiye."
+                            "Chrome na ho tab bhi PDF generate hona chahiye.\n\n"
+                            "Last fallback error: " + repr(getattr(__builtins__, "_vyas_last_pdf_fallback_error", "n/a"))
                         )
                         with st.expander("तकनीकी विवरण (Debug)"):
                             st.code(
