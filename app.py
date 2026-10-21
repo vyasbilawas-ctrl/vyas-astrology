@@ -61,7 +61,84 @@ def render_kundli(svg_str: str):
     b64 = base64.b64encode(clean.encode('utf-8')).decode('utf-8')
     st.html(f'<div class="kundli-container"><img src="data:image/svg+xml;base64,{b64}" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" /></div>')
 
+
+def lazy_sections(labels, key: str):
+    """A tab strip that renders ONLY the selected section's body.
+
+    ``st.tabs`` runs every tab body on every rerun: with 8 tab groups (one nine
+    tabs wide, plus nested four-tab sets) the app rebuilt the Panchang engine
+    (~2.2s), the transit engine (~1.4s), 34 dataframes and 4 large SVG charts
+    even while the user was reading the first tab.
+
+    ``with tab:`` cannot skip work — Python always executes the body — so this
+    returns a list of booleans instead, and call sites become::
+
+        _lz = lazy_sections(["A", "B", "C"], key="forecast")
+        if _lz[0]:
+            ...expensive A...
+        if _lz[1]:
+            ...expensive B...
+
+    Because the unselected bodies never execute, their engines, dataframes and
+    charts are never built. Selection lives in session_state, so it survives
+    reruns triggered by widgets elsewhere on the page.
+    """
+    active = st.radio(
+        "section",
+        options=list(range(len(labels))),
+        format_func=lambda i: labels[i],
+        index=0,
+        key=f"lazytab_{key}",
+        horizontal=True,
+        label_visibility="collapsed",
+    )
+    return [i == active for i in range(len(labels))]
+
 st.set_page_config(page_title="VYAS • Vedic Yield Astrology Systems", page_icon="☸️", layout="wide", initial_sidebar_state="expanded")
+
+
+# ---------------- CACHED HEAVY ENGINES ----------------
+# Measured on a real chart (Windows, cold pyephem/Skyfield):
+#   panchang.compute  ~2.2s   gochar.transits ~1.4s   planet_positions ~1.5s
+# Streamlit reruns the whole script on EVERY widget interaction, so without
+# caching the user paid ~5s of astronomy for something as trivial as opening an
+# expander. These wrappers memoise on the *inputs that actually matter*, so a
+# rerun with unchanged birth data costs ~0ms.
+#
+# Dataclass results are converted to plain dicts because st.cache_data pickles
+# its return value (and the index argument lets callers rehydrate cheaply).
+@st.cache_data(show_spinner=False, max_entries=64)
+def _cached_panchang(dt_local, lat: float, lon: float, tz_hours: float, asc_lon: float):
+    """Full Panchang for a local datetime. Keyed on date+time+place+ayanamsa."""
+    return vyas_panchang.compute(dt_local, lat, lon, tz_hours, asc_lon)
+
+
+@st.cache_data(show_spinner=False, max_entries=64)
+def _cached_gochar_transits(now_day: str, tz_hours: float, moon_lon: float, asc_lon: float):
+    """Transit/ingress table for the given day. Keyed on the DAY, not the second,
+    so moving between tabs on the same day never recomputes."""
+    return vyas_gochar.transits(
+        datetime.fromisoformat(now_day), tz_hours, moon_lon, asc_lon, with_ingress=True
+    )
+
+
+@st.cache_data(show_spinner=False, max_entries=64)
+def _cached_transit_positions(now_day: str):
+    """Current transit positions for the given day (planet -> object with
+    longitude/speed/sign_index)."""
+    return vyas_gochar.get_current_transit_positions()
+
+# ---------------- FONT LOADING (non-blocking, exactly once) ----------------
+# Preconnect warms the TLS handshake to both font hosts while the HTML is still
+# parsing, so the stylesheet request starts ~200-400ms earlier than it otherwise
+# would. `display=swap` means text paints immediately in the fallback stack and
+# reflows once webfonts arrive — the page is never held hostage by fonts.google
+# .com, which is the single biggest first-paint cost on a cold Streamlit load.
+st.html("""
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Tiro+Devanagari+Sanskrit&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap">
+""")
 
 # ---------------- GOOGLE OAUTH 2.0 CALLBACK HANDLING ----------------
 # Rules:
@@ -123,10 +200,12 @@ elif _oauth_code and not st.session_state.get("user_google_processed"):
 # Global Luxury Vedic Styling
 st.markdown("""
 <style>
-    /* @import MUST come before every other rule (incl. @font-face), otherwise
-       browsers ignore it — that is why Noto Sans Devanagari never loaded and
-       mixed Hindi/Latin headings rendered with collapsed word spacing. */
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Tiro+Devanagari+Sanskrit&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
+    /* Fonts are loaded ONCE, from a <link> in the document head (see the
+       preconnect/link tags injected below), NOT via CSS @import. An @import
+       inside the app's own <style> is render-blocking: the browser must finish
+       fetching fonts.googleapis.com before it paints anything, and on Streamlit
+       Cloud that request sits behind the iframe. Preconnect + display=swap
+       paints instantly with fallback glyphs and swaps when fonts arrive. */
     @font-face {
         font-family: 'Material Symbols Rounded';
         font-style: normal;
@@ -622,11 +701,293 @@ st.markdown("""
             padding: 2px 3px !important;
         }
     }
+
+    /* =================================================================
+       PREMIUM POLISH LAYER
+       =================================================================
+       Same dark-navy + gold identity, but with the "expensive" cues that were
+       missing: a real elevation hierarchy (three card tiers instead of one flat
+       shadow), a barely-there ambient aurora behind the content, hairline
+       gradient borders, and motion that settles instead of bouncing.
+
+       This block is intentionally LAST in the stylesheet so it refines the rules
+       above rather than fighting them.
+       ================================================================= */
+
+    :root {
+        --vyas-gold-1: #fff2cc;
+        --vyas-gold-2: #f0c05a;
+        --vyas-gold-3: #d49429;
+        --vyas-ink-1: #0b1220;
+        --vyas-ink-2: #0e1a2f;
+        --vyas-line: rgba(229, 169, 60, 0.22);
+        /* One easing for the whole app: fast out, soft settle. Bouncing reads
+           as cheap; this reads as deliberate. */
+        --vyas-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Ambient aurora — two very soft gold/indigo pools behind everything.
+       opacity is kept low so text contrast is untouched; it only stops the
+       background from reading as a flat black rectangle. */
+    .stApp::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        background:
+            radial-gradient(60rem 40rem at 12% -5%, rgba(229, 169, 60, 0.10), transparent 60%),
+            radial-gradient(50rem 34rem at 100% 0%, rgba(56, 92, 178, 0.14), transparent 62%),
+            radial-gradient(46rem 40rem at 50% 115%, rgba(229, 169, 60, 0.06), transparent 65%);
+    }
+
+    /* --- Elevation tiers ---------------------------------------------------
+       Flat cards everywhere is the single biggest reason the old UI read as
+       "boring". Three tiers give the eye somewhere to go. */
+    .glass-card {
+        position: relative;
+        background:
+            linear-gradient(180deg, rgba(17, 27, 48, 0.94) 0%, rgba(9, 15, 30, 0.96) 100%);
+        border: 1px solid var(--vyas-line);
+        border-radius: 16px;
+        padding: 22px 26px;
+        margin-bottom: 18px;
+        box-shadow:
+            0 1px 0 rgba(255, 255, 255, 0.04) inset,
+            0 18px 40px -18px rgba(0, 0, 0, 0.9),
+            0 2px 6px rgba(0, 0, 0, 0.45);
+        transition: transform 0.4s var(--vyas-ease),
+                    box-shadow 0.4s var(--vyas-ease),
+                    border-color 0.4s var(--vyas-ease);
+    }
+    /* Hairline gradient top edge — the "polished metal" cue. */
+    .glass-card::after {
+        content: "";
+        position: absolute;
+        top: 0; left: 14px; right: 14px;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(240, 192, 90, 0.55), transparent);
+        opacity: 0.7;
+        pointer-events: none;
+    }
+    .glass-card:hover {
+        border-color: rgba(229, 169, 60, 0.45);
+        box-shadow:
+            0 1px 0 rgba(255, 255, 255, 0.06) inset,
+            0 26px 60px -20px rgba(0, 0, 0, 0.95),
+            0 0 0 1px rgba(229, 169, 60, 0.10),
+            0 0 34px -6px rgba(229, 169, 60, 0.22);
+        transform: translateY(-3px);
+    }
+
+    /* --- Section titles ----------------------------------------------------
+       Gold rule + a soft leading glow so headings anchor the page. */
+    .section-title {
+        font-size: 1.32rem;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        line-height: 1.45;
+        padding: 2px 0 12px 0;
+        margin-top: 14px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid rgba(229, 169, 60, 0.18);
+        background-image: linear-gradient(90deg, rgba(240, 192, 90, 0.9), rgba(240, 192, 90, 0.25) 45%, transparent 75%);
+        background-repeat: no-repeat;
+        background-size: 100% 1px;
+        background-position: 0 100%;
+    }
+
+    /* --- Lazy section strips ------------------------------------------------
+       These replaced st.tabs. They are now the primary navigation, so they get
+       the tab-strip treatment: a recessed track with a raised, lit "seal" for
+       the active section. */
+    div[data-testid="stRadio"] > div[role="radiogroup"] {
+        flex-wrap: wrap;
+        gap: 6px;
+        background:
+            linear-gradient(180deg, rgba(6, 9, 16, 0.62) 0%, rgba(10, 16, 30, 0.72) 100%);
+        padding: 7px;
+        border-radius: 14px;
+        border: 1px solid rgba(229, 169, 60, 0.16);
+        box-shadow: 0 6px 18px -10px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+        margin-bottom: 16px;
+    }
+    div[data-testid="stRadio"] label {
+        position: relative;
+        background: transparent !important;
+        border: 1px solid transparent !important;
+        border-radius: 10px !important;
+        padding: 9px 15px !important;
+        color: #9aa6b8 !important;
+        font-weight: 500 !important;
+        font-size: 0.88rem !important;
+        transition: color 0.25s var(--vyas-ease),
+                    background 0.25s var(--vyas-ease),
+                    border-color 0.25s var(--vyas-ease),
+                    transform 0.25s var(--vyas-ease) !important;
+        cursor: pointer !important;
+    }
+    div[data-testid="stRadio"] label:hover {
+        color: #f4e6bf !important;
+        background: rgba(229, 169, 60, 0.09) !important;
+        border-color: rgba(229, 169, 60, 0.28) !important;
+        transform: translateY(-1px);
+    }
+    div[data-testid="stRadio"] label[data-checked="true"] {
+        background:
+            linear-gradient(135deg, rgba(229, 169, 60, 0.26) 0%, rgba(16, 26, 48, 0.95) 100%) !important;
+        border: 1px solid rgba(240, 192, 90, 0.62) !important;
+        color: #fff2cc !important;
+        font-weight: 700 !important;
+        box-shadow:
+            0 8px 22px -8px rgba(240, 192, 90, 0.5),
+            0 1px 0 rgba(255, 255, 255, 0.10) inset !important;
+    }
+
+    /* --- Prediction cards --------------------------------------------------- */
+    .predict-card {
+        background:
+            linear-gradient(180deg, rgba(17, 27, 48, 0.9) 0%, rgba(11, 18, 34, 0.95) 100%);
+        border-left: 4px solid var(--vyas-gold-2);
+        border-top: 1px solid rgba(240, 192, 90, 0.16);
+        border-right: 1px solid rgba(240, 192, 90, 0.16);
+        border-bottom: 1px solid rgba(240, 192, 90, 0.16);
+        border-radius: 12px;
+        padding: 18px 22px;
+        margin-bottom: 14px;
+        box-shadow: 0 14px 32px -18px rgba(0, 0, 0, 0.9);
+        transition: transform 0.35s var(--vyas-ease),
+                    box-shadow 0.35s var(--vyas-ease),
+                    border-left-color 0.35s var(--vyas-ease);
+    }
+    .predict-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 22px 44px -20px rgba(0, 0, 0, 0.95), 0 0 26px -10px rgba(240, 192, 90, 0.35);
+        border-left-color: #ffd97d;
+    }
+    .predict-header {
+        font-size: 1.12rem;
+        font-weight: 700;
+        color: #f0c05a;
+        letter-spacing: 0.2px;
+        margin-bottom: 9px;
+    }
+
+    /* --- Kundli chart frame -------------------------------------------------- */
+    .kundli-container {
+        background:
+            radial-gradient(circle at 50% 42%, rgba(24, 38, 70, 0.72) 0%, rgba(6, 10, 20, 0.95) 100%);
+        border: 1px solid rgba(240, 192, 90, 0.30);
+        border-radius: 18px;
+        box-shadow:
+            0 22px 50px -22px rgba(0, 0, 0, 0.95),
+            inset 0 0 34px rgba(240, 192, 90, 0.07);
+        transition: transform 0.45s var(--vyas-ease), box-shadow 0.45s var(--vyas-ease);
+    }
+    .kundli-container:hover {
+        transform: scale(1.012);
+        box-shadow:
+            0 30px 64px -24px rgba(0, 0, 0, 1),
+            0 0 40px -12px rgba(240, 192, 90, 0.28),
+            inset 0 0 40px rgba(240, 192, 90, 0.10);
+    }
+
+    /* --- Primary CTA -------------------------------------------------------- */
+    div.stButton > button[kind="primary"],
+    div.stButton > button,
+    section[data-testid="stSidebar"] div.stButton > button {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 217, 125, 0.85) !important;
+        box-shadow:
+            0 10px 26px -12px rgba(212, 148, 41, 0.85),
+            0 1px 0 rgba(255, 255, 255, 0.35) inset !important;
+        transition: transform 0.28s var(--vyas-ease),
+                    box-shadow 0.28s var(--vyas-ease),
+                    background 0.28s var(--vyas-ease),
+                    letter-spacing 0.28s var(--vyas-ease) !important;
+    }
+    div.stButton > button:hover,
+    section[data-testid="stSidebar"] div.stButton > button:hover {
+        transform: translateY(-2px) !important;
+        letter-spacing: 0.6px !important;
+        box-shadow:
+            0 18px 38px -14px rgba(247, 213, 132, 0.75),
+            0 1px 0 rgba(255, 255, 255, 0.5) inset !important;
+    }
+    div.stButton > button:active,
+    section[data-testid="stSidebar"] div.stButton > button:active {
+        transform: translateY(0) scale(0.985) !important;
+    }
+
+    /* --- Expanders ---------------------------------------------------------- */
+    [data-testid="stExpander"] details {
+        border: 1px solid rgba(240, 192, 90, 0.18) !important;
+        border-radius: 12px !important;
+        background: linear-gradient(180deg, rgba(14, 23, 47, 0.72) 0%, rgba(9, 15, 30, 0.85) 100%);
+        box-shadow: 0 10px 26px -18px rgba(0, 0, 0, 0.9);
+        transition: border-color 0.3s var(--vyas-ease), box-shadow 0.3s var(--vyas-ease);
+        margin-bottom: 8px;
+    }
+    [data-testid="stExpander"] details:hover {
+        border-color: rgba(240, 192, 90, 0.34) !important;
+    }
+    .streamlit-expanderHeader,
+    [data-testid="stExpander"] summary {
+        padding: 12px 14px !important;
+        transition: background 0.25s var(--vyas-ease), color 0.25s var(--vyas-ease);
+    }
+    [data-testid="stExpander"] summary:hover {
+        background: rgba(240, 192, 90, 0.06) !important;
+    }
+
+    /* --- Dataframes: give tables the same bordered-panel treatment ---------- */
+    [data-testid="stDataFrame"] {
+        border: 1px solid rgba(229, 169, 60, 0.16);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 12px 30px -20px rgba(0, 0, 0, 0.9);
+    }
+
+    /* --- Entry motion: one soft rise on newly rendered sections ------------- */
+    @keyframes vyasRise {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: none; }
+    }
+    .glass-card, .predict-card, .section-title, .kundli-container {
+        animation: vyasRise 0.5s var(--vyas-ease) both;
+    }
+
+    /* --- Respect reduced motion -------------------------------------------- */
+    @media (prefers-reduced-motion: reduce) {
+        .glass-card, .predict-card, .section-title, .kundli-container {
+            animation: none !important;
+        }
+        .glass-card, .predict-card, .kundli-container,
+        div[data-testid="stRadio"] label,
+        div.stButton > button {
+            transition: none !important;
+        }
+    }
+
+    /* --- Premium polish on small screens ----------------------------------- */
+    @media (max-width: 768px) {
+        .glass-card { padding: 14px 15px !important; border-radius: 14px !important; }
+        .section-title { font-size: 1.1rem !important; }
+        div[data-testid="stRadio"] > div[role="radiogroup"] {
+            border-radius: 12px;
+            gap: 5px;
+        }
+        .stApp::before { opacity: 0.6; }  /* cheaper compositing on phones */
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# Master Header with Interactive 60fps Cosmic Particle Canvas
-st.components.v1.html("""
+# Master Header with Interactive Cosmic Particle Canvas.
+# NOTE: st.components.v1.html was deprecated (removal after 2026-06-01); the
+# sanctioned replacement is st.iframe, which accepts a raw HTML string and, like
+# components.html, renders it in a sandboxed iframe that still executes <script>.
+st.iframe("""
 <!DOCTYPE html>
 <html>
 <head>
@@ -701,6 +1062,10 @@ st.components.v1.html("""
             height = canvas.height = window.innerHeight;
         });
 
+        // Honour reduced-motion: skip the animation loop entirely.
+        const reduceMotion = window.matchMedia &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
         const stars = [];
         for (let i = 0; i < 45; i++) {
             stars.push({
@@ -714,7 +1079,28 @@ st.components.v1.html("""
             });
         }
 
-        function animate() {
+        // shadowBlur is a very expensive canvas op; precomputing one glow
+        // sprite and drawing it 45x is orders of magnitude cheaper than
+        // setting shadowBlur per star per frame at 60fps.
+        const glow = document.createElement('canvas');
+        glow.width = glow.height = 16;
+        const gctx = glow.getContext('2d');
+        const grad = gctx.createRadialGradient(8, 8, 0, 8, 8, 8);
+        grad.addColorStop(0, 'rgba(240, 192, 90, 1)');
+        grad.addColorStop(0.4, 'rgba(240, 192, 90, 0.45)');
+        grad.addColorStop(1, 'rgba(240, 192, 90, 0)');
+        gctx.fillStyle = grad;
+        gctx.fillRect(0, 0, 16, 16);
+
+        let running = true;
+        let last = 0;
+        const FRAME_MS = 1000 / 30;  // 30fps is visually identical for slow drift
+
+        function draw(t) {
+            if (!running) return;
+            if (t - last < FRAME_MS) { requestAnimationFrame(draw); return; }
+            last = t;
+
             ctx.clearRect(0, 0, width, height);
             stars.forEach(s => {
                 s.alpha += s.speed;
@@ -726,16 +1112,45 @@ st.components.v1.html("""
                 if (s.y < 0) s.y = height;
                 if (s.y > height) s.y = 0;
 
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(240, 192, 90, ' + Math.abs(s.alpha) + ')';
-                ctx.shadowBlur = 6;
-                ctx.shadowColor = '#f0c05a';
-                ctx.fill();
+                const size = s.radius * 4;
+                ctx.globalAlpha = Math.abs(s.alpha) * 0.75;
+                ctx.drawImage(glow, s.x - size / 2, s.y - size / 2, size, size);
             });
-            requestAnimationFrame(animate);
+            ctx.globalAlpha = 1;
+            requestAnimationFrame(draw);
         }
-        animate();
+
+        if (reduceMotion) {
+            ctx.clearRect(0, 0, width, height);
+            stars.forEach(s => {
+                const size = s.radius * 4;
+                ctx.globalAlpha = Math.abs(s.alpha) * 0.75;
+                ctx.drawImage(glow, s.x - size / 2, s.y - size / 2, size, size);
+            });
+            ctx.globalAlpha = 1;
+        } else {
+            // Stop burning CPU when the tab is hidden or the banner scrolls away.
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    running = false;
+                } else if (!running) {
+                    running = true;
+                    requestAnimationFrame(draw);
+                }
+            });
+            if ('IntersectionObserver' in window) {
+                new IntersectionObserver(entries => {
+                    const visible = entries[0].isIntersecting;
+                    if (visible && !running) {
+                        running = true;
+                        requestAnimationFrame(draw);
+                    } else if (!visible) {
+                        running = false;
+                    }
+                }, { threshold: 0 }).observe(canvas);
+            }
+            requestAnimationFrame(draw);
+        }
     </script>
 </body>
 </html>
@@ -756,7 +1171,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     
     # ---------------- MOBILE 1-CLICK PWA APP INSTALLATION (NATIVE PROMPT) ----------------
-    st.components.v1.html("""
+    st.iframe("""
     <div id="pwa-install-container" style="display: none; background: linear-gradient(135deg, rgba(37, 99, 235, 0.25) 0%, rgba(14, 23, 47, 0.95) 100%);
                 border: 1px solid rgba(96, 165, 250, 0.5); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; text-align: center;">
         <div style="font-size: 0.9rem; font-weight: 800; color: #93c5fd; font-family: sans-serif;">📲 VYAS ASTRA ऐप इंस्टॉल करें</div>
@@ -1568,12 +1983,13 @@ if st.session_state.get('data_generated'):
                 </div>
                 """, unsafe_allow_html=True)
 
-            tab_ch1, tab_ch2, tab_ch3, tab_ch4 = st.tabs([
-                "☀️ दिन का चौघड़िया", "🌙 रात्रि का चौघड़िया", 
-                "🪐 24 कालहोरा चक्र (Planetary Horas)", 
-                "🌟 शास्त्रोक्त शुभ-अशुभ मुहूर्त (Drik Muhurtas)"
-            ])
-            with tab_ch1:
+            _lz_tab_ch = lazy_sections([
+                "☀️ दिन का चौघड़िया",
+                "🌙 रात्रि का चौघड़िया",
+                "🪐 24 कालहोरा चक्र (Planetary Horas)",
+                "🌟 शास्त्रोक्त शुभ-अशुभ मुहूर्त (Drik Muhurtas)",
+            ], key="tab_ch")
+            if _lz_tab_ch[0]:
                 day_chs = daily_res.get('chaughadiya_day', [])
                 if day_chs:
                     st.markdown("""
@@ -1586,7 +2002,7 @@ if st.session_state.get('data_generated'):
                         </div>""" for c in day_chs
                     ]) + "</div>", unsafe_allow_html=True)
 
-            with tab_ch2:
+            if _lz_tab_ch[1]:
                 night_chs = daily_res.get('chaughadiya_night', [])
                 if night_chs:
                     st.markdown("""
@@ -1599,7 +2015,7 @@ if st.session_state.get('data_generated'):
                         </div>""" for c in night_chs
                     ]) + "</div>", unsafe_allow_html=True)
 
-            with tab_ch3:
+            if _lz_tab_ch[2]:
                 h_day = daily_res.get('horas_day', [])
                 h_night = daily_res.get('horas_night', [])
                 col_h1, col_h2 = st.columns(2)
@@ -1624,7 +2040,7 @@ if st.session_state.get('data_generated'):
                         } for h in h_night])
                         st.dataframe(h_ndf, use_container_width=True, hide_index=True)
 
-            with tab_ch4:
+            if _lz_tab_ch[3]:
                 col_m_shubh, col_m_ashubh = st.columns(2)
                 with col_m_shubh:
                     st.markdown("##### 🟢 शास्त्रोक्त शुभ मुहूर्त (Auspicious Timings)")
@@ -1825,14 +2241,14 @@ if st.session_state.get('data_generated'):
     # SUITE 1: 🌟 CHARTS & 16 VARGAS
     # =========================================================================
     if "कुण्डली" in selected_suite or "Charts" in selected_suite:
-        sub_tab1, sub_tab2, sub_tab3, sub_tab4 = st.tabs([
+        _lz_sub_tab = lazy_sections([
             "लग्न एवं नवमांश (D1 & D9 Charts)" if is_hi else "D1 & D9 Natal Charts",
             "षोडशवर्ग 16 चक्र (All 16 Vargas)" if is_hi else "All 16 Divisional Charts",
             "षष्ट्यंश देवता (D60 Shashtyamsha & Deities)" if is_hi else "D60 Shashtyamsha Deities",
-            "📜 प्रामाणिक शास्त्रीय सूत्र फलादेश (Classical Sutras)" if is_hi else "Classical Vedic Sutras"
-        ])
+            "📜 प्रामाणिक शास्त्रीय सूत्र फलादेश (Classical Sutras)" if is_hi else "Classical Vedic Sutras",
+        ], key="sub_tab")
 
-        with sub_tab1:
+        if _lz_sub_tab[0]:
             st.markdown(f'<div class="section-title">{"✨ वैदिक ग्रह स्थिति एवं जन्म कुण्डली" if is_hi else "✨ Vedic Planetary Positions & Natal Charts"}</div>', unsafe_allow_html=True)
             
             # Overview metric cards (Reference Style)
@@ -1911,7 +2327,7 @@ if st.session_state.get('data_generated'):
                     })
                 st.dataframe(pd.DataFrame(p_data), use_container_width=True, hide_index=True)
 
-        with sub_tab2:
+        if _lz_sub_tab[1]:
             st.markdown(f'<div class="section-title">{"षोडशवर्ग 16 कुण्डलियाँ (Shodashvarga 16 Divisional Charts)" if is_hi else "Shodashvarga 16 Divisional Charts"}</div>', unsafe_allow_html=True)
             varga_list = ["D9", "D10", "D60", "D2", "D3", "D4", "D7", "D12", "D16", "D20", "D24", "D27", "D30", "D40", "D45"]
             varga_sel = st.selectbox("जाँच हेतु वर्ग कुण्डली का चयन करें (Select Divisional Chart):", varga_list, index=0)
@@ -1972,7 +2388,7 @@ if st.session_state.get('data_generated'):
             </div>
             """, unsafe_allow_html=True)
 
-        with sub_tab3:
+        if _lz_sub_tab[2]:
             st.markdown(f'<div class="section-title">{"D60 षष्ट्यंश विश्लेषण एवं अधिष्ठाता देवता (Prarabdha Karma Alignment)" if is_hi else "D60 Shashtyamsha & Deities"}</div>', unsafe_allow_html=True)
             st.info("पाराशरी सिद्धांत: षष्ट्यंश कुण्डली में पूर्वजन्म संचित प्रारब्ध एवं कर्म संस्कारों का अंतिम निर्णय होता है। प्रत्येक 30 कला (0°30') पर विशिष्ट अधिष्ठाता देवता का आधिपत्य होता है।")
             d60_table = []
@@ -1987,7 +2403,7 @@ if st.session_state.get('data_generated'):
                 })
             st.dataframe(pd.DataFrame(d60_table), use_container_width=True, hide_index=True)
 
-        with sub_tab4:
+        if _lz_sub_tab[3]:
             st.markdown(f'<div class="section-title">{"🔮 प्रामाणिक वैदिक एवं नाड़ी सूत्र फलादेश" if is_hi else "Classical Vedic & Nadi Sutras"}</div>', unsafe_allow_html=True)
             
             # Evaluate from knowledge bank
@@ -2122,14 +2538,14 @@ if st.session_state.get('data_generated'):
         st.markdown(f"#### 📜 8 कूटों का विस्तृत परीक्षण एवं दोष परिहार सारणी")
         st.dataframe(pd.DataFrame(match_res["kootas"]), use_container_width=True, hide_index=True)
     elif "दशा" in selected_suite or "Dasha" in selected_suite:
-        d_tab1, d_tab2, d_tab3, d_tab4 = st.tabs([
+        _lz_d_tab = lazy_sections([
             "विंशोत्तरी 5-स्तरीय दशा (Vimshottari 5-Levels)" if is_hi else "Vimshottari 5-Levels",
             "योगिनी दशा चक्र (Yogini Dasha 36-Year)" if is_hi else "Yogini Dasha",
             "ताजिक वर्षफल एवं मुन्था (Tajik Varshphal)" if is_hi else "Tajik Varshphal",
-            "गोचर संचरण (Realtime Gochar Transits)" if is_hi else "Gochar Transits"
-        ])
+            "गोचर संचरण (Realtime Gochar Transits)" if is_hi else "Gochar Transits",
+        ], key="d_tab")
 
-        with d_tab1:
+        if _lz_d_tab[0]:
             st.markdown(f'<div class="section-title">{"विंशोत्तरी दशा: 5-स्तरीय सूक्ष्म समय कालक्रम" if is_hi else "Vimshottari 5-Fold Micro-Dasha"}</div>', unsafe_allow_html=True)
             cur_dasha = dasha_engine.get_running_dasha(datetime.now()) if hasattr(dasha_engine, 'get_running_dasha') else dasha_engine.get_dasha_at(datetime.now())
             st.markdown(f"""
@@ -2173,7 +2589,7 @@ if st.session_state.get('data_generated'):
                 })
             st.dataframe(pd.DataFrame(md_table), use_container_width=True, hide_index=True)
 
-        with d_tab2:
+        if _lz_d_tab[1]:
             st.markdown(f'<div class="section-title">{"योगिनी दशा: 36-वर्षीय जीवन चक्र एवं अन्तर्दशाएँ" if is_hi else "Yogini Dasha 36-Year Lifecycle"}</div>', unsafe_allow_html=True)
             y_cycles = forensic_predictor.compute_yogini_dasha(chart.planets["Moon"].longitude, birth["local"])
             y_table = []
@@ -2187,7 +2603,7 @@ if st.session_state.get('data_generated'):
                 })
             st.dataframe(pd.DataFrame(y_table), use_container_width=True, hide_index=True)
 
-        with d_tab3:
+        if _lz_d_tab[2]:
             st.markdown(f'<div class="section-title">{"ताजिक वर्षफल एवं मुन्था विचार (Annual Solar Return)" if is_hi else "Tajik Varshphal & Muntha"}</div>', unsafe_allow_html=True)
             col_v1, col_v2 = st.columns([1, 2])
             with col_v1:
@@ -2238,10 +2654,10 @@ if st.session_state.get('data_generated'):
                 })
             st.dataframe(pd.DataFrame(mudda_df), use_container_width=True, hide_index=True)
 
-        with d_tab4:
+        if _lz_d_tab[3]:
             st.markdown(f'<div class="section-title">{"तात्कालिक गोचर संचरण एवं शास्त्रीय वेध विश्लेषण" if is_hi else "Gochar Transits & Vedha Analysis"}</div>', unsafe_allow_html=True)
             if hasattr(vyas_gochar, "get_current_transit_positions"):
-                gochar_pos = vyas_gochar.get_current_transit_positions()
+                gochar_pos = _cached_transit_positions(datetime.now().strftime("%Y-%m-%d"))
             else:
                 pos_now = vyas_ephem.planet_positions(datetime.now(timezone.utc))
                 gochar_pos = {name: PlanetState(name=name, longitude=p.longitude, speed=p.speed) for name, p in pos_now.items()}
@@ -2263,7 +2679,7 @@ if st.session_state.get('data_generated'):
 
             st.markdown(f"#### {'फलदीपिका शास्त्रीय गोचर, तारा बल एवं वेध तालिका' if is_hi else 'Phaladeepika Transit, Tara & Vedha'}")
             try:
-                transit_rows = vyas_gochar.transits(datetime.now(), 5.5, chart.planets["Moon"].longitude, chart.ascendant_longitude, with_ingress=True)
+                transit_rows = _cached_gochar_transits(datetime.now().strftime("%Y-%m-%d"), 5.5, chart.planets["Moon"].longitude, chart.ascendant_longitude)
                 t_table = []
                 for tr in transit_rows:
                     t_table.append({
@@ -2285,16 +2701,16 @@ if st.session_state.get('data_generated'):
     # SUITE 3: ⚖️ ASHTAKAVARGA, SHADBALA & MAITRI
     # =========================================================================
     elif "अष्टकवर्ग" in selected_suite or "Ashtakavarga" in selected_suite:
-        b_tab1, b_tab2, b_tab3 = st.tabs([
+        _lz_b_tab = lazy_sections([
             "अष्टकवर्ग चक्र एवं शोधन (SAV & BAV)" if is_hi else "Ashtakavarga Matrix",
             "षड्बल एवं भावबल (Shadbala & Bhavabala)" if is_hi else "Shadbala & Bhavabala",
-            "भाव चलित एवं पञ्चधा मैत्री (Chalit & Maitri)" if is_hi else "Chalit & Maitri"
-        ])
+            "भाव चलित एवं पञ्चधा मैत्री (Chalit & Maitri)" if is_hi else "Chalit & Maitri",
+        ], key="b_tab")
 
         p_signs = {n: p.sign_index for n, p in chart.planets.items()}
         av_res = vyas_ashtaka.compute_ashtakavarga(p_signs, asc_sign_idx)
 
-        with b_tab1:
+        if _lz_b_tab[0]:
             st.markdown(f'<div class="section-title">{"समुदाय अष्टकवर्ग (SAV: 337 बिंदु) एवं शोधन" if is_hi else "Samudaya Ashtakavarga"}</div>', unsafe_allow_html=True)
             sav_pred = forensic_predictor.compute_ashtakavarga_predictions(av_res["sav"], asc_sign_idx)
             st.markdown(f"""
@@ -2315,7 +2731,7 @@ if st.session_state.get('data_generated'):
                 })
             st.dataframe(pd.DataFrame(sav_display), use_container_width=True, hide_index=True)
 
-        with b_tab2:
+        if _lz_b_tab[1]:
             st.markdown(f'<div class="section-title">{"षड्बल एवं भावबल विश्लेषण (Six-Fold Planetary Strengths)" if is_hi else "Shadbala Six-Fold Strengths"}</div>', unsafe_allow_html=True)
             # 2nd param is is_day_birth:bool (Sun in houses 1-6 = above horizon);
             # 3rd is paksha. The old call passed asc_sign_idx here.
@@ -2340,7 +2756,7 @@ if st.session_state.get('data_generated'):
                 })
             st.dataframe(pd.DataFrame(shad_table), use_container_width=True, hide_index=True)
 
-        with b_tab3:
+        if _lz_b_tab[2]:
             st.markdown(f'<div class="section-title">{"श्रीपति भाव चलित चक्र एवं पञ्चधा मैत्री" if is_hi else "Sripati Chalit Chart & Maitri"}</div>', unsafe_allow_html=True)
             pl_lons = {n: p.longitude for n, p in chart.planets.items()}
             mc_lon = kp_cusps[9].longitude
@@ -2394,15 +2810,15 @@ if st.session_state.get('data_generated'):
     # SUITE 4: 👑 KP, JAIMINI, NADI & CHAKRAS
     # =========================================================================
     elif "केपी" in selected_suite or "KP" in selected_suite:
-        k_tab1, k_tab2, k_tab3, k_tab4, k_tab5 = st.tabs([
+        _lz_k_tab = lazy_sections([
             "🎯 केपी सूक्ष्म प्रणाली (KP SSSSSL & Promises)" if is_hi else "KP SSSSSL & Promises",
             "👑 जैमिनी चर कारक (Jaimini Chara Karakas)" if is_hi else "Jaimini Karakas",
             "🧬 भृगु नन्दी नाड़ी (Nadi Combinations)" if is_hi else "Bhrigu Nandi Nadi",
             "☸️ वैदिक चक्र (Sudarshan, SBC, Kota & Navatara)" if is_hi else "Classical Chakras",
-            "📜 पंचांग एवं अवकहड़ा (Panchang & Avakhada)" if is_hi else "Panchang & Avakhada"
-        ])
+            "📜 पंचांग एवं अवकहड़ा (Panchang & Avakhada)" if is_hi else "Panchang & Avakhada",
+        ], key="k_tab")
 
-        with k_tab1:
+        if _lz_k_tab[0]:
             st.markdown(f'<div class="section-title">{"🎯 कृष्णमूर्ति पद्धति (KP System) • SSSSSL गणना, 4-Step कार्येश एवं जीवन प्रॉमिस" if is_hi else "Krishnamurti Paddhati (KP System) Master Engine"}</div>', unsafe_allow_html=True)
             
             # Precompute KP 4-fold significators and planet lords
@@ -2533,12 +2949,12 @@ if st.session_state.get('data_generated'):
             # --- SUB-SECTION 5: 4-FOLD SIGNIFICATORS (चतुर्विध कार्येश) ---
             st.markdown(f"#### {'📊 केपी 4-Step कार्येश तालिका (KP 4-Fold Significators Matrix)' if is_hi else 'KP 4-Fold Significators Matrix'}")
             
-            sig_tab_p, sig_tab_h = st.tabs([
+            _lz_sig_tab = lazy_sections([
                 "ग्रह अनुसार कार्येश (Planet-wise Significators)" if is_hi else "Planet-wise Significators",
-                "भाव अनुसार कार्येश (House-wise Significators)" if is_hi else "House-wise Significators"
-            ])
+                "भाव अनुसार कार्येश (House-wise Significators)" if is_hi else "House-wise Significators",
+            ], key="sig_tab")
             
-            with sig_tab_p:
+            if _lz_sig_tab[0]:
                 pl_sig_rows = []
                 for p_name in constants.PLANETS:
                     if p_name in planet_significators:
@@ -2555,7 +2971,7 @@ if st.session_state.get('data_generated'):
                         })
                 st.dataframe(pd.DataFrame(pl_sig_rows), use_container_width=True, hide_index=True)
 
-            with sig_tab_h:
+            if _lz_sig_tab[1]:
                 h_sig_rows = []
                 for h in range(1, 13):
                     hs = house_significators[h]
@@ -2588,7 +3004,7 @@ if st.session_state.get('data_generated'):
                         </p>
                         """, unsafe_allow_html=True)
 
-        with k_tab2:
+        if _lz_k_tab[1]:
             st.markdown(f'<div class="section-title">{"जैमिनी सप्त चर कारक एवं आत्मकारक" if is_hi else "Jaimini Chara Karakas"}</div>', unsafe_allow_html=True)
             j_karakas, ak_p, km_sign = vyas_jaimini.compute_chara_karakas(chart.planets)
             jk_table = []
@@ -2640,7 +3056,7 @@ if st.session_state.get('data_generated'):
                 })
             st.dataframe(pd.DataFrame(cd_table), use_container_width=True, hide_index=True)
 
-        with k_tab3:
+        if _lz_k_tab[2]:
             st.markdown(f'<div class="section-title">{"भृगु नन्दी नाड़ी: गहन जीवन फलादेश एवं ग्रह संयोजन" if is_hi else "Bhrigu Nandi Nadi"}</div>', unsafe_allow_html=True)
             
             # BNN Deep 4-Pillar Life Predictions
@@ -2684,7 +3100,7 @@ if st.session_state.get('data_generated'):
                 """, unsafe_allow_html=True)
 
 
-        with k_tab4:
+        if _lz_k_tab[3]:
             st.markdown(f'<div class="section-title">{"☸️ वैदिक चक्र अनुसंधान: सुदर्शन चक्र, कोटा, सर्वतोभद्र एवं 27 नवतारा" if is_hi else "Classical Vedic Chakras Engine"}</div>', unsafe_allow_html=True)
             
             pl_lons = {n: p.longitude for n, p in chart.planets.items()}
@@ -2693,14 +3109,14 @@ if st.session_state.get('data_generated'):
             kota_res = vyas_chakras.compute_kota_chakra(chart.planets['Moon'].longitude, chart.ascendant_longitude, pl_lons)
             navatara_items = vyas_chakras.compute_navatara_chakra(chart.planets['Moon'].longitude, pl_lons)
 
-            ch_sub1, ch_sub2, ch_sub3, ch_sub4 = st.tabs([
+            _lz_ch_sub = lazy_sections([
                 "🌟 सुदर्शन चक्र (Sudarshan Tri-Wheel)" if is_hi else "Sudarshan Chakra",
                 "🛡️ कोटा चक्र (Kota Fortress Chart)" if is_hi else "Kota Chakra",
                 "🔮 सर्वतोभद्र चक्र (Sarvatobhadra Chakra)" if is_hi else "Sarvatobhadra Chakra",
-                "✨ 27 नवतारा चक्र (27 Navatara System)" if is_hi else "27 Navatara Chakra"
-            ])
+                "✨ 27 नवतारा चक्र (27 Navatara System)" if is_hi else "27 Navatara Chakra",
+            ], key="ch_sub")
 
-            with ch_sub1:
+            if _lz_ch_sub[0]:
                 st.markdown(f"""
                 <div class="glass-card" style="border-left: 4px solid #f59e0b; margin-bottom: 16px;">
                     <div style="font-size: 1.15rem; font-weight: bold; color: #fbbf24;">
@@ -2738,7 +3154,7 @@ if st.session_state.get('data_generated'):
                         </div>
                         """, unsafe_allow_html=True)
 
-            with ch_sub2:
+            if _lz_ch_sub[1]:
                 st.markdown(f"""
                 <div class="glass-card" style="border-left: 4px solid {'#ef4444' if kota_res.is_fort_under_siege else '#22c55e'}; margin-bottom: 16px;">
                     <div style="font-size: 1.15rem; font-weight: bold; color: {'#f87171' if kota_res.is_fort_under_siege else '#4ade80'};">
@@ -2764,7 +3180,7 @@ if st.session_state.get('data_generated'):
                     })
                 st.dataframe(pd.DataFrame(kota_table), use_container_width=True, hide_index=True)
 
-            with ch_sub3:
+            if _lz_ch_sub[2]:
                 st.markdown(f"""
                 <div class="glass-card" style="border-left: 4px solid #8b5cf6; margin-bottom: 16px;">
                     <div style="font-size: 1.15rem; font-weight: bold; color: #a78bfa;">
@@ -2787,7 +3203,7 @@ if st.session_state.get('data_generated'):
                     })
                 st.dataframe(pd.DataFrame(sbc_table), use_container_width=True, hide_index=True)
 
-            with ch_sub4:
+            if _lz_ch_sub[3]:
                 st.markdown(f"""
                 <div class="glass-card" style="border-left: 4px solid #06b6d4; margin-bottom: 16px;">
                     <div style="font-size: 1.15rem; font-weight: bold; color: #22d3ee;">
@@ -2811,9 +3227,9 @@ if st.session_state.get('data_generated'):
                     })
                 st.dataframe(pd.DataFrame(nt_table), use_container_width=True, hide_index=True)
 
-        with k_tab5:
+        if _lz_k_tab[4]:
             st.markdown(f'<div class="section-title">{"दैनिक पंचांग, अवकहड़ा चक्र एवं शुद्ध स्थानीय मुहूर्त" if is_hi else "Panchang, Avakhada & Local Muhurta"}</div>', unsafe_allow_html=True)
-            panch_obj = vyas_panchang.compute(birth['local'], birth['lat'], birth['lon'], birth['tz'], chart.ascendant_longitude)
+            panch_obj = _cached_panchang(birth['local'], birth['lat'], birth['lon'], birth['tz'], chart.ascendant_longitude)
             col_p1, col_p2, col_p3 = st.columns([1.1, 1.1, 1.2])
             with col_p1:
                 st.markdown(f"""
@@ -2893,7 +3309,7 @@ if st.session_state.get('data_generated'):
         bhavas = forensic_predictor.analyze_all_12_bhavas(chart, dignities)
         overall_forecast = forensic_predictor.compute_overall_life_forecast(chart, dignities, bhavas, sav, vargas_matrix)
 
-        p_tab0, p_tab1, p_tab2, p_tab3, p_tab4, p_tab5, p_tab6, p_tab7, p_tab8 = st.tabs([
+        _lz_p_tab = lazy_sections([
             "🌟 समग्र जीवन फलादेश (Senior Master Forecast)" if is_hi else "Master Overall Life Forecast",
             "द्वादश भाव विस्तृत फलित (12 Bhavas)" if is_hi else "12 Bhavas In-Depth",
             "🏛️ भावत् भावम् सूक्ष्म विश्लेषण (Bhavat Bhavam)" if is_hi else "Bhavat Bhavam Matrix",
@@ -2902,10 +3318,10 @@ if st.session_state.get('data_generated'):
             "शनि साढ़े साती एवं ढैय्या (Sade Sati Report)" if is_hi else "Sade Sati Report",
             "कालसर्प दोष परीक्षण (Kalsarp Dosha)" if is_hi else "Kalsarp Dosha",
             "लाल किताब फलित एवं उपाय (Lal Kitab & Upay)" if is_hi else "Lal Kitab & Remedies",
-            "शास्त्रीय सूत्र डेटाबैंक (Classical Sutras)" if is_hi else "Classical Sutras"
-        ])
+            "शास्त्रीय सूत्र डेटाबैंक (Classical Sutras)" if is_hi else "Classical Sutras",
+        ], key="p_tab")
 
-        with p_tab0:
+        if _lz_p_tab[0]:
             st.markdown(f'<div class="section-title">{"🌟 महर्षि पाराशर व कल्याणवर्मा परंपरा: समग्र जीवन महा-फलादेश (13 जीवन अध्याय)" if is_hi else "Comprehensive Classical Life Horoscope Synthesis"}</div>', unsafe_allow_html=True)
             st.markdown("""
             <div class="glass-card" style="border-left: 4px solid #f0c05a; margin-bottom: 20px;">
@@ -2916,21 +3332,21 @@ if st.session_state.get('data_generated'):
             </div>
             """, unsafe_allow_html=True)
             
-            for ch in overall_forecast:
-                ch_num = ch.get('chapter_num', 1)
-                ch_title = ch.get('title_hi', ch.get('title', 'जीवन अध्याय'))
-                ch_icon = ch.get('icon', '📜')
+            for _chap in overall_forecast:
+                ch_num = _chap.get('chapter_num', 1)
+                ch_title = _chap.get('title_hi', _chap.get('title', 'जीवन अध्याय'))
+                ch_icon = _chap.get('icon', '📜')
                 with st.expander(f"{ch_icon} अध्याय {ch_num}: {ch_title}", expanded=(ch_num in [1, 4, 5, 8])):
                     st.markdown(f"""
                     <div class="predict-card" style="border-left-color: #ffd97d;">
                         <div class="predict-header" style="font-size: 1.15rem; color: #ffd97d;">{ch_icon} {ch_title}</div>
                         <p style="font-size: 1.05rem; line-height: 1.75; color: #f8fafc; text-align: justify; margin-top: 10px;">
-                            {ch.get('content_hi', '')}
+                            {_chap.get('content_hi', '')}
                         </p>
                     </div>
                     """, unsafe_allow_html=True)
 
-        with p_tab1:
+        if _lz_p_tab[0]:
             st.markdown(f'<div class="section-title">{"द्वादश भाव गहन ज्योतिषीय फलित (Bhava-by-Bhava Analysis)" if is_hi else "12 Houses Forensic Interpretation"}</div>', unsafe_allow_html=True)
             for bh in bhavas:
                 with st.expander(f"🏛️ भाव {bh.bhava_num}: {bh.sign_hi} राशि (स्वामी: {bh.lord_hi}) — [{bh.strength_type}]", expanded=(bh.bhava_num in [1, 7, 10])):
@@ -2945,7 +3361,7 @@ if st.session_state.get('data_generated'):
                     </div>
                     """, unsafe_allow_html=True)
 
-        with p_tab2:
+        if _lz_p_tab[1]:
             st.markdown(f'<div class="section-title">{"🏛️ भावत् भावम् सूक्ष्म सिद्धांत एवं फलित (Bhavat Bhavam Recursive Matrix)" if is_hi else "Bhavat Bhavam Matrix"}</div>', unsafe_allow_html=True)
             st.markdown("""
             <div class="glass-card" style="border-left: 4px solid #f0c05a; margin-bottom: 20px;">
@@ -2989,7 +3405,7 @@ if st.session_state.get('data_generated'):
                         </p>
                         """, unsafe_allow_html=True)
 
-        with p_tab3:
+        if _lz_p_tab[2]:
             st.markdown(f'<div class="section-title">{"ग्रह अवस्था, अस्त/वक्री एवं दृष्टि बल विश्लेषण" if is_hi else "Planetary Dignities & States"}</div>', unsafe_allow_html=True)
             dig_rows = []
             for p_name, dig in dignities.items():
@@ -3005,7 +3421,7 @@ if st.session_state.get('data_generated'):
                 })
             st.dataframe(pd.DataFrame(dig_rows), use_container_width=True, hide_index=True)
 
-        with p_tab4:
+        if _lz_p_tab[3]:
             st.markdown(f'<div class="section-title">{"मंगल दोष सम्पूर्ण शास्त्रीय विवेचन एवं परिहार" if is_hi else "Mangal Dosha Assessment"}</div>', unsafe_allow_html=True)
             m_dosha = forensic_predictor.compute_comprehensive_mangal_dosha(chart)
             st.markdown(f"""
@@ -3018,7 +3434,7 @@ if st.session_state.get('data_generated'):
             for r in m_dosha['remedies_hi']:
                 st.markdown(f"• {r}")
 
-        with p_tab5:
+        if _lz_p_tab[4]:
             st.markdown(f'<div class="section-title">{"शनि साढ़े साती एवं ढैय्या 46-चरणीय जीवन चक्र" if is_hi else "Shani Sade Sati Full Report"}</div>', unsafe_allow_html=True)
             sade_phases = forensic_predictor.compute_comprehensive_sade_sati(birth["local"], chart.planets["Moon"].longitude)
             s_table = []
@@ -3033,7 +3449,7 @@ if st.session_state.get('data_generated'):
                 })
             st.dataframe(pd.DataFrame(s_table), use_container_width=True, hide_index=True)
 
-        with p_tab6:
+        if _lz_p_tab[5]:
             st.markdown(f'<div class="section-title">{"कालसर्प दोष 12 भेदों की सूक्ष्म जाँच" if is_hi else "Kalsarp Dosha Analysis"}</div>', unsafe_allow_html=True)
             k_dosha = forensic_predictor.compute_comprehensive_kalsarp(chart)
             st.markdown(f"""
@@ -3043,7 +3459,7 @@ if st.session_state.get('data_generated'):
             </div>
             """, unsafe_allow_html=True)
 
-        with p_tab7:
+        if _lz_p_tab[6]:
             st.markdown(f'<div class="section-title">{"लाल किताब भाव फलकथन एवं अचूक उपाय" if is_hi else "Lal Kitab Predictions & Remedies"}</div>', unsafe_allow_html=True)
             lk_items = forensic_predictor.compute_lal_kitab_predictions_and_upay(chart)
             for item in lk_items:
@@ -3053,7 +3469,7 @@ if st.session_state.get('data_generated'):
                     for u in item["upay_hi"]:
                         st.markdown(f"✓ {u}")
 
-        with p_tab8:
+        if _lz_p_tab[7]:
             total_kb_all = len(vyas_knowledge_engine.load_knowledge_bank())
             st.markdown(f'<div class="section-title">{"🔮 " + f"{total_kb_all:,}+ AI ज्योतिष ज्ञानकोष एवं शास्त्रीय सूत्र महा-डेटाबैंक" if is_hi else f"{total_kb_all:,}+ Classical Vedic & Nadi Sutras Knowledge Bank"}</div>', unsafe_allow_html=True)
             
@@ -3385,4 +3801,27 @@ if st.session_state.get('data_generated'):
         if st.button("आचार्य व्यास जी से परामर्श करें (Live Consultation)", key="open_acharya_bot_sidebar_btn", use_container_width=True):
             st.session_state["show_acharya_dialog"] = True
             st.rerun()
+
+# ---------------- SCRIPT TIMING (opt-in) ----------------
+# Set VYAS_SHOW_TIMING=1 (env var or secret) to see how long this rerun took.
+# Useful for verifying that cached engines and lazy sections really are skipping
+# work: an unchanged rerun should be well under a second.
+import time as _time_mod
+
+def _timing_enabled() -> bool:
+    raw = os.environ.get("VYAS_SHOW_TIMING", "")
+    if str(raw).strip() not in ("", "0", "false", "False"):
+        return True
+    try:
+        return bool(st.secrets.get("VYAS_SHOW_TIMING", False))
+    except Exception:
+        return False
+
+if _timing_enabled():
+    if "_vyas_script_start" in st.session_state:
+        _elapsed = _time_mod.perf_counter() - st.session_state["_vyas_script_start"]
+        with st.sidebar:
+            st.caption(f"⏱️ Rerun: {_elapsed * 1000:.0f} ms")
+
+st.session_state["_vyas_script_start"] = _time_mod.perf_counter()
 
