@@ -23,5 +23,11 @@ vyas_users.db
 
 
 
-packages.txt
+# packages.txt intentionally NOT ignored: Streamlit Cloud needs apt to install
+# Chromium (the only reliable HTML->PDF engine on that platform). The file
+# contains a single stable package name (`chromium`) which is present in
+# every Debian release Streamlit Cloud has shipped. Earlier crashes came
+# from exotic names (chromium-driver, chromium-browser) -- do not re-add them.
+"old">
+# (placeholder)
 
