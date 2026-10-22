@@ -184,7 +184,13 @@ def lazy_sections(labels, key: str):
     )
     return [i == active for i in range(len(labels))]
 
-st.set_page_config(page_title="VYAS • Vedic Yield Astrology Systems", page_icon="☸️", layout="wide", initial_sidebar_state="expanded")
+_VYAS_LOGO_ICON = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logo_icon.png")
+st.set_page_config(
+    page_title="VYAS • Vedic Yield Astrology Systems",
+    page_icon=_VYAS_LOGO_ICON if os.path.exists(_VYAS_LOGO_ICON) else "☸️",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
 
 # ---------------- CACHED HEAVY ENGINES ----------------
@@ -1531,10 +1537,17 @@ if not is_logged_in_now:
 
 # Sidebar Native Setup
 with st.sidebar:
-    # Use transparent PNG logo with cosmic gold halo
-    logo_file = "logo.png" if os.path.exists(os.path.join(os.path.dirname(__file__), "logo.png")) else "logo.jpg"
+    # Use the compact logo variant (the sidebar renders it at max 110px, so the
+    # 1 MB original only bloats every rerun's HTML payload).
+    _here = os.path.dirname(__file__)
+    if os.path.exists(os.path.join(_here, "logo_icon.png")):
+        logo_file = "logo_icon.png"
+    elif os.path.exists(os.path.join(_here, "logo.png")):
+        logo_file = "logo.png"
+    else:
+        logo_file = "logo.jpg"
     try:
-        _logo_b64 = base64.b64encode(open(os.path.join(os.path.dirname(__file__), logo_file), 'rb').read()).decode()
+        _logo_b64 = base64.b64encode(open(os.path.join(_here, logo_file), 'rb').read()).decode()
     except Exception:
         _logo_b64 = ""
     st.markdown(f"""
@@ -1770,6 +1783,18 @@ with st.sidebar:
                 4. जिस Gmail से लॉगिन करना है उसे <b>Audience → Test users</b> में जोड़ें (या app Publish करें)।
             </div>
             """, unsafe_allow_html=True)
+
+            # ---- Account storage (persistence) ----
+            with st.expander("🗄️ Account Storage (खाते कहाँ सेव हैं)", expanded=False):
+                if auth_vault.BACKEND == "postgres":
+                    st.success("Neon Postgres — खाते redeploy/reboot के बाद भी सुरक्षित रहेंगे।")
+                else:
+                    st.warning(
+                        "Local SQLite — Streamlit Cloud redeploy पर खाते मिट सकते हैं। "
+                        "Settings → Secrets में DATABASE_URL जोड़ें।"
+                    )
+                if auth_vault.LAST_DB_ERROR:
+                    st.caption(f"Last DB error: {auth_vault.LAST_DB_ERROR}")
 
             # ---- OAuth diagnostics ----
             with st.expander("🔍 OAuth Debug (redirect URI जाँचें)", expanded=False):
