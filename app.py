@@ -1288,6 +1288,37 @@ with st.sidebar:
     <hr style="border-color: rgba(229, 169, 60, 0.16); margin: 10px 0;">
     """, unsafe_allow_html=True)
     
+    # ---------------- USER AUTH & 30-DAY VIP TRIAL VAULT ----------------
+    if "user" not in st.session_state:
+        # Restore session ONLY from the server-side active_user_id (set on a
+        # real OAuth / verified login). The old `?uid=` URL-param login let
+        # anyone become any user via a crafted link — removed.
+        restored_user = None
+        try:
+            if hasattr(auth_vault, "get_last_active_user"):
+                restored_user = auth_vault.get_last_active_user()
+        except Exception:
+            restored_user = None
+
+        # A stale `uid` param must never log anyone in; scrub it from the URL.
+        if st.query_params.get("uid"):
+            st.query_params.clear()
+
+        if restored_user:
+            st.session_state["user"] = restored_user
+        else:
+            st.session_state["user"] = {
+                "id": 1,
+                "name": "नया जातक (Seeker)",
+                "email": "seeker@vyasastro.com",
+                "tier": "VIP_TRIAL",
+                "days_left": 30,
+                "is_vip": True
+            }
+
+    u = st.session_state["user"]
+    is_logged_in_now = (u.get("email") != "seeker@vyasastro.com")
+    
     # ---------------- MOBILE 1-CLICK PWA APP INSTALLATION (NATIVE PROMPT) ----------------
     if is_logged_in_now:
         st.iframe("""
@@ -1330,36 +1361,6 @@ with st.sidebar:
         </script>
         """, height=125)
     
-    # ---------------- USER AUTH & 30-DAY VIP TRIAL VAULT ----------------
-    if "user" not in st.session_state:
-        # Restore session ONLY from the server-side active_user_id (set on a
-        # real OAuth / verified login). The old `?uid=` URL-param login let
-        # anyone become any user via a crafted link — removed.
-        restored_user = None
-        try:
-            if hasattr(auth_vault, "get_last_active_user"):
-                restored_user = auth_vault.get_last_active_user()
-        except Exception:
-            restored_user = None
-
-        # A stale `uid` param must never log anyone in; scrub it from the URL.
-        if st.query_params.get("uid"):
-            st.query_params.clear()
-
-        if restored_user:
-            st.session_state["user"] = restored_user
-        else:
-            st.session_state["user"] = {
-                "id": 1,
-                "name": "नया जातक (Seeker)",
-                "email": "seeker@vyasastro.com",
-                "tier": "VIP_TRIAL",
-                "days_left": 30,
-                "is_vip": True
-            }
-
-    u = st.session_state["user"]
-    is_logged_in_now = (u.get("email") != "seeker@vyasastro.com")
     if is_logged_in_now:
         st.markdown(f"""
         <div style="background: linear-gradient(135deg, rgba(240, 192, 90, 0.18) 0%, rgba(14, 23, 47, 0.95) 100%);
