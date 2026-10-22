@@ -154,15 +154,22 @@ _oauth_err_desc = st.query_params.get("error_description")
 if _oauth_error:
     # Google bounced back with an error — show it and clean the URL.
     st.session_state["user_google_processed"] = True
-    st.error(f"Google लॉगिन विफल: {_oauth_error} — {_oauth_err_desc or 'कृपया पुनः प्रयास करें।'}"
-             f" (सामान्य कारण: Google Cloud Console में Redirect URI "
-             f"`{google_drive_sync.load_google_config().get('redirect_uri', 'http://localhost:8501')}` दर्ज नहीं है।)")
+    _eff_ruri = google_drive_sync.resolve_redirect_uri(
+        google_drive_sync.load_google_config().get("redirect_uri", "")
+    )
+    google_drive_sync.record_oauth_error(
+        f"google_redirected_back error={_oauth_error} desc={_oauth_err_desc or '-'} redirect_uri={_eff_ruri}"
+    )
+    st.error(f"Google लॉगिन विफल: {_oauth_error} — {_oauth_err_desc or 'कृपया पुनः प्रयास करें।'}\n\n"
+             f"**Redirect URI:** `{_eff_ruri}` — यह Google Cloud Console → Credentials → "
+             f"OAuth client → **Authorized redirect URIs** में हूबहू होना चाहिए।")
     st.query_params.clear()
 
 elif _oauth_code and not st.session_state.get("user_google_processed"):
     st.session_state["user_google_processed"] = True  # mark BEFORE any network call
 
     if not google_drive_sync.verify_oauth_state(_oauth_state):
+        google_drive_sync.record_oauth_error(f"state_mismatch received={(_oauth_state or '')[:12]}")
         st.error("लॉगिन सुरक्षा जाँच विफल (state mismatch)। कृपया पेज रीफ़्रेश करके दोबारा लॉगिन करें।")
         st.query_params.clear()
     else:
@@ -188,8 +195,10 @@ elif _oauth_code and not st.session_state.get("user_google_processed"):
                         st.session_state["user"] = u_obj
                         st.session_state["google_access_token"] = acc_tok
                         auth_vault.set_active_session_user(u_obj["id"])
+                        google_drive_sync.clear_oauth_error()
 
             if _login_err:
+                google_drive_sync.record_oauth_error(_login_err)
                 st.error(f"Google लॉगिन विफल — {_login_err}")
             else:
                 st.toast(f"Google से सफल लॉगिन: {u_obj['name']}! Google Drive कनेक्ट हो गया।", icon="☁️")
@@ -1467,18 +1476,14 @@ with st.sidebar:
             """, unsafe_allow_html=True)
 
             if not has_gdrive:
-                auth_url = google_drive_sync.get_google_auth_url()
+                auth_url = google_drive_sync.get_google_auth_url(include_drive=True)
                 if auth_url:
-                    st.markdown(f"""
-                    <div style="margin-bottom: 8px;">
-                        <a href="{auth_url}" target="_top" rel="noopener" style="text-decoration: none;">
-                            <button style="width: 100%; background: #ffffff; color: #3c4043; border: 1px solid #dadce0; border-radius: 6px; padding: 6px 12px; font-weight: 600; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                                <svg width="15" height="15" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-                                <span>🔗 Google Drive से कनेक्ट करें</span>
-                            </button>
-                        </a>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    st.link_button(
+                        "☁️ Google Drive से कनेक्ट करें",
+                        auth_url,
+                        use_container_width=True,
+                        help="Drive में PDF सुरक्षित करने के लिए अनुमति दें।",
+                    )
 
             if st.button("🚪 Logout (लॉगआउट)", key="sidebar_logout_btn", use_container_width=True):
                 auth_vault.clear_active_session()
@@ -1507,29 +1512,21 @@ with st.sidebar:
                 st.success("लॉगआउट हुआ।")
                 st.rerun()
         else:
-            auth_url = google_drive_sync.get_google_auth_url()
+            auth_url = google_drive_sync.get_google_auth_url(include_drive=False)
             if auth_url:
-                # Streamlit Cloud renders the app inside a cross-site iframe.
-                # Google refuses to render its login page inside an embedded
-                # frame ("To protect your security, accounts.google.com will not
-                # allow ... if another site has embedded it"), which surfaces as
-                # the opaque "403. That's an error. ... That's all we know."
-                # Escaping to the TOP-LEVEL window fixes it. `_top` handles the
-                # plain case; the JS handler covers iframes carrying a sandbox
-                # attribute, where target=_top is silently ignored.
-                st.markdown(f"""
-                <div style="margin-bottom: 12px; text-align: center;">
-                    <a href="{auth_url}" target="_top" rel="noopener"
-                       onclick="try{{window.top.location.href=this.href;return false;}}catch(e){{return true;}}"
-                       style="text-decoration: none;">
-                        <button style="width: 100%; background: linear-gradient(135deg, #f5d16e 0%, #b99a3d 100%); color: #1a1305; border: 1px solid rgba(255, 244, 204, 0.9); border-radius: 10px; padding: 10px 14px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 6px 20px rgba(245, 209, 110, 0.35);">
-                            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-                            <span>Google से साइन इन करें</span>
-                        </button>
-                    </a>
-                    <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 6px;">सुरक्षित Google लॉगिन से शुरू करें</div>
-                </div>
-                """, unsafe_allow_html=True)
+                # A plain top-level navigation (<a target="_top">) is silently
+                # blocked when the app is framed with a sandbox that omits
+                # allow-top-navigation — the click then does nothing at all.
+                # Streamlit's own link_button renders a real anchor that opens
+                # Google in a NEW top-level tab, which Google always allows.
+                st.link_button(
+                    "Google से साइन इन करें",
+                    auth_url,
+                    use_container_width=True,
+                    type="primary",
+                    help="सुरक्षित OAuth 2.0 — Google लॉगिन नई विंडो में खुलेगा।",
+                )
+                st.caption("🔒 साइन-इन नई विंडो में पूरा करें, फिर यह पेज रीफ़्रेश करें।")
             else:
                 st.markdown(
                     '<div style="background: rgba(250,204,21,0.10); border:1px solid #facc15; '
@@ -1539,6 +1536,39 @@ with st.sidebar:
                     '</div>',
                     unsafe_allow_html=True
                 )
+
+    # Sign-in diagnostics — collapsed by default so it never clutters the
+    # landing page, but gives a precise, copy-pasteable answer when the Google
+    # flow fails (missing client id, unregistered redirect URI, last error).
+    if not is_logged_in:
+        with st.expander("🛠️ साइन-इन में समस्या? / Sign-in help", expanded=False):
+            _diag = google_drive_sync.oauth_diagnostics()
+            _bad = []
+            if _diag["client_id_configured"] != "yes":
+                _bad.append("Google Client ID सेट नहीं है — Streamlit **Secrets** में `GOOGLE_CLIENT_ID` जोड़ें।")
+            if _diag["client_secret_configured"] != "yes":
+                _bad.append("Google Client Secret सेट नहीं है — Secrets में `GOOGLE_CLIENT_SECRET` जोड़ें।")
+            if _diag["redirect_uri_registered"] != "yes":
+                _bad.append("यह Redirect URI Google Cloud Console में registered नहीं है (नीचे देखें)।")
+            if _bad:
+                st.warning(" • ".join(_bad))
+            else:
+                st.success("क्रेडेंशियल्स ठीक दिख रहे हैं। नीचे अंतिम त्रुटि देखें।")
+            st.markdown(
+                f"**Redirect URI (यही Google Console में डालें):**\n\n"
+                f"`{_diag['effective_redirect_uri']}`"
+            )
+            st.caption(
+                f"Client ID: {_diag['client_id_hint'] or '—'} · "
+                f"Runtime origin: {_diag['runtime_origin'] or '—'}"
+            )
+            if _diag["last_oauth_error"]:
+                st.error(f"अंतिम त्रुटि:\n\n{_diag['last_oauth_error']}")
+            st.caption(
+                "Google Cloud → APIs & Services → Credentials → OAuth client → "
+                "**Authorized redirect URIs** में ऊपर वाला URI जोड़ें। "
+                "साथ ही OAuth consent screen में अपना Gmail **Test users** में जोड़ें।"
+            )
 
     # Hide admin/debug panels from non-logged-in users for cleaner landing page
     if is_logged_in:

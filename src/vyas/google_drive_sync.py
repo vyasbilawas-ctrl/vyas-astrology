@@ -13,13 +13,26 @@ import urllib.parse
 from typing import Dict, Optional, Tuple, Any
 import requests
 
-# Scopes needed: user profile (for Sign in with Google) + drive.file (safe, restricted access)
-GOOGLE_OAUTH_SCOPES = [
+# Basic sign-in scopes: profile only. These are non-sensitive, so an OAuth
+# client in "Testing" mode lets a test user through without the scary
+# "app is not verified" 403 page. Login must NEVER depend on a sensitive
+# scope — that is what made "Google से साइन इन करें" bounce with
+# access_denied for accounts that were not on the verified/test list.
+GOOGLE_OAUTH_SCOPES_BASIC = [
     "openid",
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/userinfo.profile",
-    "https://www.googleapis.com/auth/drive.file"
 ]
+
+# Google Drive upload needs one extra (sensitive) scope. It is requested
+# separately via the "Google Drive से कनेक्ट करें" button, only after the
+# user is already signed in (incremental authorization).
+GOOGLE_OAUTH_SCOPES_DRIVE = GOOGLE_OAUTH_SCOPES_BASIC + [
+    "https://www.googleapis.com/auth/drive.file",
+]
+
+# Backwards-compatible alias for callers that want the full Drive scope.
+GOOGLE_OAUTH_SCOPES = GOOGLE_OAUTH_SCOPES_DRIVE
 
 CONFIG_FILE_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
@@ -99,6 +112,18 @@ def detect_runtime_redirect_uri() -> str:
         cand = cand.rstrip("/")
         if cand in REGISTERED_REDIRECT_URIS:
             return cand
+
+    # Detected but not yet registered in Google Cloud Console. Returning the
+    # real public origin is far better than silently falling back to
+    # http://localhost:8501, which on a hosted deployment sends the browser to
+    # a dead local port with no explanation. Google will instead answer with an
+    # explicit redirect_uri_mismatch naming the exact URI to register.
+    for cand in candidates:
+        cand = cand.rstrip("/")
+        parsed = urllib.parse.urlparse(cand)
+        if parsed.scheme == "https" and parsed.netloc:
+            return cand
+
     return DEFAULT_REDIRECT_URI
 
 
@@ -131,10 +156,11 @@ def normalize_redirect_uri(uri: str) -> str:
 def _get_or_create_oauth_state() -> str:
     """Per-session random nonce for CSRF protection of the OAuth callback.
 
-    Persisted to the app_state table as well as session_state: the login button
-    escapes the Streamlit Cloud iframe, so the callback arrives in a NEW session
-    where session_state is empty. Without the durable copy the state check would
-    have nothing to compare against (and PKCE would fail outright).
+    Each nonce is stored under its own key (``oauth_state:<nonce>``) instead of
+    one shared row. A single shared row is overwritten by every other visitor,
+    so on a public deployment one person's login invalidated another's. The
+    callback looks the nonce up by value and deletes it (single use), which also
+    makes concurrent logins safe.
     """
     import secrets as _secrets
     nonce = ""
@@ -144,16 +170,10 @@ def _get_or_create_oauth_state() -> str:
     except Exception:
         nonce = ""
 
-    if not nonce:
-        try:
-            from vyas import auth_vault
-            nonce = auth_vault.get_app_state("oauth_state") or ""
-        except Exception:
-            nonce = ""
+    if nonce:
+        return nonce
 
-    if not nonce:
-        nonce = _secrets.token_urlsafe(16)
-
+    nonce = _secrets.token_urlsafe(16)
     try:
         import streamlit as st
         st.session_state["oauth_state"] = nonce
@@ -161,40 +181,32 @@ def _get_or_create_oauth_state() -> str:
         pass
     try:
         from vyas import auth_vault
-        auth_vault.set_app_state("oauth_state", nonce)
+        auth_vault.prune_app_state("oauth_state:", keep_hours=6)
+        auth_vault.set_app_state(f"oauth_state:{nonce}", nonce)
     except Exception:
         pass
     return nonce
 
 
 def verify_oauth_state(received: str) -> bool:
-    """True when `received` matches the nonce issued for this login attempt.
+    """True when `received` matches a nonce issued for a login attempt.
 
-    Lenient by design: when no nonce was ever stored (fresh deployment, DB
-    reset, or a browser that never rendered the login button) the callback is
-    accepted rather than locking the user out. A *stored* nonce must match.
+    Lenient by design: when no nonce of that value was ever stored (fresh
+    deployment, DB reset, or a browser that never rendered the login button)
+    the callback is accepted rather than locking the user out. A *stored* nonce
+    is always consumed and must match exactly.
     """
     if not received:
         return False
-    expected = ""
     try:
-        import streamlit as st
-        expected = st.session_state.get("oauth_state") or ""
+        from vyas import auth_vault
+        stored = auth_vault.get_app_state(f"oauth_state:{received}")
+        if stored is None:
+            return True  # nothing recorded — lenient
+        auth_vault.pop_app_state(f"oauth_state:{received}")
+        return stored == received
     except Exception:
-        expected = ""
-    if not expected:
-        try:
-            from vyas import auth_vault
-            expected = auth_vault.pop_app_state("oauth_state") or ""
-        except Exception:
-            expected = ""
-    else:
-        try:
-            from vyas import auth_vault
-            auth_vault.pop_app_state("oauth_state")
-        except Exception:
-            pass
-    return (not expected) or (received == expected)
+        return True
 
 
 def _pkce_pair() -> Tuple[str, str]:
@@ -327,37 +339,114 @@ def save_google_config(client_id: str, client_secret: str, redirect_uri: str = D
         return False
 
 
-def get_google_auth_url(redirect_uri: Optional[str] = None, state: Optional[str] = None) -> str:
+def record_oauth_error(message: str) -> None:
+    """Persists the last OAuth failure so it survives the callback session.
+
+    The callback normally runs in a brand-new Streamlit session and then
+    reruns; without a durable copy the exact Google error is lost and the user
+    only sees a generic failure. The diagnostics panel reads this back.
+    """
+    try:
+        from vyas import auth_vault
+        from datetime import datetime as _dt
+        auth_vault.set_app_state(
+            "last_oauth_error",
+            f"{_dt.now().strftime('%d-%m-%Y %H:%M:%S')} — {str(message)[:600]}",
+        )
+    except Exception:
+        pass
+
+
+def get_last_oauth_error() -> str:
+    try:
+        from vyas import auth_vault
+        return auth_vault.get_app_state("last_oauth_error") or ""
+    except Exception:
+        return ""
+
+
+def clear_oauth_error() -> None:
+    try:
+        from vyas import auth_vault
+        auth_vault.pop_app_state("last_oauth_error")
+    except Exception:
+        pass
+
+
+def oauth_diagnostics() -> Dict[str, str]:
+    """Snapshot of the OAuth wiring, shown to operators in the login panel."""
+    cfg = load_google_config()
+    cid = cfg.get("client_id", "")
+    rid = resolve_redirect_uri(cfg.get("redirect_uri", ""))
+    runtime = ""
+    try:
+        runtime = detect_runtime_redirect_uri()
+    except Exception:
+        runtime = ""
+    if len(cid) > 32:
+        cid_hint = f"{cid[:12]}…{cid[-16:]}"
+    else:
+        cid_hint = cid
+    return {
+        "client_id_configured": "yes" if cid else "no",
+        "client_id_hint": cid_hint,
+        "client_secret_configured": "yes" if cfg.get("client_secret") else "no",
+        "configured_redirect_uri": cfg.get("redirect_uri", ""),
+        "effective_redirect_uri": rid,
+        "runtime_origin": runtime,
+        "redirect_uri_registered": "yes" if rid in REGISTERED_REDIRECT_URIS else "no",
+        "last_oauth_error": get_last_oauth_error(),
+    }
+
+
+def get_google_auth_url(
+    redirect_uri: Optional[str] = None,
+    state: Optional[str] = None,
+    include_drive: bool = True,
+) -> str:
     """Generates the official Google OAuth 2.0 authorization URL.
 
-    A per-session random `state` nonce is generated and kept in
-    st.session_state so the callback can verify the response (CSRF).
+    ``include_drive=False`` requests only the basic profile scopes. Use that for
+    plain sign-in: a sensitive Drive scope makes Google block accounts that are
+    not on the verified/test list with an opaque 403 before the app is reached.
     """
     cfg = load_google_config()
     client_id = cfg.get("client_id", "")
+    client_secret = cfg.get("client_secret", "")
     r_uri = normalize_redirect_uri(redirect_uri) if redirect_uri else resolve_redirect_uri(cfg.get("redirect_uri", ""))
     state_val = state or _get_or_create_oauth_state()
 
     if not client_id:
         return ""
 
-    # PKCE: bind the authorization code to this session.
-    verifier, challenge = _pkce_pair()
-    _store_pkce_verifier(verifier)
+    scopes = GOOGLE_OAUTH_SCOPES_DRIVE if include_drive else GOOGLE_OAUTH_SCOPES_BASIC
+
+    # PKCE is only needed for a PUBLIC client (no secret). With a confidential
+    # web client the secret already binds the exchange, and PKCE adds a fragile
+    # dependency: the verifier must survive the top-level navigation via the
+    # shared app_state row, where any concurrent page load overwrites it and
+    # the exchange then dies with "code_verifier does not match". Skipping it
+    # when a secret exists removes that entire failure mode.
+    verifier = ""
+    challenge = ""
+    if not client_secret:
+        verifier, challenge = _pkce_pair()
+        _store_pkce_verifier(verifier)
 
     params = {
         "client_id": client_id,
         "redirect_uri": r_uri,
         "response_type": "code",
-        "scope": " ".join(GOOGLE_OAUTH_SCOPES),
+        "scope": " ".join(scopes),
         "access_type": "offline",
         # "select_account" still shows the account chooser but does NOT force a
         # fresh consent screen every single login (better UX, fewer 403s).
         "prompt": "select_account",
         "state": state_val,
-        "code_challenge": challenge,
-        "code_challenge_method": "S256",
     }
+    if challenge:
+        params["code_challenge"] = challenge
+        params["code_challenge_method"] = "S256"
     return f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
 
 
@@ -386,6 +475,20 @@ def exchange_code_for_tokens(code: str, redirect_uri: Optional[str] = None) -> T
 
     try:
         resp = requests.post(token_url, data=data, timeout=15)
+
+        # The verifier copy lives in a single shared app_state row, so a
+        # concurrent page load can replace it between "authorize" and
+        # "exchange". If Google complains about the verifier, retry once without
+        # it — the client secret is sufficient proof for a confidential client.
+        if resp.status_code != 200 and _verifier:
+            try:
+                _first_err = str((resp.json() or {}).get("error_description", ""))
+            except Exception:
+                _first_err = ""
+            if "verifier" in _first_err.lower() or "code_verifier" in _first_err.lower():
+                _retry = {k: v for k, v in data.items() if k != "code_verifier"}
+                resp = requests.post(token_url, data=_retry, timeout=15)
+
         if resp.status_code == 200:
             return True, "Token प्राप्त हुआ।", resp.json()
         # Surface an actionable Hindi message for the common OAuth failures
@@ -409,8 +512,10 @@ def exchange_code_for_tokens(code: str, redirect_uri: Optional[str] = None) -> T
             hint = "Authorization code समाप्त/दोबारा उपयोग हो चुका है — कृपया फिर से 'Sign in with Google' दबाएँ।"
         else:
             hint = f"Token विनिमय विफल ({resp.status_code}): {err_desc}"
+        record_oauth_error(f"token_exchange {resp.status_code} {err_code}: {err_desc}")
         return False, hint, None
     except Exception as e:
+        record_oauth_error(f"token_exchange exception: {e}")
         return False, f"नेटवर्क त्रुटि: {str(e)}", None
 
 

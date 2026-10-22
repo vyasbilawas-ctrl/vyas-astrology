@@ -166,6 +166,21 @@ def pop_app_state(key: str) -> Optional[str]:
         pass
     return val
 
+
+def prune_app_state(prefix: str, keep_hours: int = 6) -> None:
+    """Drops stale keys sharing a prefix so single-use rows cannot pile up."""
+    cutoff = (datetime.now() - timedelta(hours=keep_hours)).isoformat()
+    try:
+        with _get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "DELETE FROM app_state WHERE key LIKE ? AND updated_at < ?",
+                (str(prefix) + "%", cutoff),
+            )
+            conn.commit()
+    except Exception:
+        pass
+
 # Ensure DB is initialized on module import
 init_db()
 
