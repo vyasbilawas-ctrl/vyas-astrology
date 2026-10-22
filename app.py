@@ -1399,6 +1399,19 @@ is_logged_in_now = (u.get("email") != "seeker@vyasastro.com")
 
 # ---------------- LOGGED-OUT LANDING: EMAIL LOGIN / REGISTRATION ----------------
 if not is_logged_in_now:
+    # Mount the sidebar container on the very first run of every session, even
+    # though visitors only see the landing page. Streamlit creates the sidebar
+    # lazily, and when it was first used *after* login the deployed app rendered
+    # the main page but never mounted the sidebar (birth details unreachable).
+    with st.sidebar:
+        st.markdown("""
+        <div style="text-align: center; padding: 10px 0;">
+            <div style="font-family: 'Cinzel', serif; font-size: 1.02rem; font-weight: 800; color: #fef3c7; letter-spacing: 2px;">VYAS ASTRA</div>
+            <div style="font-size: 0.66rem; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;">Vedic Astrology Intelligence</div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.caption("जन्म विवरण, कुण्डली एवं विश्लेषण के लिए लॉगिन करें।")
+
     _hero_col, _auth_col = st.columns([1.12, 1], gap="large")
 
     with _hero_col:
