@@ -315,7 +315,7 @@ st.markdown("""
 
     .section-title {
         /* Devanagari-capable fonts FIRST: Cinzel is Latin-only, so a heading that
-           mixes Hindi + Latin ("... प्रबंध (AstroSage PDF)") fell back to a
+           mixes Hindi + Latin ("... प्रबंध (VYAS PDF)") fell back to a
            different font mid-line, collapsing the space and making words look
            glued together ("प्रबंधPDF"). */
         font-family: 'Nirmala UI', 'Noto Sans Devanagari', 'Mangal',
@@ -1274,58 +1274,61 @@ st.iframe("""
 with st.sidebar:
     # Use transparent PNG logo with cosmic gold halo
     logo_file = "logo.png" if os.path.exists(os.path.join(os.path.dirname(__file__), "logo.png")) else "logo.jpg"
+    try:
+        _logo_b64 = base64.b64encode(open(os.path.join(os.path.dirname(__file__), logo_file), 'rb').read()).decode()
+    except Exception:
+        _logo_b64 = ""
     st.markdown(f"""
     <div style="text-align: center; margin-bottom: 8px;">
-        <img src="data:image/png;base64,{base64.b64encode(open(os.path.join(os.path.dirname(__file__), logo_file), 'rb').read()).decode()}" 
-             style="max-width: 140px; height: auto; filter: drop-shadow(0 0 20px rgba(229, 169, 60, 0.35));" />
-        <div style="font-family: 'Cinzel', serif; font-size: 1.15rem; font-weight: 800; color: #fef3c7; letter-spacing: 2px; margin-top: 6px;">VYAS ASTRA</div>
-        <div style="font-size: 0.72rem; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;">Vedic Astrology Intelligence</div>
+        <img src="data:image/png;base64,{_logo_b64}" 
+             style="max-width: 110px; height: auto; filter: drop-shadow(0 0 18px rgba(229, 169, 60, 0.32));" />
+        <div style="font-family: 'Cinzel', serif; font-size: 1.08rem; font-weight: 800; color: #fef3c7; letter-spacing: 2px; margin-top: 6px;">VYAS ASTRA</div>
+        <div style="font-size: 0.68rem; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;">Vedic Astrology Intelligence</div>
     </div>
-    <hr style="border-color: rgba(229, 169, 60, 0.18); margin: 12px 0;">
+    <hr style="border-color: rgba(229, 169, 60, 0.16); margin: 10px 0;">
     """, unsafe_allow_html=True)
     
     # ---------------- MOBILE 1-CLICK PWA APP INSTALLATION (NATIVE PROMPT) ----------------
-    st.iframe("""
-    <div id="pwa-install-container" style="display: none; background: linear-gradient(135deg, rgba(37, 99, 235, 0.25) 0%, rgba(14, 23, 47, 0.95) 100%);
-                border: 1px solid rgba(96, 165, 250, 0.5); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; text-align: center;">
-        <div style="font-size: 0.9rem; font-weight: 800; color: #93c5fd; font-family: sans-serif;">📲 VYAS ASTRA ऐप इंस्टॉल करें</div>
-        <div style="font-size: 0.76rem; color: #cbd5e1; margin: 4px 0 10px 0; font-family: sans-serif;">अपने फोन की होम स्क्रीन पर सीधे 1-क्लिक में ऐप जोड़ें।</div>
-        <button id="pwa-install-btn" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: 1px solid #60a5fa; border-radius: 8px; padding: 8px 18px; font-weight: 700; font-size: 0.85rem; cursor: pointer; width: 100%; box-shadow: 0 4px 12px rgba(37,99,235,0.4);">
-            ⚡ अभी इंस्टॉल करें (Install Now)
-        </button>
-    </div>
+    if is_logged_in_now:
+        st.iframe("""
+        <div id="pwa-install-container" style="display: none; background: linear-gradient(135deg, rgba(37, 99, 235, 0.25) 0%, rgba(14, 23, 47, 0.95) 100%);
+                    border: 1px solid rgba(96, 165, 250, 0.5); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; text-align: center;">
+            <div style="font-size: 0.9rem; font-weight: 800; color: #93c5fd; font-family: sans-serif;">📲 VYAS ASTRA ऐप इंस्टॉल करें</div>
+            <div style="font-size: 0.76rem; color: #cbd5e1; margin: 4px 0 10px 0; font-family: sans-serif;">अपने फोन की होम स्क्रीन पर सीधे 1-क्लिक में ऐप जोड़ें।</div>
+            <button id="pwa-install-btn" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: 1px solid #60a5fa; border-radius: 8px; padding: 8px 18px; font-weight: 700; font-size: 0.85rem; cursor: pointer; width: 100%; box-shadow: 0 4px 12px rgba(37,99,235,0.4);">
+                ⚡ अभी इंस्टॉल करें (Install Now)
+            </button>
+        </div>
 
-    <script>
-        let deferredPrompt;
-        const container = document.getElementById('pwa-install-container');
-        const installBtn = document.getElementById('pwa-install-btn');
+        <script>
+            let deferredPrompt;
+            const container = document.getElementById('pwa-install-container');
+            const installBtn = document.getElementById('pwa-install-btn');
 
-        // Automatically trigger when browser detects installable PWA
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            container.style.display = 'block';
-        });
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                container.style.display = 'block';
+            });
 
-        // Always show button on mobile devices so user can trigger it
-        if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-            container.style.display = 'block';
-        }
-
-        installBtn.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    container.style.display = 'none';
-                }
-                deferredPrompt = null;
-            } else {
-                alert("मोबाइल पर इंस्टॉल करने के लिए ब्राउज़र के शीर्ष मेनू (⋮ या शेयर आइकन) पर टैप करके 'Add to Home screen' चुनें।");
+            if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                container.style.display = 'block';
             }
-        });
-    </script>
-    """, height=125)
+
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        container.style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                } else {
+                    alert("मोबाइल पर इंस्टॉल करने के लिए ब्राउज़र के शीर्ष मेनू (⋮ या शेयर आइकन) पर टैप करके 'Add to Home screen' चुनें।");
+                }
+            });
+        </script>
+        """, height=125)
     
     # ---------------- USER AUTH & 30-DAY VIP TRIAL VAULT ----------------
     if "user" not in st.session_state:
@@ -1356,84 +1359,85 @@ with st.sidebar:
             }
 
     u = st.session_state["user"]
-    st.markdown(f"""
-    <div style="background: linear-gradient(135deg, rgba(240, 192, 90, 0.25) 0%, rgba(14, 23, 47, 0.95) 100%);
-                border: 1px solid rgba(240, 192, 90, 0.6); border-radius: 10px; padding: 10px 14px; text-align: center; margin-bottom: 8px;">
-        <div style="color: #f7d584; font-weight: 800; font-size: 0.95rem;">👑 VIP PRO TRIAL ACTIVE</div>
-        <div style="color: #eedc9a; font-size: 0.8rem; margin-top: 2px;">{u['name']} • <b>{u['days_left']} Days Left</b> (30-Day Free Trial)</div>
-    </div>
-    """, unsafe_allow_html=True)
+    is_logged_in_now = (u.get("email") != "seeker@vyasastro.com")
+    if is_logged_in_now:
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, rgba(240, 192, 90, 0.18) 0%, rgba(14, 23, 47, 0.95) 100%);
+                    border: 1px solid rgba(240, 192, 90, 0.5); border-radius: 10px; padding: 8px 12px; text-align: center; margin-bottom: 8px;">
+            <div style="color: #f7d584; font-weight: 800; font-size: 0.88rem;">👑 VIP PRO TRIAL ACTIVE</div>
+            <div style="color: #eedc9a; font-size: 0.76rem; margin-top: 2px;">{u['name']} • <b>{u['days_left']} Days Left</b></div>
+        </div>
+        """, unsafe_allow_html=True)
 
     # Hybrid Payment & Upgrade VIP Modal
-    with st.expander("💳 Upgrade VIP / प्रीमियम सदस्यता लें", expanded=False):
-        st.markdown("""
-        <div style="font-size: 0.85rem; color: #eedc9a; margin-bottom: 8px;">
-            <b>VIP Pro प्लान्स:</b> असीमित कुंडलियां, 30+ पेज PDF, D60 देवता, लाल किताब व BTR का पूर्ण एक्सेस।
-        </div>
-        """, unsafe_allow_html=True)
-        plan_sel = st.selectbox("चुनें प्लान (Select Plan)", [
-            "🥈 वार्षिक प्रो (Annual VIP Pro) - ₹999 / वर्ष",
-            "🥉 मासिक (Monthly Starter) - ₹199 / माह",
-            "🥇 लाइफटाइम एलीट (Lifetime Elite) - ₹2,499"
-        ])
-        
-        plan_key = "annual"
-        amount = 999
-        if "मासिक" in plan_sel:
-            plan_key = "monthly"
-            amount = 199
-        elif "लाइफटाइम" in plan_sel:
-            plan_key = "lifetime"
-            amount = 2499
-
-        # Dynamic UPI Link & Exact Amount QR Code
-        upi_id = "inikhilvyas@ybl"
-        payee_name = "Nikhil Vyas"
-        import urllib.parse
-        upi_uri = f"upi://pay?pa={upi_id}&pn={urllib.parse.quote(payee_name)}&am={amount}.00&cu=INR&tn={urllib.parse.quote('VYAS VIP Subscription')}"
-        encoded_uri = urllib.parse.quote(upi_uri)
-        # Generate online QR code image URL with exact payment amount embedded
-        qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={encoded_uri}"
-
-        st.markdown(f"""
-        <div style="text-align: center; background: rgba(10, 16, 32, 0.9); border: 1px solid #f0c05a; border-radius: 12px; padding: 14px; margin-top: 8px;">
-            <div style="color: #f0c05a; font-weight: 800; font-size: 0.95rem;">📲 Scan & Pay ₹{amount} (Exact Amount QR)</div>
-            <div style="color: #eedc9a; font-size: 0.8rem;">(PhonePe, GPay, Paytm, BHIM - स्कैन करते ही ₹{amount} अपने आप आ जाएगा)</div>
-            <div style="margin: 12px 0;">
-                <img src="{qr_url}" width="180" height="180" style="border-radius: 10px; border: 2px solid #eedc9a; background: white; padding: 6px;"/>
+    if is_logged_in_now:
+        with st.expander("💳 Upgrade VIP / प्रीमियम सदस्यता लें", expanded=False):
+            st.markdown("""
+            <div style="font-size: 0.82rem; color: #eedc9a; margin-bottom: 8px;">
+                <b>VIP Pro प्लान्स:</b> असीमित कुंडलियां, विस्तृत रिपोर्ट्स, लाल किताब व BTR का पूर्ण एक्सेस।
             </div>
-            <div style="font-size: 0.85rem; color: #f7d584;"><b>UPI ID:</b> <code>{upi_id}</code></div>
-            <div style="font-size: 0.95rem; color: #48cae4; font-weight: 800; margin-top: 5px;">कुल देय राशि: ₹{amount}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown("<small style='color: #eedc9a;'><b>भुगतान के बाद पुष्टि करें (Verification):</b></small>", unsafe_allow_html=True)
-        txn_input = st.text_input("UPI Reference / UTR No.", placeholder="e.g. 428192849120", key="txn_field")
-        
-        col_pay1, col_pay2 = st.columns(2)
-        with col_pay1:
-            if st.button("✅ Confirm Payment", use_container_width=True):
-                if txn_input and len(txn_input) >= 6:
-                    ok, up_msg = auth_vault.upgrade_vip(u["id"], plan_key, txn_input)
-                    if ok:
-                        st.session_state["user"]["tier"] = "VIP_PAID"
-                        st.session_state["user"]["is_vip"] = True
-                        st.success(up_msg)
-                        st.rerun()
-                    else:
-                        st.error(up_msg)
-                else:
-                    st.warning("कृपया मान्य UTR / ट्रांजैक्शन नंबर दर्ज करें।")
-        with col_pay2:
-            wa_text = f"Namaste Nikhil Ji, I have paid INR {amount} for VYAS VIP ({plan_key}). UTR: {txn_input}"
-            wa_url = f"https://wa.me/919414121172?text={wa_text.replace(' ', '%20')}"
-            st.markdown(f"""
-            <a href="{wa_url}" target="_blank" style="text-decoration: none;">
-                <button style="width: 100%; background: #25D366; color: white; border: none; border-radius: 6px; padding: 7px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">
-                    💬 WhatsApp Help
-                </button>
-            </a>
             """, unsafe_allow_html=True)
+            plan_sel = st.selectbox("चुनें प्लान (Select Plan)", [
+                "🥈 वार्षिक प्रो (Annual VIP Pro) - ₹999 / वर्ष",
+                "🥉 मासिक (Monthly Starter) - ₹199 / माह",
+                "🥇 लाइफटाइम एलीट (Lifetime Elite) - ₹2,499"
+            ])
+            
+            plan_key = "annual"
+            amount = 999
+            if "मासिक" in plan_sel:
+                plan_key = "monthly"
+                amount = 199
+            elif "लाइफटाइम" in plan_sel:
+                plan_key = "lifetime"
+                amount = 2499
+
+            upi_id = "inikhilvyas@ybl"
+            payee_name = "Nikhil Vyas"
+            import urllib.parse
+            upi_uri = f"upi://pay?pa={upi_id}&pn={urllib.parse.quote(payee_name)}&am={amount}.00&cu=INR&tn={urllib.parse.quote('VYAS VIP Subscription')}"
+            encoded_uri = urllib.parse.quote(upi_uri)
+            qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={encoded_uri}"
+
+            st.markdown(f"""
+            <div style="text-align: center; background: rgba(10, 16, 32, 0.9); border: 1px solid #f0c05a; border-radius: 12px; padding: 12px; margin-top: 8px;">
+                <div style="color: #f0c05a; font-weight: 800; font-size: 0.9rem;">📲 Scan & Pay ₹{amount}</div>
+                <div style="color: #eedc9a; font-size: 0.76rem;">(PhonePe, GPay, Paytm, BHIM)</div>
+                <div style="margin: 10px 0;">
+                    <img src="{qr_url}" width="160" height="160" style="border-radius: 10px; border: 2px solid #eedc9a; background: white; padding: 6px;"/>
+                </div>
+                <div style="font-size: 0.8rem; color: #f7d584;"><b>UPI ID:</b> <code>{upi_id}</code></div>
+                <div style="font-size: 0.9rem; color: #48cae4; font-weight: 800; margin-top: 4px;">कुल देय राशि: ₹{amount}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            st.markdown("<small style='color: #eedc9a;'><b>भुगतान के बाद पुष्टि करें:</b></small>", unsafe_allow_html=True)
+            txn_input = st.text_input("UPI Reference / UTR No.", placeholder="e.g. 428192849120", key="txn_field")
+            
+            col_pay1, col_pay2 = st.columns(2)
+            with col_pay1:
+                if st.button("✅ Confirm Payment", use_container_width=True):
+                    if txn_input and len(txn_input) >= 6:
+                        ok, up_msg = auth_vault.upgrade_vip(u["id"], plan_key, txn_input)
+                        if ok:
+                            st.session_state["user"]["tier"] = "VIP_PAID"
+                            st.session_state["user"]["is_vip"] = True
+                            st.success(up_msg)
+                            st.rerun()
+                        else:
+                            st.error(up_msg)
+                    else:
+                        st.warning("कृपया मान्य UTR दर्ज करें।")
+            with col_pay2:
+                wa_text = f"Namaste Nikhil Ji, I have paid INR {amount} for VYAS VIP ({plan_key}). UTR: {txn_input}"
+                wa_url = f"https://wa.me/919414121172?text={wa_text.replace(' ', '%20')}"
+                st.markdown(f"""
+                <a href="{wa_url}" target="_blank" style="text-decoration: none;">
+                    <button style="width: 100%; background: #25D366; color: white; border: none; border-radius: 6px; padding: 7px; font-weight: 700; font-size: 0.82rem; cursor: pointer;">
+                        💬 WhatsApp Help
+                    </button>
+                </a>
+                """, unsafe_allow_html=True)
 
     # ---------------- USER AUTHENTICATION & SESSION ----------------
     is_logged_in = (u["email"] != "seeker@vyasastro.com")
@@ -1517,50 +1521,27 @@ with st.sidebar:
                     <a href="{auth_url}" target="_top" rel="noopener"
                        onclick="try{{window.top.location.href=this.href;return false;}}catch(e){{return true;}}"
                        style="text-decoration: none;">
-                        <button style="width: 100%; background: #ffffff; color: #3c4043; border: 1px solid #dadce0; border-radius: 8px; padding: 10px 14px; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.18); transition: transform 0.2s ease;">
+                        <button style="width: 100%; background: linear-gradient(135deg, #f5d16e 0%, #b99a3d 100%); color: #1a1305; border: 1px solid rgba(255, 244, 204, 0.9); border-radius: 10px; padding: 10px 14px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 6px 20px rgba(245, 209, 110, 0.35);">
                             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-                            <span>Sign in with Google</span>
+                            <span>Google से साइन इन करें</span>
                         </button>
                     </a>
-                    <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 5px;">(Google Drive में कुण्डलियाँ स्वतः सुरक्षित होंगी)</div>
-                    <div style="font-size: 0.7rem; color: #64748b; margin-top: 4px;">
-                        अगर Google लॉगिन पेज न खुले तो
-                        <a href="{auth_url}" target="_blank" rel="noopener" style="color: #60a5fa;">यहाँ नए टैब में खोलें</a>।
-                    </div>
+                    <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 6px;">सुरक्षित Google लॉगिन से शुरू करें</div>
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown(
                     '<div style="background: rgba(250,204,21,0.10); border:1px solid #facc15; '
-                    'border-radius:8px; padding:10px 12px; font-size:0.82rem; line-height:1.5;">'
-                    '<b>🔑 Google Login एक बार सेट करना है</b><br/>'
-                    'Google Client ID / Secret अभी कॉन्फ़िगर नहीं हैं। एक बार सेट करने के बाद '
-                    'यह संदेश हमेशा के लिए हट जाएगा।'
+                    'border-radius:8px; padding:10px 12px; font-size:0.78rem; line-height:1.5;">'
+                    '<b>🔑 Google Login सेटअप आवश्यक</b><br/>'
+                    'Google लॉगिन के लिए Admin ने क्रेडेंशियल्स कॉन्फ़िगर करने होंगे।'
                     '</div>',
                     unsafe_allow_html=True
                 )
-                with st.expander("📋 सेटअप के steps (2 मिनट)", expanded=True):
-                    st.markdown("""
-**Streamlit Cloud पर (deployed app):**
 
-1. [share.streamlit.io](https://share.streamlit.io) → app **vyas-astrology-111** → **⋮ → Settings → Secrets**
-2. ये lines paste करें और **Save** दबाएँ:
-```toml
-GOOGLE_CLIENT_ID = "आपका-client-id.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET = "GOCSPX-आपका-secret"
-```
-3. App अपने आप reboot होगा — "Sign in with Google" button आ जाएगा।
-
-**Local पर:** नीचे **⚙️ Google Cloud API Credentials** में भरकर **💾 Save Credentials** दबाएँ।
-                    """)
-                    _cfg_now = google_drive_sync.load_google_config()
-                    st.caption(
-                        f"Current: client_id={'सेट है' if _cfg_now.get('client_id') else 'खाली'}, "
-                        f"client_secret={'सेट है' if _cfg_now.get('client_secret') else 'खाली'}, "
-                        f"redirect_uri={_cfg_now.get('redirect_uri', '')}"
-                    )
-
-        with st.expander("⚙️ Google Cloud API Credentials", expanded=False):
+    # Hide admin/debug panels from non-logged-in users for cleaner landing page
+    if is_logged_in:
+        with st.expander("⚙️ Google Cloud API Credentials (Admin Only)", expanded=False):
             g_cfg = google_drive_sync.load_google_config()
             cfg_cid = st.text_input("Google Client ID", value=g_cfg.get("client_id", ""), key="cfg_cid_in", placeholder="...apps.googleusercontent.com")
             cfg_csec = st.text_input("Google Client Secret", value=g_cfg.get("client_secret", ""), type="password", key="cfg_csec_in")
@@ -1585,10 +1566,6 @@ GOOGLE_CLIENT_SECRET = "GOCSPX-आपका-secret"
             """, unsafe_allow_html=True)
 
             # ---- OAuth diagnostics ----
-            # `redirect_uri_mismatch` (Error 400) is the single most common login
-            # failure and Google's message never says WHICH value differed. This
-            # panel shows the exact strings this deployment will send, so the
-            # Console list can be compared byte-for-byte.
             with st.expander("🔍 OAuth Debug (redirect URI जाँचें)", expanded=False):
                 _eff_redirect = google_drive_sync.resolve_redirect_uri(
                     google_drive_sync.load_google_config().get("redirect_uri", "")
@@ -1620,45 +1597,58 @@ GOOGLE_CLIENT_SECRET = "GOCSPX-आपका-secret"
                 )
 
     # ---------------- SAVED KUNDLIS VAULT (FULL MANAGEMENT) ----------------
-    saved_list = auth_vault.get_saved_kundlis(u["id"])
-    
-    with st.expander(f"📁 मेरी सुरक्षित कुण्डलियाँ ({len(saved_list)})", expanded=True):
-        if saved_list:
-            k_display_map = {f"{k['name']} ({k['dob']} - {k.get('city', '')})": k for k in saved_list}
-            chosen_k_label = st.selectbox("कुण्डली चुनें:", list(k_display_map.keys()), key="saved_k_picker")
-            chosen_k = k_display_map[chosen_k_label]
+    if is_logged_in_now:
+        saved_list = auth_vault.get_saved_kundlis(u["id"])
+        
+        with st.expander(f"📁 मेरी सुरक्षित कुण्डलियाँ ({len(saved_list)})", expanded=False):
+            if saved_list:
+                k_display_map = {f"{k['name']} ({k['dob']} - {k.get('city', '')})": k for k in saved_list}
+                chosen_k_label = st.selectbox("कुण्डली चुनें:", list(k_display_map.keys()), key="saved_k_picker")
+                chosen_k = k_display_map[chosen_k_label]
 
-            col_kv1, col_kv2 = st.columns(2)
-            with col_kv1:
-                if st.button("📂 खोलें (Open)", key="open_k_btn", use_container_width=True):
-                    st.session_state['loaded_profile'] = chosen_k
-                    st.session_state['lat'] = float(chosen_k.get('lat', 28.6139))
-                    st.session_state['lon'] = float(chosen_k.get('lon', 77.2090))
-                    st.session_state['city_name'] = chosen_k.get('city', 'New Delhi, India')
-                    st.session_state['city_search_input'] = chosen_k.get('city', 'New Delhi, India')
-                    st.session_state['_last_chosen_city'] = chosen_k.get('city', 'New Delhi, India')
-                    st.session_state.pop('selected_city_dropdown', None)
-                    st.session_state['data_generated'] = False
-                    st.success(f"'{chosen_k['name']}' की कुण्डली लोड हो गई!")
-                    st.rerun()
-            with col_kv2:
-                if st.button("🗑️ हटाएं (Delete)", key="del_k_btn", use_container_width=True):
-                    ok_del, del_msg = auth_vault.delete_kundli(u["id"], chosen_k["id"])
-                    if ok_del:
-                        if st.session_state.get('loaded_profile', {}).get('id') == chosen_k["id"]:
-                            st.session_state.pop('loaded_profile', None)
-                        st.success(del_msg)
+                col_kv1, col_kv2 = st.columns(2)
+                with col_kv1:
+                    if st.button("📂 खोलें (Open)", key="open_k_btn", use_container_width=True):
+                        st.session_state['loaded_profile'] = chosen_k
+                        st.session_state['lat'] = float(chosen_k.get('lat', 28.6139))
+                        st.session_state['lon'] = float(chosen_k.get('lon', 77.2090))
+                        st.session_state['city_name'] = chosen_k.get('city', 'New Delhi, India')
+                        st.session_state['city_search_input'] = chosen_k.get('city', 'New Delhi, India')
+                        st.session_state['_last_chosen_city'] = chosen_k.get('city', 'New Delhi, India')
+                        st.session_state.pop('selected_city_dropdown', None)
+                        st.session_state['data_generated'] = False
+                        st.success(f"'{chosen_k['name']}' की कुण्डली लोड हो गई!")
                         st.rerun()
-                    else:
-                        st.error(del_msg)
-        else:
-            st.info("💡 अभी कोई कुण्डली सुरक्षित नहीं है। नीचे जन्म विवरण भरकर **'💾 कुण्डली सुरक्षित करें'** बटन दबाएं।")
+                with col_kv2:
+                    if st.button("🗑️ हटाएं (Delete)", key="del_k_btn", use_container_width=True):
+                        ok_del, del_msg = auth_vault.delete_kundli(u["id"], chosen_k["id"])
+                        if ok_del:
+                            if st.session_state.get('loaded_profile', {}).get('id') == chosen_k["id"]:
+                                st.session_state.pop('loaded_profile', None)
+                            st.success(del_msg)
+                            st.rerun()
+                        else:
+                            st.error(del_msg)
+            else:
+                st.info("💡 अभी कोई कुण्डली सुरक्षित नहीं है। नीचे जन्म विवरण भरकर **'💾 कुण्डली सुरक्षित करें'** बटन दबाएं।")
+    # Hide saved kundlis expander for non-logged users for cleaner UI
 
     ui_lang = st.radio("🌐 भाषा / Language", ["हिन्दी (Hindi)", "English"], horizontal=True)
     is_hi = "हिन्दी" in ui_lang
     
-    st.header("Native Details / जातक विवरण" if is_hi else "Native Details")
-    mode = st.radio("Mode / प्रकार" if is_hi else "Mode", ["Natal Kundli (जन्म कुण्डली)", "Prashna (प्रश्न कुण्डली)"] if is_hi else ["Natal Kundli", "Prashna (Horary)"], horizontal=True)
+    if is_logged_in_now:
+        st.header("Native Details / जातक विवरण" if is_hi else "Native Details")
+        mode = st.radio("Mode / प्रकार" if is_hi else "Mode", ["Natal Kundli (जन्म कुण्डली)", "Prashna (प्रश्न कुण्डली)"] if is_hi else ["Natal Kundli", "Prashna (Horary)"], horizontal=True)
+    else:
+        st.markdown("""
+        <div style="text-align: center; padding: 40px 20px; background: radial-gradient(circle at 50% 0%, rgba(245, 209, 110, 0.12) 0%, transparent 60%), linear-gradient(180deg, rgba(19, 27, 54, 0.98) 0%, rgba(8, 12, 26, 0.98) 100%); border: 1px solid rgba(245, 209, 110, 0.32); border-radius: 18px; margin-top: 30px; box-shadow: 0 28px 60px -26px rgba(0,0,0,0.98);">
+            <div style="font-family: 'Cinzel', serif; font-size: 2rem; font-weight: 800; background: linear-gradient(90deg, #fff4cc 0%, #f5d16e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px;">VYAS ASTRA</div>
+            <div style="font-size: 1.1rem; color: #f7d584; margin-bottom: 8px; font-weight: 600;">वैदिक ज्योतिष • के.पी. प्रणाली • शोध प्रबंध</div>
+            <div style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 24px;">सटीक जन्मकुंडली विश्लेषण, विंशोत्तरी दशा, के.पी. फलादेश एवं विस्तृत PDF रिपोर्ट</div>
+            <div style="color: #94a3b8; font-size: 0.9rem;">कुण्डली बनाना शुरू करने के लिए ऊपर 'Google से साइन इन करें' पर क्लिक करें</div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.stop()
     
     lp = st.session_state.get('loaded_profile', {})
     default_name = lp.get('name', 'जातक / Seeker')
@@ -3649,23 +3639,23 @@ if st.session_state.get('data_generated'):
                 """, unsafe_allow_html=True)
 
     # =========================================================================
-    # SUITE 6: 📄 43+ PAGE PUBLICATION PDF (AstroSage-Class Publication)
+    # SUITE 6: 📄 43+ PAGE PUBLICATION PDF (VYAS-Class Publication)
     # =========================================================================
     elif "PDF" in selected_suite or "शोध प्रबंध" in selected_suite:
-        st.markdown(f'<div class="section-title">{"📄 56-पेज सम्पूर्ण वैदिक कुण्डली महा-शोध प्रबंध (AstroSage Gold Standard PDF)" if is_hi else "📄 56-Page Executive Vedic Kundli Dossier (AstroSage Gold Standard PDF)"}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="section-title">{"📄 56-पेज सम्पूर्ण वैदिक कुण्डली महा-शोध प्रबंध (VYAS Gold Standard PDF)" if is_hi else "📄 56-Page Executive Vedic Kundli Dossier (VYAS Gold Standard PDF)"}</div>', unsafe_allow_html=True)
         st.info("यह रिपोर्ट एस्ट्रोसेज की 56-पृष्ठ प्रीमियम कुण्डली के समकक्ष व उससे भी अधिक शुद्ध गणितीय गणनाओं, पाश्चात्य दृष्टि तालिकाओं, षोडशवर्ग चक्रों, सूक्ष्म प्रत्यंतर दशाओं और 100% प्रामाणिक वैदिक फलित से युक्त है।")
         
         # Unique per-run output path. The old fixed filename meant a FAILED
         # Chrome run silently "succeeded" by serving the previously generated
         # PDF (same report regardless of input data — the reported bug).
         _pdf_stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        pdf_out_path = os.path.join(os.path.dirname(__file__), f"VYAS_AstroSage_Standard_Kundli_56_Pages_{_pdf_stamp}.pdf")
+        pdf_out_path = os.path.join(os.path.dirname(__file__), f"VYAS_VYAS_Standard_Kundli_56_Pages_{_pdf_stamp}.pdf")
         
         col_gen1, col_gen2 = st.columns([1, 1.2])
         with col_gen1:
             pdf_lang_opt = st.radio(
                 "रिपोर्ट की भाषा चुनें (Select Report Language):",
-                ["English (AstroSage Gold Standard)", "Hindi (हिंदी)"],
+                ["English (VYAS Gold Standard)", "Hindi (हिंदी)"],
                 index=0,
                 horizontal=True,
                 key="suite6_pdf_lang"
@@ -3680,8 +3670,8 @@ if st.session_state.get('data_generated'):
                 step=1,
                 key="suite6_varsh_year"
             )
-            if st.button("🚀 56-पेज AstroSage स्टैंडर्ड महा-रिपोर्ट PDF तैयार करें", type="primary", use_container_width=True):
-                with st.spinner("Compiling 56-Page AstroSage Gold Standard Dossier with Crisp Diamond Charts, Pratyantar Matrices & Western Aspects..."):
+            if st.button("🚀 56-पेज VYAS स्टैंडर्ड महा-रिपोर्ट PDF तैयार करें", type="primary", use_container_width=True):
+                with st.spinner("Compiling 56-Page VYAS Gold Standard Dossier with Crisp Diamond Charts, Pratyantar Matrices & Western Aspects..."):
                     success = publication_engine.build_publication_pdf(
                         chart, birth, kp_cusps, dasha_engine, vargas_matrix, pdf_out_path, target_varsh_year=int(varsh_choice_pdf), lang=selected_pdf_lang
                     )
@@ -3695,7 +3685,7 @@ if st.session_state.get('data_generated'):
                                 pass
                         st.session_state['pdf_out_path'] = pdf_out_path
                         st.session_state['pdf_input_sig'] = st.session_state.get('_birth_input_sig')
-                        st.success(f"🎉 56-पेज AstroSage स्टैंडर्ड कुण्डली PDF सफलतापूर्वक तैयार हो गया है! (आकार: {os.path.getsize(pdf_out_path)/1024/1024:.2f} MB)")
+                        st.success(f"🎉 56-पेज VYAS स्टैंडर्ड कुण्डली PDF सफलतापूर्वक तैयार हो गया है! (आकार: {os.path.getsize(pdf_out_path)/1024/1024:.2f} MB)")
                     else:
                         from vyas import chrome_runtime
                         _chrome = publication_engine.find_chrome()
@@ -3812,7 +3802,7 @@ if st.session_state.get('data_generated'):
         with col_gen2:
             st.markdown("""
             <div class="glass-card">
-                <div style="font-weight: bold; color: #f0c05a; font-size: 1.1rem;">56-पेज AstroSage गोल्ड स्टैंडर्ड की प्रमुख सामग्री:</div>
+                <div style="font-weight: bold; color: #f0c05a; font-size: 1.1rem;">56-पेज VYAS गोल्ड स्टैंडर्ड की प्रमुख सामग्री:</div>
                 <ul style="color: #cbd5e1; font-size: 0.92rem; margin-top: 6px; line-height: 1.55;">
                     <li><b>पारंपरिक चक्र एवं ग्रह स्थिति:</b> अवकहड़ा चक्र, बेसिक विवरण, अनुकूल बिन्दु, घातक चक्र, पारंपरिक लग्न व नवमांश डायमंड चार्ट, चलित सारणी।</li>
                     <li><b>जीवन एवं ग्रह फलित:</b> लग्न फल, नक्षत्र फल, 4-पृष्ठ सम्पूर्ण जीवन फलित (चरित्र, करियर, आजीविका, स्वास्थ्य, वित्त, शिक्षा)।</li>
