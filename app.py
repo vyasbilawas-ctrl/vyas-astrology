@@ -54,6 +54,88 @@ from vyas.chatbot import vyas_chatbot
 from vyas import city_search
 from vyas import google_drive_sync
 
+# ---------------- AUTH SESSION HELPERS ----------------
+# A signed-in user must survive a full page reload, but Streamlit Cloud has no
+# server-side session: the old get_last_active_user() restored the SAME account
+# for every visitor (one shared row). Instead each browser gets an opaque token
+# cookie that maps to exactly one account.
+_SESSION_COOKIE = "vyas_sess"
+
+
+def _read_session_cookie() -> str:
+    try:
+        return str((st.context.cookies or {}).get(_SESSION_COOKIE, "") or "")
+    except Exception:
+        return ""
+
+
+def _write_session_cookie(token: str) -> None:
+    """Sets/clears the browser token. SameSite=None so it also works when the
+    app is embedded in Streamlit Cloud's sharing iframe."""
+    try:
+        import streamlit.components.v1 as _components
+        if token:
+            _js = (
+                f"document.cookie='{_SESSION_COOKIE}={token}; path=/; "
+                "max-age=2592000; SameSite=None; Secure';"
+            )
+        else:
+            _js = (
+                f"document.cookie='{_SESSION_COOKIE}=; path=/; "
+                "max-age=0; SameSite=None; Secure';"
+            )
+        _components.html(f"<script>{_js}</script>", height=0)
+    except Exception:
+        pass
+
+
+def _start_user_session(u_obj) -> None:
+    """Marks the user signed in for this session and remembers this browser."""
+    if not u_obj:
+        return
+    st.session_state["user"] = u_obj
+    try:
+        auth_vault.set_active_session_user(u_obj["id"])
+    except Exception:
+        pass
+    try:
+        token = auth_vault.create_session_token(u_obj["id"])
+    except Exception:
+        token = ""
+    if token:
+        st.session_state["_vyas_session_token"] = token
+        # The cookie is written on the NEXT run: this call is followed by
+        # st.rerun(), which discards any element (including the cookie script)
+        # created in the current run.
+        st.session_state["_vyas_cookie_pending"] = True
+
+
+def _end_user_session() -> None:
+    """Logs out: invalidates the token, clears the cookie and session flags."""
+    token = st.session_state.pop("_vyas_session_token", "") or _read_session_cookie()
+    try:
+        auth_vault.delete_session_token(token)
+    except Exception:
+        pass
+    try:
+        auth_vault.clear_active_session()
+    except Exception:
+        pass
+    st.session_state["_vyas_cookie_pending"] = True  # clears it on the next run
+    st.session_state["user"] = {
+        "id": 1,
+        "name": "नया जातक (Seeker)",
+        "email": "seeker@vyasastro.com",
+        "tier": "VIP_TRIAL",
+        "days_left": 30,
+        "is_vip": True,
+    }
+    for _sk in ("loaded_profile", "google_access_token", "user_google_processed",
+                "oauth_state", "gdrive_last_link", "saved_k_picker",
+                "oauth_code_verifier"):
+        st.session_state.pop(_sk, None)
+
+
 def render_kundli(svg_str: str):
     """Render astrological SVG cleanly via base64 data URI to prevent DOMPurify stripping."""
     clean = re.sub(r'<!--.*?-->', '', svg_str, flags=re.DOTALL)
@@ -192,9 +274,8 @@ elif _oauth_code and not st.session_state.get("user_google_processed"):
                         _login_err = ("लॉगिन सफल हुआ, परंतु Drive टोकन सुरक्षित नहीं हो सका "
                                       "(डेटाबेस त्रुटि)। Drive सिंक काम नहीं करेगा।")
                     else:
-                        st.session_state["user"] = u_obj
                         st.session_state["google_access_token"] = acc_tok
-                        auth_vault.set_active_session_user(u_obj["id"])
+                        _start_user_session(u_obj)
                         google_drive_sync.clear_oauth_error()
 
             if _login_err:
@@ -1279,6 +1360,154 @@ st.iframe("""
 </html>
 """, height=185)
 
+# ---------------- SESSION RESOLUTION (before the sidebar) ----------------
+# Resolved once, up-front: the logged-out landing page is rendered in the MAIN
+# area and st.stop() ends the run before the sidebar is built. (It used to be
+# built inside `with st.sidebar:`, so visitors saw a blank main page.)
+if st.session_state.pop("_vyas_cookie_pending", False):
+    # Deferred write from the run that just signed in/out (see
+    # _start_user_session): doing it here means it survives st.rerun().
+    _write_session_cookie(st.session_state.get("_vyas_session_token", "") or "")
+
+if "user" not in st.session_state:
+    _restored = None
+    _token = _read_session_cookie()
+    if _token:
+        try:
+            _restored = auth_vault.get_user_by_session_token(_token)
+        except Exception:
+            _restored = None
+    if _restored:
+        st.session_state["user"] = _restored
+    else:
+        st.session_state["user"] = {
+            "id": 1,
+            "name": "नया जातक (Seeker)",
+            "email": "seeker@vyasastro.com",
+            "tier": "VIP_TRIAL",
+            "days_left": 30,
+            "is_vip": True,
+        }
+
+# A stale `uid` param must never log anyone in; scrub it from the URL.
+if st.query_params.get("uid"):
+    st.query_params.clear()
+
+u = st.session_state["user"]
+is_logged_in_now = (u.get("email") != "seeker@vyasastro.com")
+
+
+# ---------------- LOGGED-OUT LANDING: EMAIL LOGIN / REGISTRATION ----------------
+if not is_logged_in_now:
+    _hero_col, _auth_col = st.columns([1.12, 1], gap="large")
+
+    with _hero_col:
+        st.markdown("""
+        <div style="text-align: center; padding: 34px 26px; background: radial-gradient(circle at 50% 0%, rgba(245, 209, 110, 0.14) 0%, transparent 62%), linear-gradient(180deg, rgba(19, 27, 54, 0.98) 0%, rgba(8, 12, 26, 0.98) 100%); border: 1px solid rgba(245, 209, 110, 0.32); border-radius: 18px; box-shadow: 0 28px 60px -26px rgba(0,0,0,0.98);">
+            <div style="font-family: 'Cinzel', serif; font-size: 2.1rem; font-weight: 800; background: linear-gradient(90deg, #fff4cc 0%, #f5d16e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px;">VYAS ASTRA</div>
+            <div style="font-size: 1.05rem; color: #f7d584; margin-bottom: 8px; font-weight: 600;">वैदिक ज्योतिष • के.पी. प्रणाली • शोध प्रबंध</div>
+            <div style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;">सटीक जन्मकुंडली विश्लेषण, विंशोत्तरी दशा,<br/>के.पी. फलादेश एवं विस्तृत PDF रिपोर्ट</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+        <div style="margin-top: 16px; display: grid; gap: 10px;">
+            <div style="background: rgba(19,27,54,0.72); border: 1px solid rgba(245,209,110,0.18); border-radius: 12px; padding: 12px 14px; color: #e2e8f0; font-size: 0.9rem;">
+                🪔 <b style="color:#f7d584;">पूर्ण कुण्डली</b> — लग्न, नवांश, ग्रह-दशा, योग एवं भाव विश्लेषण
+            </div>
+            <div style="background: rgba(19,27,54,0.72); border: 1px solid rgba(245,209,110,0.18); border-radius: 12px; padding: 12px 14px; color: #e2e8f0; font-size: 0.9rem;">
+                🔮 <b style="color:#f7d584;">के.पी. सूट</b> — सब-लॉर्ड, रूलिंग प्लैनेट्स एवं 4-फोल्ड सिग्निफिकेटर
+            </div>
+            <div style="background: rgba(19,27,54,0.72); border: 1px solid rgba(245,209,110,0.18); border-radius: 12px; padding: 12px 14px; color: #e2e8f0; font-size: 0.9rem;">
+                📜 <b style="color:#f7d584;">56-पृष्ठ PDF</b> — प्रिंट-रेडी रिपोर्ट, Google Drive में सुरक्षित
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with _auth_col:
+        st.markdown(
+            '<div style="font-size:1.15rem;font-weight:800;color:#fef3c7;margin-bottom:2px;">'
+            'खाते में प्रवेश करें</div>'
+            '<div style="font-size:0.82rem;color:#94a3b8;margin-bottom:10px;">'
+            'ईमेल से नया खाता बनाएं या लॉगिन करें</div>',
+            unsafe_allow_html=True,
+        )
+
+        _tab_login, _tab_register = st.tabs(["🔑 लॉगिन", "✨ नया खाता"])
+
+        with _tab_login:
+            with st.form("vyas_login_form", clear_on_submit=False):
+                _in_email = st.text_input("ईमेल", key="login_email", placeholder="you@example.com")
+                _in_pw = st.text_input("पासवर्ड", type="password", key="login_pw")
+                _in_submit = st.form_submit_button("लॉगिन करें", type="primary", use_container_width=True)
+            if _in_submit:
+                _ok_in, _msg_in, _u_in = auth_vault.login_user(_in_email, _in_pw)
+                if _ok_in and _u_in:
+                    _start_user_session(_u_in)
+                    st.rerun()
+                else:
+                    st.error(_msg_in)
+            st.caption("पासवर्ड भूल गए? नीचे 'नया खाता' से नया खाता बना सकते हैं।")
+
+        with _tab_register:
+            with st.form("vyas_register_form", clear_on_submit=False):
+                _up_name = st.text_input("पूरा नाम", key="reg_name", placeholder="जैसे: राहुल शर्मा")
+                _up_email = st.text_input("ईमेल", key="reg_email", placeholder="you@example.com")
+                _up_pw = st.text_input("पासवर्ड (कम से कम 6 अक्षर)", type="password", key="reg_pw")
+                _up_pw2 = st.text_input("पासवर्ड दोबारा", type="password", key="reg_pw2")
+                _up_submit = st.form_submit_button("निःशुल्क खाता बनाएं", type="primary", use_container_width=True)
+            if _up_submit:
+                if not (_up_name or "").strip():
+                    st.error("कृपया अपना नाम भरें।")
+                elif "@" not in (_up_email or ""):
+                    st.error("कृपया सही ईमेल आईडी भरें।")
+                elif len(_up_pw or "") < 6:
+                    st.error("पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।")
+                elif _up_pw != _up_pw2:
+                    st.error("दोनों पासवर्ड मेल नहीं खा रहे।")
+                else:
+                    _ok_up, _msg_up, _u_up = auth_vault.register_user(_up_email, _up_name, _up_pw)
+                    if _ok_up and _u_up:
+                        _start_user_session(_u_up)
+                        st.rerun()
+                    else:
+                        st.error(_msg_up)
+            st.caption("✨ नए खाते पर **30 दिन का VIP Pro ट्रायल निःशुल्क**।")
+
+        _google_login_url = google_drive_sync.get_google_auth_url(include_drive=False)
+        if _google_login_url:
+            st.markdown(
+                "<div style='text-align:center;color:#64748b;font-size:0.78rem;margin:12px 0 6px;'>— या —</div>",
+                unsafe_allow_html=True,
+            )
+            st.link_button("Google से साइन इन करें", _google_login_url, use_container_width=True)
+
+    with st.expander("🛠️ साइन-इन में समस्या? / Sign-in help", expanded=False):
+        _diag = google_drive_sync.oauth_diagnostics()
+        _bad = []
+        if _diag["client_id_configured"] != "yes":
+            _bad.append("Google Client ID सेट नहीं है — Streamlit **Secrets** में `GOOGLE_CLIENT_ID` जोड़ें।")
+        if _diag["client_secret_configured"] != "yes":
+            _bad.append("Google Client Secret सेट नहीं है — Secrets में `GOOGLE_CLIENT_SECRET` जोड़ें।")
+        if _diag["redirect_uri_registered"] != "yes":
+            _bad.append("यह Redirect URI Google Cloud Console में registered नहीं है (नीचे देखें)।")
+        if _bad:
+            st.warning(" • ".join(_bad))
+        else:
+            st.success("Google क्रेडेंशियल्स ठीक दिख रहे हैं।")
+        st.markdown(
+            f"**Redirect URI (यही Google Console में डालें):**\n\n"
+            f"`{_diag['effective_redirect_uri']}`"
+        )
+        if _diag["last_oauth_error"]:
+            st.error(f"अंतिम Google त्रुटि:\n\n{_diag['last_oauth_error']}")
+        st.caption(
+            "ईमेल/पासवर्ड से लॉगिन हमेशा काम करता है — Google वैकल्पिक है। "
+            "Google के लिए OAuth client में redirect URI जोड़ें और Audience → Test users में Gmail डालें।"
+        )
+
+    st.stop()
+
 # Sidebar Native Setup
 with st.sidebar:
     # Use transparent PNG logo with cosmic gold halo
@@ -1298,35 +1527,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     
     # ---------------- USER AUTH & 30-DAY VIP TRIAL VAULT ----------------
-    if "user" not in st.session_state:
-        # Restore session ONLY from the server-side active_user_id (set on a
-        # real OAuth / verified login). The old `?uid=` URL-param login let
-        # anyone become any user via a crafted link — removed.
-        restored_user = None
-        try:
-            if hasattr(auth_vault, "get_last_active_user"):
-                restored_user = auth_vault.get_last_active_user()
-        except Exception:
-            restored_user = None
-
-        # A stale `uid` param must never log anyone in; scrub it from the URL.
-        if st.query_params.get("uid"):
-            st.query_params.clear()
-
-        if restored_user:
-            st.session_state["user"] = restored_user
-        else:
-            st.session_state["user"] = {
-                "id": 1,
-                "name": "नया जातक (Seeker)",
-                "email": "seeker@vyasastro.com",
-                "tier": "VIP_TRIAL",
-                "days_left": 30,
-                "is_vip": True
-            }
-
-    u = st.session_state["user"]
-    is_logged_in_now = (u.get("email") != "seeker@vyasastro.com")
+    # `u` and `is_logged_in_now` are resolved once, above the sidebar.
     
     # ---------------- MOBILE 1-CLICK PWA APP INSTALLATION (NATIVE PROMPT) ----------------
     if is_logged_in_now:
@@ -1486,22 +1687,8 @@ with st.sidebar:
                     )
 
             if st.button("🚪 Logout (लॉगआउट)", key="sidebar_logout_btn", use_container_width=True):
-                auth_vault.clear_active_session()
+                _end_user_session()
                 st.query_params.clear()
-                st.session_state["user"] = {
-                    "id": 1,
-                    "name": "नया जातक (Seeker)",
-                    "email": "seeker@vyasastro.com",
-                    "tier": "VIP_TRIAL",
-                    "days_left": 30,
-                    "is_vip": True
-                }
-                # Clear every OAuth/session artifact so the next Google login
-                # callback is processed (stale flags used to silently block it).
-                for _sk in ("loaded_profile", "google_access_token", "user_google_processed",
-                            "oauth_state", "gdrive_last_link", "saved_k_picker",
-                            "oauth_code_verifier"):
-                    st.session_state.pop(_sk, None)
                 # Drop the durable OAuth copies too, otherwise a stale nonce or
                 # verifier from before the logout could satisfy a later callback.
                 for _dk in ("oauth_state", "oauth_code_verifier"):
@@ -1536,39 +1723,6 @@ with st.sidebar:
                     '</div>',
                     unsafe_allow_html=True
                 )
-
-    # Sign-in diagnostics — collapsed by default so it never clutters the
-    # landing page, but gives a precise, copy-pasteable answer when the Google
-    # flow fails (missing client id, unregistered redirect URI, last error).
-    if not is_logged_in:
-        with st.expander("🛠️ साइन-इन में समस्या? / Sign-in help", expanded=False):
-            _diag = google_drive_sync.oauth_diagnostics()
-            _bad = []
-            if _diag["client_id_configured"] != "yes":
-                _bad.append("Google Client ID सेट नहीं है — Streamlit **Secrets** में `GOOGLE_CLIENT_ID` जोड़ें।")
-            if _diag["client_secret_configured"] != "yes":
-                _bad.append("Google Client Secret सेट नहीं है — Secrets में `GOOGLE_CLIENT_SECRET` जोड़ें।")
-            if _diag["redirect_uri_registered"] != "yes":
-                _bad.append("यह Redirect URI Google Cloud Console में registered नहीं है (नीचे देखें)।")
-            if _bad:
-                st.warning(" • ".join(_bad))
-            else:
-                st.success("क्रेडेंशियल्स ठीक दिख रहे हैं। नीचे अंतिम त्रुटि देखें।")
-            st.markdown(
-                f"**Redirect URI (यही Google Console में डालें):**\n\n"
-                f"`{_diag['effective_redirect_uri']}`"
-            )
-            st.caption(
-                f"Client ID: {_diag['client_id_hint'] or '—'} · "
-                f"Runtime origin: {_diag['runtime_origin'] or '—'}"
-            )
-            if _diag["last_oauth_error"]:
-                st.error(f"अंतिम त्रुटि:\n\n{_diag['last_oauth_error']}")
-            st.caption(
-                "Google Cloud → APIs & Services → Credentials → OAuth client → "
-                "**Authorized redirect URIs** में ऊपर वाला URI जोड़ें। "
-                "साथ ही OAuth consent screen में अपना Gmail **Test users** में जोड़ें।"
-            )
 
     # Hide admin/debug panels from non-logged-in users for cleaner landing page
     if is_logged_in:

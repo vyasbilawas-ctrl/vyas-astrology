@@ -181,19 +181,106 @@ def prune_app_state(prefix: str, keep_hours: int = 6) -> None:
     except Exception:
         pass
 
+
+# ---------------- PER-BROWSER SESSION TOKENS ----------------
+# Streamlit Cloud has no server-side notion of "this browser". The old
+# get_last_active_user() auto-login was global: after one person signed in,
+# EVERY visitor was restored as that same account and could see their saved
+# charts. These tokens are handed to one browser (cookie) and resolved back to
+# that user only, so accounts stay isolated.
+
+def create_session_token(user_id: int) -> str:
+    """Creates a long-lived random token mapped to one user id."""
+    import secrets as _secrets
+    token = _secrets.token_urlsafe(32)
+    try:
+        with _get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT OR REPLACE INTO app_state (key, value, updated_at) VALUES (?, ?, ?)",
+                (f"session:{token}", str(int(user_id)), datetime.now().isoformat()),
+            )
+            conn.commit()
+    except Exception:
+        return ""
+    return token
+
+
+def get_user_by_session_token(token: str) -> Optional[Dict]:
+    """Resolves a browser cookie token back to its account (None if unknown)."""
+    token = (token or "").strip()
+    if not token:
+        return None
+    try:
+        with _get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT value FROM app_state WHERE key = ?", (f"session:{token}",))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return get_user_by_id(int(row["value"]))
+    except Exception:
+        return None
+
+
+def delete_session_token(token: str) -> None:
+    """Invalidates one browser token (used on logout)."""
+    token = (token or "").strip()
+    if not token:
+        return
+    try:
+        with _get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM app_state WHERE key = ?", (f"session:{token}",))
+            conn.commit()
+    except Exception:
+        pass
+
 # Ensure DB is initialized on module import
 init_db()
 
 def _hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode('utf-8')).hexdigest()
+    """Salted PBKDF2-HMAC-SHA256 hash (``pbkdf2$salt$hex``).
+
+    The old scheme was a bare SHA-256 hex digest: identical passwords produced
+    identical hashes and a stolen DB was trivially brute-forced. Existing rows
+    still verify (see _verify_password) and are upgraded on next login.
+    """
+    import secrets as _secrets
+    salt = _secrets.token_hex(16)
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("ascii"), 120_000)
+    return f"pbkdf2${salt}${dk.hex()}"
+
+
+def _legacy_hash(password: str) -> str:
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+
+def _verify_password(password: str, stored: str) -> bool:
+    """Constant-time check that understands both hash formats."""
+    import hmac
+    stored = stored or ""
+    if stored.startswith("pbkdf2$"):
+        try:
+            _, salt, expected = stored.split("$", 2)
+        except ValueError:
+            return False
+        dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("ascii"), 120_000)
+        return hmac.compare_digest(dk.hex(), expected)
+    return hmac.compare_digest(_legacy_hash(password), stored)
+
+
+def _needs_rehash(stored: str) -> bool:
+    return not (stored or "").startswith("pbkdf2$")
+
 
 def register_user(email: str, name: str, password: str) -> Tuple[bool, str, Optional[Dict]]:
     """Registers a new user and grants an automatic 30-day VIP Pro Trial."""
     email = email.strip().lower()
     if not email or "@" not in email:
         return False, "अमान्य ईमेल आईडी। (Invalid Email)", None
-    if len(password) < 4:
-        return False, "पासवर्ड कम से कम 4 अक्षरों का होना चाहिए।", None
+    if len(password) < 6:
+        return False, "पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।", None
 
     now = datetime.now()
     vip_expiry = now + timedelta(days=30)
@@ -227,15 +314,25 @@ def register_user(email: str, name: str, password: str) -> Tuple[bool, str, Opti
 def login_user(email: str, password: str) -> Tuple[bool, str, Optional[Dict]]:
     """Authenticates user and returns active tier details."""
     email = email.strip().lower()
-    pwd_hash = _hash_password(password)
 
     try:
         with _get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users WHERE email = ? AND password_hash = ?", (email, pwd_hash))
+            cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
             row = cursor.fetchone()
-            if not row:
+            if not row or not _verify_password(password, row["password_hash"]):
                 return False, "ईमेल या पासवर्ड गलत है।", None
+
+            # Transparently upgrade legacy SHA-256 rows to salted PBKDF2.
+            if _needs_rehash(row["password_hash"]):
+                try:
+                    cursor.execute(
+                        "UPDATE users SET password_hash = ? WHERE id = ?",
+                        (_hash_password(password), row["id"]),
+                    )
+                    conn.commit()
+                except Exception:
+                    pass
 
             user_id = row["id"]
             name = row["name"]
