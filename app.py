@@ -73,7 +73,6 @@ def _write_session_cookie(token: str) -> None:
     """Sets/clears the browser token. SameSite=None so it also works when the
     app is embedded in Streamlit Cloud's sharing iframe."""
     try:
-        import streamlit.components.v1 as _components
         if token:
             _js = (
                 f"document.cookie='{_SESSION_COOKIE}={token}; path=/; "
@@ -84,7 +83,16 @@ def _write_session_cookie(token: str) -> None:
                 f"document.cookie='{_SESSION_COOKIE}=; path=/; "
                 "max-age=0; SameSite=None; Secure';"
             )
-        _components.html(f"<script>{_js}</script>", height=0)
+        _snippet = f"<script>{_js}</script>"
+        # st.iframe is the documented replacement for components.html, but it
+        # drops <script>, which is exactly what is needed here — so keep using
+        # components.html and fall back to st.iframe only if it is gone.
+        try:
+            import streamlit.components.v1 as _components
+            _components.html(_snippet, height=0)
+        except Exception:
+            if hasattr(st, "iframe"):
+                st.iframe(_snippet, height=0)
     except Exception:
         pass
 
