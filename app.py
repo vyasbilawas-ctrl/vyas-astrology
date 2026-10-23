@@ -2583,7 +2583,8 @@ if st.session_state.get('data_generated'):
     # =========================================================================
     # SUITE: ⏳ BIRTH TIME RECTIFICATION (BTR)
     # =========================================================================
-    if "जन्म समय शुद्धि" in selected_suite or "BTR" in selected_suite:
+    if ("जन्म समय शुद्धि" in selected_suite or "BTR" in selected_suite
+            or "Rectification" in selected_suite):
         st.markdown(f'<div class="section-title">{"⏳ जन्म समय शुद्धि (Birth Time Rectification - कुन्द व तत्व शोधन)" if is_hi else "⏳ Birth Time Rectification (BTR Engine)"}</div>', unsafe_allow_html=True)
         st.info("ऋषि पराशर एवं आधुनिक KP अनुसंधान के अनुसार जन्म समय में 1-2 मिनट का भी अंतर लग्न कस्प, D60 और सब-लॉर्ड्स को बदल देता है। नीचे दिए गए शास्त्रीय परीक्षणों से अपने समय की प्रामाणिकता जांचें:")
 
@@ -2929,7 +2930,8 @@ if st.session_state.get('data_generated'):
     # =========================================================================
     # SUITE: 💍 ASHTAKOOTA MILAN & DOSHA CANCELLATIONS
     # =========================================================================
-    elif "अष्टकूट" in selected_suite or "Ashtakoota" in selected_suite:
+    elif ("अष्टकूट" in selected_suite or "Ashtakoota" in selected_suite
+          or "Compatibility" in selected_suite):
         st.markdown(f'<div class="section-title">{"💍 अष्टकूट गुण मिलान (36 गुण) एवं शास्त्रीय दोष परिहार विश्लेषण" if is_hi else "💍 Ashtakoota 36 Gunas Match & Classical Dosha Cancellation"}</div>', unsafe_allow_html=True)
         st.info("विवाह मिलान केवल 36 में से 18 गुण मिलाने तक सीमित नहीं है। ऋषि पराशर एवं मुहुर्त चिंतामणि के अनुसार यदि नाड़ी या भकूट में शास्त्रीय परिहार (Exceptions) लागू हो जाएं, तो शून्य अंक भी दोषमुक्त होकर शुभ फल प्रदान करते हैं।")
 
@@ -3734,7 +3736,8 @@ if st.session_state.get('data_generated'):
     # =========================================================================
     # SUITE 5: 📖 DEEP FORENSIC PREDICTIONS (Extensive Classical Analysis)
     # =========================================================================
-    elif "फलित" in selected_suite or "Predictions" in selected_suite:
+    elif ("फलित" in selected_suite or "Predictions" in selected_suite
+          or "Forecast" in selected_suite):
         p_signs = {n: p.sign_index for n, p in chart.planets.items()}
         av_res = vyas_ashtaka.compute_ashtakavarga(p_signs, asc_sign_idx)
         sav = av_res["sav"]
