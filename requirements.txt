@@ -1,4 +1,4 @@
-streamlit>=1.45.0
+streamlit>=1.65.0
 skyfield>=1.49
 jplephem>=2.22
 numpy>=1.26.0

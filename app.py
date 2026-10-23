@@ -97,6 +97,62 @@ def _write_session_cookie(token: str) -> None:
         pass
 
 
+# ---------------- DURABLE BROWSER SESSION (localStorage bridge) ----------------
+# Streamlit Community Cloud's proxy forwards only an allowlist of cookies to
+# the app. A custom `vyas_sess` cookie is stored in the browser (document.cookie
+# shows it) but arrives EMPTY in st.context.cookies on Cloud, so every reload
+# fell back to the logged-out landing page. This zero-height bidirectional
+# component runs in the app page itself (no sandboxed iframe), so it can read
+# and write localStorage and hand the token back to Python through component
+# state — a channel the proxy cannot strip.
+_SESSION_STORE_KEY = "vyas_session_v1"
+_SESSION_STORE_JS = r"""
+export default function (component) {
+    const { setStateValue, data } = component;
+    const KEY = 'vyas_session_v1';
+    const action = (data && data.action) || 'read';
+    try {
+        if (action === 'store' && data && data.token) {
+            localStorage.setItem(KEY, data.token);
+            setStateValue('token', data.token);
+        } else if (action === 'clear') {
+            localStorage.removeItem(KEY);
+            setStateValue('token', '');
+        } else {
+            setStateValue('token', localStorage.getItem(KEY) || '');
+        }
+    } catch (err) {
+        setStateValue('token', '');
+    }
+}
+"""
+
+try:
+    _SESSION_COMPONENT = st.components.v2.component(
+        "vyas_session_store", js=_SESSION_STORE_JS
+    )
+except Exception:
+    _SESSION_COMPONENT = None
+
+
+def _mount_session_bridge(action: str = "read", token: str = "") -> str:
+    """Reads/stores/clears the browser session token (empty on any failure)."""
+    if _SESSION_COMPONENT is None:
+        return ""
+    try:
+        result = _SESSION_COMPONENT(
+            data={"action": action, "token": token},
+            default={"token": ""},
+            key="vyas_session_bridge",
+            on_token_change=lambda: None,
+            height=0,
+            width="stretch",
+        )
+        return str(getattr(result, "token", "") or "")
+    except Exception:
+        return ""
+
+
 def _start_user_session(u_obj) -> None:
     """Marks the user signed in for this session and remembers this browser."""
     if not u_obj:
@@ -112,9 +168,10 @@ def _start_user_session(u_obj) -> None:
         token = ""
     if token:
         st.session_state["_vyas_session_token"] = token
-        # The cookie is written on the NEXT run: this call is followed by
-        # st.rerun(), which discards any element (including the cookie script)
-        # created in the current run.
+        # Both are written on the NEXT run: this call is followed by st.rerun(),
+        # which discards any element (including the cookie script) created in
+        # the current run.
+        st.session_state["_vyas_store_pending"] = token
         st.session_state["_vyas_cookie_pending"] = True
 
 
@@ -130,6 +187,7 @@ def _end_user_session() -> None:
     except Exception:
         pass
     st.session_state["_vyas_cookie_pending"] = True  # clears it on the next run
+    st.session_state["_vyas_clear_pending"] = True
     st.session_state["user"] = {
         "id": 1,
         "name": "नया जातक (Seeker)",
@@ -1383,9 +1441,25 @@ if st.session_state.pop("_vyas_cookie_pending", False):
     # _start_user_session): doing it here means it survives st.rerun().
     _write_session_cookie(st.session_state.get("_vyas_session_token", "") or "")
 
-if "user" not in st.session_state:
+# Mirror the token into localStorage (works where cookies are stripped) and
+# read it back on the next run. The component is zero-height and invisible.
+_store_pending = st.session_state.pop("_vyas_store_pending", "") or ""
+_clear_pending = st.session_state.pop("_vyas_clear_pending", False)
+_bridge_token = _mount_session_bridge(
+    "store" if _store_pending else ("clear" if _clear_pending else "read"),
+    _store_pending,
+)
+if _clear_pending:
+    # The component still reports the old token on the logout run (JS clears it
+    # in the browser only after this run). Never treat that as a restore.
+    _bridge_token = ""
+
+_current_email = (st.session_state.get("user") or {}).get("email", "")
+if (not _current_email) or _current_email == "seeker@vyasastro.com":
     _restored = None
-    _token = _read_session_cookie()
+    # localStorage first: it survives reloads even when the Cloud proxy drops
+    # custom cookies. The cookie remains a fallback for local/direct hosting.
+    _token = _bridge_token or _read_session_cookie()
     if _token:
         try:
             _restored = auth_vault.get_user_by_session_token(_token)
@@ -1393,6 +1467,8 @@ if "user" not in st.session_state:
             _restored = None
     if _restored:
         st.session_state["user"] = _restored
+        # Keep the token so Logout can invalidate exactly this browser's row.
+        st.session_state["_vyas_session_token"] = _token
     else:
         st.session_state["user"] = {
             "id": 1,
@@ -1827,6 +1903,13 @@ with st.sidebar:
                     "(trailing slash, http vs https, www — कुछ भी अलग नहीं)।"
                 )
 
+                if st.button("🔬 Google क्रेडेंशियल्स जाँचें", key="test_g_creds_btn", use_container_width=True):
+                    _ok_gc, _msg_gc = google_drive_sync.test_google_credentials()
+                    if _ok_gc:
+                        st.success(_msg_gc)
+                    else:
+                        st.error(_msg_gc)
+
     # ---------------- SAVED KUNDLIS VAULT (FULL MANAGEMENT) ----------------
     if is_logged_in_now:
         saved_list = auth_vault.get_saved_kundlis(u["id"])
@@ -1864,153 +1947,168 @@ with st.sidebar:
                 st.info("💡 अभी कोई कुण्डली सुरक्षित नहीं है। नीचे जन्म विवरण भरकर **'💾 कुण्डली सुरक्षित करें'** बटन दबाएं।")
     # Hide saved kundlis expander for non-logged users for cleaner UI
 
-    ui_lang = st.radio("🌐 भाषा / Language", ["हिन्दी (Hindi)", "English"], horizontal=True)
-    is_hi = "हिन्दी" in ui_lang
-    
-    if is_logged_in_now:
-        st.header("Native Details / जातक विवरण" if is_hi else "Native Details")
-        mode = st.radio("Mode / प्रकार" if is_hi else "Mode", ["Natal Kundli (जन्म कुण्डली)", "Prashna (प्रश्न कुण्डली)"] if is_hi else ["Natal Kundli", "Prashna (Horary)"], horizontal=True)
-    else:
-        st.markdown("""
-        <div style="text-align: center; padding: 40px 20px; background: radial-gradient(circle at 50% 0%, rgba(245, 209, 110, 0.12) 0%, transparent 60%), linear-gradient(180deg, rgba(19, 27, 54, 0.98) 0%, rgba(8, 12, 26, 0.98) 100%); border: 1px solid rgba(245, 209, 110, 0.32); border-radius: 18px; margin-top: 30px; box-shadow: 0 28px 60px -26px rgba(0,0,0,0.98);">
-            <div style="font-family: 'Cinzel', serif; font-size: 2rem; font-weight: 800; background: linear-gradient(90deg, #fff4cc 0%, #f5d16e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px;">VYAS ASTRA</div>
-            <div style="font-size: 1.1rem; color: #f7d584; margin-bottom: 8px; font-weight: 600;">वैदिक ज्योतिष • के.पी. प्रणाली • शोध प्रबंध</div>
-            <div style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 24px;">सटीक जन्मकुंडली विश्लेषण, विंशोत्तरी दशा, के.पी. फलादेश एवं विस्तृत PDF रिपोर्ट</div>
-            <div style="color: #94a3b8; font-size: 0.9rem;">कुण्डली बनाना शुरू करने के लिए ऊपर 'Google से साइन इन करें' पर क्लिक करें</div>
-        </div>
-        """, unsafe_allow_html=True)
-        st.stop()
-    
-    lp = st.session_state.get('loaded_profile', {})
-    default_name = lp.get('name', 'जातक / Seeker')
-    default_city = lp.get('city', 'New Delhi, India')
-    default_lat = float(lp.get('lat', 28.6139))
-    default_lon = float(lp.get('lon', 77.2090))
-    default_tz = float(lp.get('tz', 5.5))
+st.markdown("""
+<div style="margin: 4px 0 16px; padding: 18px 22px; border-radius: 14px;
+            background: radial-gradient(circle at 8% 0%, rgba(229,169,60,0.20) 0%, transparent 55%),
+                        linear-gradient(135deg, rgba(19,27,54,0.96) 0%, rgba(8,12,26,0.96) 100%);
+            border: 1px solid rgba(229,169,60,0.38); box-shadow: 0 18px 40px -24px #000;">
+    <div style="font-family: 'Cinzel', serif; font-size: 1.45rem; font-weight: 800; color: #fef3c7; letter-spacing: 0.5px;">
+        🪔 अपनी कुण्डली बनाएं
+    </div>
+    <div style="color: #cbd5e1; font-size: 0.9rem; margin-top: 5px;">
+        जन्म विवरण भरें, फिर नीचे <b style="color:#f7d584;">“कुण्डली एवं ज्योतिषीय विश्लेषण बनाएं”</b> दबाएं।
+        चाहें तो <b style="color:#f7d584;">“कुण्डली सुरक्षित करें”</b> से प्रोफ़ाइल वॉल्ट में भी रख सकते हैं।
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-    default_dob = datetime(1995, 1, 1).date()
-    if lp.get('dob'):
-        try:
-            default_dob = datetime.strptime(lp['dob'], "%Y-%m-%d").date()
-        except Exception:
-            pass
+ui_lang = st.radio("🌐 भाषा / Language", ["हिन्दी (Hindi)", "English"], horizontal=True)
+is_hi = "हिन्दी" in ui_lang
 
-    def_h, def_m, def_s = 12, 0, 0
-    if lp.get('tob'):
-        try:
-            parts = [int(p) for p in lp['tob'].split(':')]
-            if len(parts) >= 1: def_h = parts[0]
-            if len(parts) >= 2: def_m = parts[1]
-            if len(parts) >= 3: def_s = parts[2]
-        except Exception:
-            pass
-    
-    if "Natal" in mode:
-        name = st.text_input("Name / नाम" if is_hi else "Name", default_name)
-        date_val = st.date_input("Date of Birth / जन्म तिथि" if is_hi else "Date of Birth", value=default_dob, min_value=datetime(1900, 1, 1).date(), max_value=datetime(2100, 12, 31).date(), format="DD/MM/YYYY")
-        
-        # Exact HH:MM:SS input for ultra micro-precision
-        st.markdown("<small style='color: #f0c05a;'><b>Time of Birth (Hours : Mins : Secs) / जन्म समय</b></small>", unsafe_allow_html=True)
-        t_col1, t_col2, t_col3 = st.columns(3)
-        tob_hour = t_col1.number_input("Hour (घंटा)", min_value=0, max_value=23, value=def_h)
-        tob_min = t_col2.number_input("Min (मिनट)", min_value=0, max_value=59, value=def_m)
-        tob_sec = t_col3.number_input("Sec (सेकंड)", min_value=0, max_value=59, value=def_s)
-        time_val = d_time(int(tob_hour), int(tob_min), int(tob_sec))
-    else:
-        name = st.text_input("Querent Name / प्रच्छक का नाम" if is_hi else "Querent Name", "Querent")
-        prashna_category = st.selectbox(
-            "प्रश्न विषय (Prashna Subject / Category)",
-            [
-                "💼 नौकरी / कार्य सफलता (Career & Job)",
-                "💍 विवाह एवं प्रेम संबंध (Marriage & Romance)",
-                "🏥 रोग मुक्ति व स्वास्थ्य (Health & Recovery)",
-                "⚖️ कोर्ट केस / वाद-विवाद (Court Case & Dispute)",
-                "💰 धन लाभ / फंसा हुआ धन (Wealth & Recovery of Dues)",
-                "✈️ विदेश यात्रा / स्थानांतरण (Travel & Relocation)",
-                "🔍 खोई हुई वस्तु / गुमशुदा (Lost Article / Missing Person)"
-            ]
-        )
-        prashna_text = st.text_input("विशेष प्रश्न (Specific Question)", "क्या मेरा कार्य सिद्ध होगा?")
-        st.session_state['prashna_meta'] = {"category": prashna_category, "text": prashna_text}
-        st.info("प्रश्न कुण्डली में तात्कालिक सटीक समय व स्थान प्रयुक्त होगा (Prashna uses exact horary moment).")
-        now = datetime.now()
-        date_val = now.date()
-        time_val = now.time()
+if is_logged_in_now:
+    st.subheader("Native Details / जातक विवरण" if is_hi else "Native Details")
+    mode = st.radio("Mode / प्रकार" if is_hi else "Mode", ["Natal Kundli (जन्म कुण्डली)", "Prashna (प्रश्न कुण्डली)"] if is_hi else ["Natal Kundli", "Prashna (Horary)"], horizontal=True)
+else:
+    st.markdown("""
+    <div style="text-align: center; padding: 40px 20px; background: radial-gradient(circle at 50% 0%, rgba(245, 209, 110, 0.12) 0%, transparent 60%), linear-gradient(180deg, rgba(19, 27, 54, 0.98) 0%, rgba(8, 12, 26, 0.98) 100%); border: 1px solid rgba(245, 209, 110, 0.32); border-radius: 18px; margin-top: 30px; box-shadow: 0 28px 60px -26px rgba(0,0,0,0.98);">
+        <div style="font-family: 'Cinzel', serif; font-size: 2rem; font-weight: 800; background: linear-gradient(90deg, #fff4cc 0%, #f5d16e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px;">VYAS ASTRA</div>
+        <div style="font-size: 1.1rem; color: #f7d584; margin-bottom: 8px; font-weight: 600;">वैदिक ज्योतिष • के.पी. प्रणाली • शोध प्रबंध</div>
+        <div style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 24px;">सटीक जन्मकुंडली विश्लेषण, विंशोत्तरी दशा, के.पी. फलादेश एवं विस्तृत PDF रिपोर्ट</div>
+        <div style="color: #94a3b8; font-size: 0.9rem;">कुण्डली बनाना शुरू करने के लिए ऊपर 'Google से साइन इन करें' पर क्लिक करें</div>
+    </div>
+    """, unsafe_allow_html=True)
+    st.stop()
 
-    st.subheader("Birth Place / जन्म स्थान" if is_hi else "Birth Place")
-    
-    # Instant town & city search across 565,000+ Indian & Global locations
-    city_query = st.text_input("नगर/कस्बा खोजें (Type City / Town / Tehsil to search):", value=default_city, key="city_search_input")
-    
-    matched_cities = city_search.search_cities(city_query, limit=40)
-    city_options = {}
-    if matched_cities:
-        for c in matched_cities:
-            city_options[c["label"]] = c
-    else:
-        # Default fallback option
-        fallback_label = f"{city_query or default_city} (स्थान)"
-        city_options[fallback_label] = {
-            "label": fallback_label,
-            "name": city_query or default_city,
-            "lat": float(st.session_state.get('lat', default_lat)),
-            "lon": float(st.session_state.get('lon', default_lon))
-        }
+lp = st.session_state.get('loaded_profile', {})
+default_name = lp.get('name', 'जातक / Seeker')
+default_city = lp.get('city', 'New Delhi, India')
+default_lat = float(lp.get('lat', 28.6139))
+default_lon = float(lp.get('lon', 77.2090))
+default_tz = float(lp.get('tz', 5.5))
 
-    selected_city_label = st.selectbox(
-        "नगर चुनें (Select Town / City from List):",
-        options=list(city_options.keys()),
-        index=0,
-        key="selected_city_dropdown"
+default_dob = datetime(1995, 1, 1).date()
+if lp.get('dob'):
+    try:
+        default_dob = datetime.strptime(lp['dob'], "%Y-%m-%d").date()
+    except Exception:
+        pass
+
+def_h, def_m, def_s = 12, 0, 0
+if lp.get('tob'):
+    try:
+        parts = [int(p) for p in lp['tob'].split(':')]
+        if len(parts) >= 1: def_h = parts[0]
+        if len(parts) >= 2: def_m = parts[1]
+        if len(parts) >= 3: def_s = parts[2]
+    except Exception:
+        pass
+
+if "Natal" in mode:
+    name = st.text_input("Name / नाम" if is_hi else "Name", default_name)
+    date_val = st.date_input("Date of Birth / जन्म तिथि" if is_hi else "Date of Birth", value=default_dob, min_value=datetime(1900, 1, 1).date(), max_value=datetime(2100, 12, 31).date(), format="DD/MM/YYYY")
+    
+    # Exact HH:MM:SS input for ultra micro-precision
+    st.markdown("<small style='color: #f0c05a;'><b>Time of Birth (Hours : Mins : Secs) / जन्म समय</b></small>", unsafe_allow_html=True)
+    t_col1, t_col2, t_col3 = st.columns(3)
+    tob_hour = t_col1.number_input("Hour (घंटा)", min_value=0, max_value=23, value=def_h)
+    tob_min = t_col2.number_input("Min (मिनट)", min_value=0, max_value=59, value=def_m)
+    tob_sec = t_col3.number_input("Sec (सेकंड)", min_value=0, max_value=59, value=def_s)
+    time_val = d_time(int(tob_hour), int(tob_min), int(tob_sec))
+else:
+    name = st.text_input("Querent Name / प्रच्छक का नाम" if is_hi else "Querent Name", "Querent")
+    prashna_category = st.selectbox(
+        "प्रश्न विषय (Prashna Subject / Category)",
+        [
+            "💼 नौकरी / कार्य सफलता (Career & Job)",
+            "💍 विवाह एवं प्रेम संबंध (Marriage & Romance)",
+            "🏥 रोग मुक्ति व स्वास्थ्य (Health & Recovery)",
+            "⚖️ कोर्ट केस / वाद-विवाद (Court Case & Dispute)",
+            "💰 धन लाभ / फंसा हुआ धन (Wealth & Recovery of Dues)",
+            "✈️ विदेश यात्रा / स्थानांतरण (Travel & Relocation)",
+            "🔍 खोई हुई वस्तु / गुमशुदा (Lost Article / Missing Person)"
+        ]
     )
+    prashna_text = st.text_input("विशेष प्रश्न (Specific Question)", "क्या मेरा कार्य सिद्ध होगा?")
+    st.session_state['prashna_meta'] = {"category": prashna_category, "text": prashna_text}
+    st.info("प्रश्न कुण्डली में तात्कालिक सटीक समय व स्थान प्रयुक्त होगा (Prashna uses exact horary moment).")
+    now = datetime.now()
+    date_val = now.date()
+    time_val = now.time()
 
-    # Automatically set lat/lon from selected town/city
-    sel_city_data = city_options.get(selected_city_label)
-    if sel_city_data and ('lat' in sel_city_data) and ('lon' in sel_city_data):
-        # Update session state if user selects a different city from search
-        if st.session_state.get('_last_chosen_city') != selected_city_label:
-            st.session_state['lat'] = sel_city_data['lat']
-            st.session_state['lon'] = sel_city_data['lon']
-            st.session_state['city_name'] = sel_city_data['name']
-            st.session_state['_last_chosen_city'] = selected_city_label
+st.subheader("Birth Place / जन्म स्थान" if is_hi else "Birth Place")
 
-    city_name = st.session_state.get('city_name', sel_city_data.get('name', default_city) if sel_city_data else default_city)
-            
-    coord_col1, coord_col2 = st.columns(2)
-    lat = coord_col1.number_input("Latitude (°N) / अक्षांश" if is_hi else "Latitude (°N)", value=float(st.session_state.get('lat', default_lat)), format="%.4f", step=0.01)
-    lon = coord_col2.number_input("Longitude (°E) / रेखांश" if is_hi else "Longitude (°E)", value=float(st.session_state.get('lon', default_lon)), format="%.4f", step=0.01)
-    st.session_state['lat'] = lat
-    st.session_state['lon'] = lon
-    
-    tz_offset = st.number_input("Timezone Offset (Hours) / समय क्षेत्र", value=5.5, step=0.5)
-    
-    col_ay1, col_ay2 = st.columns(2)
-    with col_ay1:
-        ayan_choice = st.selectbox("Ayanamsa (अयनांश)", ["Lahiri", "KP", "Raman"], index=0)
-    with col_ay2:
-        node_choice = st.selectbox("राहु-केतु नोड (Rahu Node)", ["Mean (औसत)", "True (स्पष्ट)"], index=0)
+# Instant town & city search across 565,000+ Indian & Global locations
+city_query = st.text_input("नगर/कस्बा खोजें (Type City / Town / Tehsil to search):", value=default_city, key="city_search_input")
 
-    # Save to vault button
-    if st.button("💾 कुण्डली सुरक्षित करें (Save Profile to Vault)", use_container_width=True):
-        k_payload = {
-            "name": name,
-            "dob": date_val.strftime("%Y-%m-%d"),
-            "tob": time_val.strftime("%H:%M:%S"),
-            "city": city_name,
-            "lat": lat,
-            "lon": lon,
-            "tz": tz_offset,
-            "ayanamsa": ayan_choice
-        }
-        ok, s_msg = auth_vault.save_kundli(u["id"], k_payload)
-        if ok:
-            st.success(f"'{name}' की कुण्डली सुरक्षित हो गई! यह ऊपर 'मेरी सुरक्षित कुण्डलियाँ' में उपलब्ध है।")
-            st.rerun()
-        else:
-            st.warning(s_msg)
-    
-    btn_lbl = "Generate Analysis & Birth Chart →" if not is_hi else "कुण्डली एवं ज्योतिषीय विश्लेषण बनाएं →"
-    generate = st.button(btn_lbl, type="primary", use_container_width=True)
+matched_cities = city_search.search_cities(city_query, limit=40)
+city_options = {}
+if matched_cities:
+    for c in matched_cities:
+        city_options[c["label"]] = c
+else:
+    # Default fallback option
+    fallback_label = f"{city_query or default_city} (स्थान)"
+    city_options[fallback_label] = {
+        "label": fallback_label,
+        "name": city_query or default_city,
+        "lat": float(st.session_state.get('lat', default_lat)),
+        "lon": float(st.session_state.get('lon', default_lon))
+    }
+
+selected_city_label = st.selectbox(
+    "नगर चुनें (Select Town / City from List):",
+    options=list(city_options.keys()),
+    index=0,
+    key="selected_city_dropdown"
+)
+
+# Automatically set lat/lon from selected town/city
+sel_city_data = city_options.get(selected_city_label)
+if sel_city_data and ('lat' in sel_city_data) and ('lon' in sel_city_data):
+    # Update session state if user selects a different city from search
+    if st.session_state.get('_last_chosen_city') != selected_city_label:
+        st.session_state['lat'] = sel_city_data['lat']
+        st.session_state['lon'] = sel_city_data['lon']
+        st.session_state['city_name'] = sel_city_data['name']
+        st.session_state['_last_chosen_city'] = selected_city_label
+
+city_name = st.session_state.get('city_name', sel_city_data.get('name', default_city) if sel_city_data else default_city)
+        
+coord_col1, coord_col2 = st.columns(2)
+lat = coord_col1.number_input("Latitude (°N) / अक्षांश" if is_hi else "Latitude (°N)", value=float(st.session_state.get('lat', default_lat)), format="%.4f", step=0.01)
+lon = coord_col2.number_input("Longitude (°E) / रेखांश" if is_hi else "Longitude (°E)", value=float(st.session_state.get('lon', default_lon)), format="%.4f", step=0.01)
+st.session_state['lat'] = lat
+st.session_state['lon'] = lon
+
+tz_offset = st.number_input("Timezone Offset (Hours) / समय क्षेत्र", value=5.5, step=0.5)
+
+col_ay1, col_ay2 = st.columns(2)
+with col_ay1:
+    ayan_choice = st.selectbox("Ayanamsa (अयनांश)", ["Lahiri", "KP", "Raman"], index=0)
+with col_ay2:
+    node_choice = st.selectbox("राहु-केतु नोड (Rahu Node)", ["Mean (औसत)", "True (स्पष्ट)"], index=0)
+
+# Save to vault button
+if st.button("💾 कुण्डली सुरक्षित करें (Save Profile to Vault)", use_container_width=True):
+    k_payload = {
+        "name": name,
+        "dob": date_val.strftime("%Y-%m-%d"),
+        "tob": time_val.strftime("%H:%M:%S"),
+        "city": city_name,
+        "lat": lat,
+        "lon": lon,
+        "tz": tz_offset,
+        "ayanamsa": ayan_choice
+    }
+    ok, s_msg = auth_vault.save_kundli(u["id"], k_payload)
+    if ok:
+        st.success(f"'{name}' की कुण्डली सुरक्षित हो गई! यह ऊपर 'मेरी सुरक्षित कुण्डलियाँ' में उपलब्ध है।")
+        st.rerun()
+    else:
+        st.warning(s_msg)
+
+btn_lbl = "Generate Analysis & Birth Chart →" if not is_hi else "कुण्डली एवं ज्योतिषीय विश्लेषण बनाएं →"
+generate = st.button(btn_lbl, type="primary", use_container_width=True)
 
 # Calculate Core Structures
 # Input signature: the cached chart must be invalidated whenever ANY birth-input

@@ -519,6 +519,54 @@ def exchange_code_for_tokens(code: str, redirect_uri: Optional[str] = None) -> T
         return False, f"नेटवर्क त्रुटि: {str(e)}", None
 
 
+def test_google_credentials() -> Tuple[bool, str]:
+    """Checks client_id/client_secret against Google without a real auth code.
+
+    Google distinguishes the two failure modes precisely:
+      * ``invalid_client`` -> the secret does not belong to this client ID
+        (or was reset in the Cloud console); login can never succeed.
+      * ``invalid_grant``  -> credentials are FINE; only the dummy code was
+        rejected, which is expected.
+    """
+    cfg = load_google_config()
+    client_id = cfg.get("client_id", "")
+    client_secret = cfg.get("client_secret", "")
+    if not client_id or not client_secret:
+        return False, "Client ID या Client Secret सेट नहीं है।"
+    try:
+        resp = requests.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": "vyas-credential-check",
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "redirect_uri": resolve_redirect_uri(cfg.get("redirect_uri", "")),
+                "grant_type": "authorization_code",
+            },
+            timeout=15,
+        )
+    except Exception as exc:
+        return False, f"Google से संपर्क नहीं हो सका: {exc}"
+
+    try:
+        payload = resp.json()
+    except Exception:
+        payload = {}
+    err = str(payload.get("error", "") or "")
+    if err == "invalid_client" or resp.status_code == 401:
+        return False, (
+            "Client Secret गलत है — यह client ID से मेल नहीं खाता। "
+            "Google Cloud Console → Clients → अपना OAuth client खोलें → "
+            "Client secret कॉपी करें (या 'Add secret' से नया बनाएं) और "
+            "Streamlit Cloud → Settings → Secrets में GOOGLE_CLIENT_SECRET बदलें।"
+        )
+    if err == "invalid_grant":
+        return True, "क्रेडेंशियल्स सही हैं (Google ने केवल नकली code अस्वीकार किया, जो अपेक्षित है)।"
+    if resp.status_code == 200:
+        return True, "क्रेडेंशियल्स सही हैं।"
+    return False, f"अप्रत्याशित प्रतिक्रिया ({resp.status_code}): {resp.text[:200]}"
+
+
 def get_user_info(access_token: str) -> Tuple[bool, str, Optional[Dict[str, Any]]]:
     """Retrieves Google user profile (email, name, picture)."""
     userinfo_url = "https://www.googleapis.com/oauth2/v2/userinfo"
