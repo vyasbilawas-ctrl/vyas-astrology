@@ -70,10 +70,24 @@ def search_cities(query: str, limit: int = 30) -> List[Dict]:
             """, (pattern_start, pattern_any, pattern_start, limit))
             
             rows = cursor.fetchall()
-            seen = set()
+            # GeoNames stores many villages with the same display label
+            # (e.g. several "Pali, Rajasthan" entries, most with pop 0).
+            # Collapse duplicates to the best candidate: a populated place
+            # first, then the highest population. Keeping the *last* row used
+            # to select an obscure hamlet with wrong coordinates.
+            best_by_label = {}
             for r in rows:
                 st_name = STATE_MAP.get(r["state_code"], "India")
                 display_name = f"{r['name_ascii']}, {st_name}"
+                feature = (r["feature"] or "")
+                rank = 0 if feature.startswith("PPL") else 1
+                score = (rank, -int(r["pop"] or 0))
+                prev = best_by_label.get(display_name)
+                if prev is None or score < prev[0]:
+                    best_by_label[display_name] = (score, r)
+
+            seen = set()
+            for display_name, (_score, r) in best_by_label.items():
                 coord_key = (round(r["lat"], 3), round(r["lon"], 3))
                 if coord_key in seen:
                     continue
@@ -81,7 +95,7 @@ def search_cities(query: str, limit: int = 30) -> List[Dict]:
                 results.append({
                     "label": display_name,
                     "name": r["name_ascii"],
-                    "state": st_name,
+                    "state": STATE_MAP.get(r["state_code"], "India"),
                     "lat": round(r["lat"], 4),
                     "lon": round(r["lon"], 4),
                     "pop": r["pop"]
