@@ -38,6 +38,8 @@ import os
 import math
 import shutil
 import subprocess
+from vyas.chart_context import ChartContext
+from vyas.sutra_synthesizer import synthesize as synthesize_sutra
 import tempfile
 import time
 from datetime import datetime, timedelta, timezone
@@ -200,8 +202,17 @@ def generate_56_page_publication_html(
         else:
             target_varsh_year = curr_dt.year
 
-    # Core Calculations
-    dignities = forensic_predictor.analyze_all_planetary_dignities(chart, vargas_detailed)
+    # Core calculations. One unified context keeps report predictions traceable.
+    report_ctx = ChartContext.build(
+        chart, birth, kp_cusps, dasha_engine, vargas_detailed, target_varsh_year
+    )
+    report_ctx.birth = {**birth, "lang": lang}
+    overall_prediction = synthesize_sutra(report_ctx, "overall")
+    career_prediction = synthesize_sutra(report_ctx, "career")
+    marriage_prediction = synthesize_sutra(report_ctx, "marriage")
+    health_prediction = synthesize_sutra(report_ctx, "health")
+
+    dignities = report_ctx.dignities
     bhavas = forensic_predictor.analyze_all_12_bhavas(chart, dignities)
     mangal_data = forensic_predictor.compute_comprehensive_mangal_dosha(chart)
     kalsarp_data = forensic_predictor.compute_comprehensive_kalsarp(chart)
@@ -230,7 +241,9 @@ def generate_56_page_publication_html(
     # KP & Chalit
     significators = kp.compute_kp_significators(chart.planets, kp_cusps)
     ruling_planets = kp.get_ruling_planets(birth_dt, lat, lon, tz, moon_lon, chart.ascendant_longitude)
-    chalit_details = chalit.compute_sripati_chalit(chart.ascendant_longitude, chart.planets["Sun"].longitude + 90.0, {p: chart.planets[p].longitude for p in chart.planets})
+    # MC (Midheaven) = Ascendant + 270° mod 360 (10th house cusp in whole-sign approximation)
+    _mc_lon = (chart.ascendant_longitude + 270.0) % 360.0
+    chalit_details = chalit.compute_sripati_chalit(chart.ascendant_longitude, _mc_lon, {p: chart.planets[p].longitude for p in chart.planets})
 
     # Jaimini Karakas & Avasthas
     chara_karakas_list, atmakaraka_planet, karakamsha_sign = jaimini.compute_chara_karakas(chart.planets)
@@ -309,7 +322,7 @@ def generate_56_page_publication_html(
     <style>
         @page {
             size: A4 portrait;
-            margin: 8mm 10mm 10mm 10mm;
+            margin: 10mm 12mm 12mm 12mm;
         }
         * {
             box-sizing: border-box;
@@ -322,8 +335,8 @@ def generate_56_page_publication_html(
             background: #ffffff;
             margin: 0;
             padding: 0;
-            font-size: 8.5pt;
-            line-height: 1.35;
+            font-size: 9.5pt;
+            line-height: 1.5;
             word-spacing: 0.04em;
         }
         .page {
@@ -398,14 +411,14 @@ def generate_56_page_publication_html(
             text-align: left;
         }
         table.as-table-dense th, table.as-table-dense td {
-            padding: 1.5px 2px;
-            font-size: 7.2pt;
+            padding: 2px 3px;
+            font-size: 8.5pt;
         }
         p {
-            margin: 4px 0;
+            margin: 6px 0;
             text-align: justify;
-            font-size: 8.5pt;
-            line-height: 1.35;
+            font-size: 9.5pt;
+            line-height: 1.5;
         }
         .ad-box {
             border: 1px solid #cccccc;
@@ -421,19 +434,18 @@ def generate_56_page_publication_html(
     print_date_str = curr_dt.strftime("%d/%m/%Y %I:%M:%S %p")
 
     def page_header(title_extra: str = ""):
-        brand_text = "VYAS Vedic Astrology Engine | https://vyas.astro" if not is_hi else "व्यास वैदिक ज्योतिष शोध प्रणाली | https://vyas.astro"
         return f"""
         <div class="as-header">
             <span>{name}</span>
-            <span>{brand_text}</span>
+            <span>{"जन्म कुण्डली" if is_hi else "Vedic Kundli"}</span>
         </div>
         """
 
     def page_footer(pg_num: int):
         return f"""
         <div class="as-footer">
-            <span>https://vyas.astro, Printing Date: {print_date_str}</span>
-            <span>Page No. {pg_num}</span>
+            <span>{"प्रिन्ट दिनांक" if is_hi else "Printing Date"}: {print_date_str}</span>
+            <span>{"पृष्ठ संख्या" if is_hi else "Page No."} {pg_num}</span>
         </div>
         """
 
@@ -450,8 +462,8 @@ def generate_56_page_publication_html(
             {svg_d1}
         </div>
 
-        <div style="font-size: 24pt; font-weight: 800; color: #8b0000; margin-bottom: 4px; letter-spacing: 1px;">VYAS ASTRA</div>
-        <div style="font-size: 11pt; font-weight: bold; color: #333333; margin-bottom: 15px;">{"विश्व-स्तरीय सम्पूर्ण वैदिक कुण्डली एवं जीवन महा-शोध प्रबंध" if is_hi else "World's Premier Vedic Kundli & Life Comprehensive Intelligence"}</div>
+        <div style="font-size: 24pt; font-weight: 800; color: #8b0000; margin-bottom: 4px; letter-spacing: 1px;">{"वैदिक कुण्डली" if is_hi else "Vedic Kundli"}</div>
+        <div style="font-size: 11pt; font-weight: bold; color: #333333; margin-bottom: 15px;">{"सम्पूर्ण वैदिक कुण्डली एवं जीवन विश्लेषण" if is_hi else "Comprehensive Vedic Kundli & Life Analysis"}</div>
 
         <div style="border-top: 1.5px solid #000000; border-bottom: 1.5px solid #000000; padding: 12px 0; width: 85%; margin: 0 auto 30px auto;">
             <div style="font-size: 14pt; font-weight: bold; margin-bottom: 6px;">{name}</div>
@@ -467,7 +479,7 @@ def generate_56_page_publication_html(
             Price: <span style="text-decoration: line-through; color: #777777;">$10</span> <span style="color: #c53030;">FREE</span>
         </div>
         <div style="font-size: 8.5pt; color: #666666; margin-top: 30px;">
-            Researched & Formulated by Nikhil Vyas (M.A. Jyotish) • Cell: 9414121172
+            {"जन्म कुण्डली - गणना एवं विश्लेषण" if is_hi else "Birth Chart - Calculation & Analysis"}
         </div>
         {page_footer(1)}
     </div>
@@ -729,9 +741,9 @@ def generate_56_page_publication_html(
         md_nodes = dasha_engine.calculate_mahadashas()
         _blocks = []
         for md in md_nodes[:9]:
-            ad_lines = []
-            for ad in (md.sub_dashas or [])[:4]:
-                ad_lines.append(f"{ad.lord[:3].upper()} {_fmt_ddmmyy(ad.start_date)}")
+            # Expand ADs on-the-fly (sub_dashas not pre-populated by calculate_mahadashas)
+            ad_nodes = dasha_engine.expand_sub_dashas(md, target_level=2)
+            ad_lines = [f"{ad.lord[:3].upper()} {_fmt_ddmmyy(ad.start_date)}" for ad in ad_nodes[:4]]
             _years = int(round(md.duration_days / 365.25))
             _blocks.append(
                 f'<div style="flex: 1 1 30%; line-height: 1.25;">'
@@ -742,6 +754,29 @@ def generate_56_page_publication_html(
         dasha_box_html = "".join(_blocks)
     except Exception:
         dasha_box_html = ""
+
+    # Current Vimshottari Dasha up to Prana Dasha (PrD)
+    current_dasha_html = ""
+    try:
+        _now = datetime.now()
+        running = dasha_engine.get_running_dasha(_now, max_depth=5)
+        rows_cur = []
+        for key in ["MD", "AD", "PD", "SD", "PrD"]:
+            if key in running:
+                info = running[key]
+                rows_cur.append(
+                    f"<tr><td>{'महादशा' if is_hi and key=='MD' else 'अन्तर्दशा' if is_hi and key=='AD' else 'प्रत्यन्तर' if is_hi and key=='PD' else 'सूक्ष्म' if is_hi and key=='SD' else 'प्राण' if is_hi else key}</td><td>{info['lord']}</td><td>{info['start']}</td><td>{info['end']}</td></tr>"
+                )
+        if rows_cur:
+            current_dasha_html = f"""
+            <div class="as-sub-title">{"वर्तमान दशा (प्राण दशा तक)" if is_hi else "Current Dasha (up to Prana Dasha)"}</div>
+            <table class="as-table as-table-left">
+                <tr><th>{"स्तर" if is_hi else "Level"}</th><th>{"स्वामी" if is_hi else "Lord"}</th><th>{"प्रारम्भ" if is_hi else "Start"}</th><th>{"समाप्त" if is_hi else "End"}</th></tr>
+                {''.join(rows_cur)}
+            </table>
+            """
+    except Exception:
+        current_dasha_html = ""
 
     # Moon nakshatra star lord (e.g. SAT for Anuradha) — was hardcoded "SAT"
     _moon_nak_idx = int(moon_lon // constants.NAKSHATRA_SPAN) % 27
@@ -758,7 +793,7 @@ def generate_56_page_publication_html(
     p3 = f"""
     <div class="page">
         {page_header()}
-        <div class="as-title">|| Traditional ||</div>
+        <div class="as-title">|| वैदिक परम्परानुसार ||</div>
         
         <table class="as-table as-table-dense as-table-left" style="margin-bottom: 8px;">
             <tr>
@@ -812,7 +847,7 @@ def generate_56_page_publication_html(
 
         <div class="two-col">
             <div class="col-half">
-                <div style="font-weight: bold; font-size: 8.5pt; text-align: center; margin-bottom: 2px;">Vimshottari Dasha</div>
+                <div style="font-weight: bold; font-size: 8.5pt; text-align: center; margin-bottom: 2px;">विंशोत्तरी दशा</div>
                 <div style="font-size: 7pt; display: flex; flex-wrap: wrap; gap: 4px; border: 1px solid #000; padding: 4px;">
                     {dasha_box_html}
                 </div>
@@ -830,6 +865,7 @@ def generate_56_page_publication_html(
                 </table>
             </div>
         </div>
+        {current_dasha_html}
         {page_footer(3)}
     </div>
     """
@@ -874,8 +910,8 @@ def generate_56_page_publication_html(
         <p>{asc_app_txt}</p>
 
         <div class="ad-box">
-            <div style="font-size: 11pt; font-weight: bold; color: #8b0000;">VYAS ASTRA • Premium Vedic Consultation</div>
-            <div style="font-size: 8.5pt; color: #444444; margin-top: 2px;">Get Direct Personal Guidance with Astrologer Nikhil Vyas (M.A. Jyotish) • Call: 9414121172</div>
+            <div style="font-size: 11pt; font-weight: bold; color: #8b0000;">VYAS • वैदिक परामर्श</div>
+            <div style="font-size: 8.5pt; color: #444444; margin-top: 2px;">शास्त्रीय गणना एवं गहन विश्लेषण</div>
         </div>
         {page_footer(4)}
     </div>
@@ -921,11 +957,11 @@ def generate_56_page_publication_html(
         {page_header()}
         <div class="as-title">|| {'जीवन फलादेश' if is_hi else 'Life Predictions'} ||</div>
         
+        <div class="as-sub-title">{'समेकित जीवन विश्लेषण' if is_hi else 'Integrated Life Analysis'}</div>
+        <p>{overall_prediction}</p>
+
         <div class="as-sub-title">{'चरित्र एवं आंतरिक शक्ति' if is_hi else 'Character'}</div>
-        <p>
-            {'आप एक गूढ़ एवं सम्मोहक व्यक्तित्व के स्वामी हैं। आपकी वास्तविक क्षमताओं और गहराई को केवल आप ही भली-भांति समझ सकते हैं। आपमें दूसरों को प्रभावित करने और नेतृत्व करने की असाधारण चुंबकीय शक्ति है। आप हृदय से उदार, परोपकारी एवं कर्तव्यनिष्ठ हैं। समाज और अपनों के कल्याण के लिए आप सदैव तत्पर रहते हैं। क्रोध आने पर कभी-कभी आप संयम खो सकते हैं, अतः वाणी पर नियंत्रण रखना आपके लिए परम हितकर रहेगा।' if is_hi else
-            'You are something of an enigma. The only person who really know you is yourself. You have the power of acting a part in life that is totally different from your true self. You possess considerable magnetic power and you can use it for good or for ill. How you do use it depends entirely on your own desires. Fortunately, you are usually able to control your actions for good and the result is that your magnetic power sheds a beneficial influence on others. You are large in mind and large in heart. You are ready to help others. You know the value of happiness and know how to obtain it but you will never get happiness at other\'s cost. In fact, you devote your energies towards securing happiness for others. You are sympathetic, hard-working, generous and friendly but are quick to be aroused. When you become angry, you lose all control and make assertions for which you will be sorry later on. So, try to have better self-control.'}
-        </p>
+        <p>{asc_temp_txt}</p>
 
         <div class="as-sub-title">{'प्रसन्नता एवं आत्म-संतुष्टि' if is_hi else 'Happiness And Fulfillment'}</div>
         <p>
@@ -949,11 +985,8 @@ def generate_56_page_publication_html(
         {page_header()}
         <div class="as-title">|| {'जीवन फलादेश' if is_hi else 'Life Predictions'} ||</div>
         
-        <div class="as-sub-title">{'कार्यक्षेत्र एवं करियर' if is_hi else 'Career'}</div>
-        <p>
-            {'आप अपनी समस्त जिम्मेदारियों को अत्यंत गंभीरता से लेते हैं। उच्च महत्वाकांक्षा और कार्यकुशलता के कारण उच्चाधिकारी व वरिष्ठजन आपको महत्वपूर्ण दायित्व सौंपते हैं। आपको प्रशासनिक, प्रबंधकीय एवं स्वतंत्र नेतृत्वकारी पदों की ओर अपने लक्ष्य निर्धारित करने चाहिए।' if is_hi else
-            'You take all of your responsibilities quite seriously. As a result you have much ambition and will be sought after by your superiors to take on additional responsibilities. Therefore, you should direct your goals toward career positions in an executive capacity.'}
-        </p>
+        <div class="as-sub-title">{'कार्यक्षेत्र एवं करियर (सूत्र-संयोजन)' if is_hi else 'Career (Sutra-Synthesis)'}</div>
+        <p>{career_prediction}</p>
 
         <div class="as-sub-title">{'अनुकूल आजीविका' if is_hi else 'Occupation'}</div>
         <p>
@@ -961,11 +994,8 @@ def generate_56_page_publication_html(
             'You are not particularly well suited to a routine commercial life, since these demand a monotonous nature which you do not possess. There are plenty of occupations in which you ought to do remarkably well. Generally speaking, you have an aptitude for several of the highest professions: law, medicine, advisory consultancy, literature, executive management, and research.'}
         </p>
 
-        <div class="as-sub-title">{'स्वास्थ्य एवं दीर्घायु' if is_hi else 'Health'}</div>
-        <p>
-            {'आपकी आयु और स्वास्थ्य का स्तर आपकी अनुशासित जीवनशैली पर अत्यधिक निर्भर करता है। शुद्ध वायु, नियमित प्राणायाम एवं सात्विक भोजन आपके लिए अमृत तुल्य हैं। मौसम परिवर्तन के समय श्वास व पाचन का विशेष ध्यान रखें।' if is_hi else
-            'The length of your life depends more on yourself than on the fates. You have the power to attain a ripe old age. But, if you wish to do so, you must take particular care of your respiratory system. Seek all the fresh air you can obtain. Make a practice of regular walking. Never overload digestion with foods that are rich and hard to digest. Plain food will serve you best.'}
-        </p>
+        <div class="as-sub-title">{'स्वास्थ्य एवं दीर्घायु (सूत्र-संयोजन)' if is_hi else 'Health & Longevity (Sutra-Synthesis)'}</div>
+        <p>{health_prediction}</p>
         {page_footer(7)}
     </div>
     """
@@ -983,11 +1013,8 @@ def generate_56_page_publication_html(
             'Outdoor pursuits engage much of your leisure time and you find them exceedingly beneficial. You love movement in the open, enjoy the pleasures of travel and long journeys, as well as educational visits. You take a keen interest in educating yourself using books and research.'}
         </p>
 
-        <div class="as-sub-title">{'प्रेम व वैवाहिक संबंध' if is_hi else 'Love Matters'}</div>
-        <p>
-            {'आपका मित्र-मंडली का दायरा विस्तृत रहता है। जीवनसाथी का चयन प्रायः आपकी गहरी समझ और आकर्षण पर आधारित होता है। वैवाहिक जीवन में संतुलन एवं स्वतंत्रता का समन्वय बनाए रखना सुखद दांपत्य की कुंजी है।' if is_hi else
-            'You never forget friends and possess a wide circle of acquaintances. You will marry and be comfortable. But, marriage will require conscious nurturing and communication so external interests do not create unnecessary misunderstandings. Mutual respect ensures deep lifelong harmony.'}
-        </p>
+        <div class="as-sub-title">{'प्रेम व वैवाहिक संबंध (D9-आधारित)' if is_hi else 'Love & Marriage (D9-based)'}</div>
+        <p>{marriage_prediction}</p>
 
         <div class="as-sub-title">{'आर्थिक स्थिति एवं वित्त' if is_hi else 'Finance'}</div>
         <p>
@@ -2483,34 +2510,11 @@ def generate_56_page_publication_html(
     p56 = f"""
     <div class="page" style="text-align: center; padding-top: 30mm;">
         <div style="font-size: 20pt; font-weight: 800; color: #1a365d; margin-bottom: 8px;">
-            Make Confident Decisions with a Complete Kundli Analysis
+            {"संगणित वैदिक कुण्डली विश्लेषण" if is_hi else "Computed Vedic Kundli Analysis"}
         </div>
         <p style="font-size: 10pt; color: #4a5568; width: 80%; margin: 0 auto 25px auto;">
-            Your VYAS Executive Master Kundli Report gives you clear answers on when to act, where to focus, and how to navigate upcoming changes in your life.
+            {"यह रिपोर्ट शास्त्रीय गणनाओं पर आधारित है। फलों का तात्पर्य संकेतों के रूप में समझें।" if is_hi else "This report is based on classical calculations. Interpret results as indications, not certainties."}
         </p>
-
-        <div style="width: 80%; margin: 0 auto; text-align: left; border: 1.5px solid #000; padding: 20px; background: #fffdf5; border-radius: 8px;">
-            <div style="font-size: 11pt; font-weight: bold; margin-bottom: 12px; color: #8b0000;">
-                ★ Research-Grade Strengths of this Publication:
-            </div>
-            <div style="font-size: 9.5pt; line-height: 1.6; margin-bottom: 8px;">
-                ✔ <b>Deep Analysis of Strengths & Patterns:</b> Exact planetary degrees, Placidus cusps, and 16 divisional charts.
-            </div>
-            <div style="font-size: 9.5pt; line-height: 1.6; margin-bottom: 8px;">
-                ✔ <b>Precise Predictions Backed by Mathematical Ephemeris:</b> High-precision JPL DE440s ephemeris with micro-degree calculations.
-            </div>
-            <div style="font-size: 9.5pt; line-height: 1.6; margin-bottom: 8px;">
-                ✔ <b>Identifies Peak Timing for Success:</b> Comprehensive multi-level Vimshottari, Yogini, Char, and Mudda Dashas.
-            </div>
-            <div style="font-size: 9.5pt; line-height: 1.6;">
-                ✔ <b>Personalised Shastric Remedies:</b> Authentic Vedic, Lal Kitab, and Sattvic remedial measures for peace and prosperity.
-            </div>
-        </div>
-
-        <div style="margin-top: 40px; border-top: 1px solid #ccc; width: 80%; margin-left: auto; margin-right: auto; padding-top: 15px;">
-            <div style="font-size: 12pt; font-weight: bold; color: #1a365d;">VYAS VEDIC ASTROLOGY SYSTEMS</div>
-            <div style="font-size: 9pt; color: #555; margin-top: 4px;">System Lead: <b>Nikhil Vyas</b> (M.A. Jyotish) • Cell: 9414121172 • Email: inikhilvyas@gmail.com</div>
-        </div>
         {page_footer(56)}
     </div>
     """

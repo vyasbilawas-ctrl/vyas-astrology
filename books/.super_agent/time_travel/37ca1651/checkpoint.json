@@ -1,0 +1,14 @@
+{
+  "task_id": "37ca1651",
+  "created_at": "2026-10-24 13:53:58",
+  "prompt": "try",
+  "status": "FAILED",
+  "intent_category": "SURGICAL_FEATURE_OR_REFACTOR",
+  "intent_contract_summary": {
+    "user_goal": "try",
+    "risk_level": "MEDIUM"
+  },
+  "snapshotted_files": {},
+  "created_files": [],
+  "completed_at": "2026-10-24 13:54:06"
+}

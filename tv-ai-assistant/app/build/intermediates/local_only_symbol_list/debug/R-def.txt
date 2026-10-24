@@ -1,0 +1,13 @@
+R_DEF: Internal format may change without notice
+local
+drawable ic_launcher
+id btnSave
+id btnSettings
+id btnSpeak
+id etApiKey
+id txtResult
+id txtStatus
+id txtTitle
+layout activity_main
+layout activity_settings
+style Theme.AppCompat.DayNight

@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "com.tvai.assistant.app-merged_res-27:/drawable_ic_launcher.xml.flat",
+        "source": "com.tvai.assistant.app-main-29:/drawable/ic_launcher.xml"
+    },
+    {
+        "merged": "com.tvai.assistant.app-merged_res-27:/layout_activity_settings.xml.flat",
+        "source": "com.tvai.assistant.app-main-29:/layout/activity_settings.xml"
+    },
+    {
+        "merged": "com.tvai.assistant.app-merged_res-27:/layout_activity_main.xml.flat",
+        "source": "com.tvai.assistant.app-main-29:/layout/activity_main.xml"
+    }
+]

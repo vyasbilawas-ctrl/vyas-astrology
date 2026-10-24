@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# Gradle wrapper script
+# If wrapper JAR present, use it; otherwise fall back to system gradle
+WRAPPER_JAR="$(cd "$(dirname "$0")"; pwd)/gradle/wrapper/gradle-wrapper.jar"
+if [ -f "$WRAPPER_JAR" ]; then
+  exec java -cp "$WRAPPER_JAR" org.gradle.wrapper.GradleWrapperMain "$@"
+else
+  exec gradle "$@"
+fi

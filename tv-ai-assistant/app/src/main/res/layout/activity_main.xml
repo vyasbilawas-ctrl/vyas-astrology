@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#101418"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="48dp">
+
+    <TextView
+        android:id="@+id/txtTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="24dp"
+        android:text="AI TV Assistant"
+        android:textColor="#FFFFFF"
+        android:textSize="32sp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnSpeak"
+            android:layout_width="240dp"
+            android:layout_height="84dp"
+            android:text="Bolo"
+            android:textSize="24sp" />
+
+        <Button
+            android:id="@+id/btnSettings"
+            android:layout_width="240dp"
+            android:layout_height="84dp"
+            android:layout_marginStart="24dp"
+            android:text="Settings"
+            android:textSize="24sp" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="32dp"
+        android:layout_weight="1">
+
+        <TextView
+            android:id="@+id/txtResult"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingExtra="6dp"
+            android:text="Gemini key set karo, phir Bolo dabao."
+            android:textColor="#E8EAED"
+            android:textSize="22sp" />
+    </ScrollView>
+
+</LinearLayout>

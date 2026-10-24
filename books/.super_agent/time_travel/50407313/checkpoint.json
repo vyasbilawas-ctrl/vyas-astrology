@@ -1,0 +1,14 @@
+{
+  "task_id": "50407313",
+  "created_at": "2026-10-24 13:51:33",
+  "prompt": "dekho",
+  "status": "FAILED",
+  "intent_category": "SURGICAL_FEATURE_OR_REFACTOR",
+  "intent_contract_summary": {
+    "user_goal": "dekho",
+    "risk_level": "MEDIUM"
+  },
+  "snapshotted_files": {},
+  "created_files": [],
+  "completed_at": "2026-10-24 13:51:33"
+}

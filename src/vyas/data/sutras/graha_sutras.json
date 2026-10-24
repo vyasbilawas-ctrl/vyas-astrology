@@ -1,0 +1,339 @@
+{
+  "version": 1,
+  "source": "BPHS / Phaladeepika / Saravali (compiled subset)",
+  "rules": [
+    {
+      "id": "GR_LAGNESH_IN_LAGNA",
+      "scope": ["D1"],
+      "conditions": {"lagnesh_in_house": [1]},
+      "weight": 60,
+      "priority": "high",
+      "text_hi": "लग्नेश स्वयं लग्न में स्थित होने से आत्मबल एवं आत्मनिर्भरता प्रबल होती है। शारीरिक स्वास्थ्य, देह-बल तथा आत्मविश्वास उत्तम रहते हैं और जातक अपने प्रयासों से जीवन में स्थिति स्वयं गढ़ता है।",
+      "reason_tags": ["self", "health", "confidence"]
+    },
+    {
+      "id": "GR_LAGNESH_IN_KENDRA",
+      "scope": ["D1"],
+      "conditions": {"lagnesh_in_house": [4, 7, 10]},
+      "weight": 50,
+      "priority": "high",
+      "text_hi": "लग्नेश केंद्र में स्थित होने से जीवन में स्थिरता, कर्मशीलता एवं पारिवारिक सहयोग के द्वार खुलते हैं। जातक जिम्मेदारियों को सुचारु रूप से निभाने में सक्षम रहता है।",
+      "reason_tags": ["stability", "duty"]
+    },
+    {
+      "id": "GR_LAGNESH_IN_DUSTHANA",
+      "scope": ["D1"],
+      "conditions": {"lagnesh_in_house": [6, 8, 12]},
+      "weight": -40,
+      "priority": "high",
+      "text_hi": "लग्नेश दुर्स्थान में होने से आरंभिक जीवन में स्वास्थ्य अथवा परिश्रम की अधिकता रहती है। फिर भी यह स्थिति शत्रु-विजय, रोग-प्रतिरोधक क्षमता एवं संघर्ष से उत्पन्न दृढ़ता का कारक भी बनती है।",
+      "reason_tags": ["struggle", "resilience"]
+    },
+    {
+      "id": "GR_LAGNESH_EXALT",
+      "scope": ["D1", "D9"],
+      "conditions": {"lagnesh_dignity": ["exalted"]},
+      "weight": 70,
+      "priority": "high",
+      "text_hi": "लग्नेश उच्च राशि में होने से जातक की बुद्धि, निर्णय-क्षमता एवं नेतृत्व क्षमता श्रेष्ठ रहती है। समाज में मान-सम्मान की प्राप्ति होती है तथा आर्थिक एवं भौतिक सुखों के योग बनते हैं।",
+      "reason_tags": ["leadership", "status"]
+    },
+    {
+      "id": "GR_LAGNESH_DEBIL_NEECHBHANG",
+      "scope": ["D1", "D9"],
+      "conditions": {"lagnesh_dignity": ["debilitated"], "lagnesh_vargottam_or_d9_strong": false},
+      "weight": -50,
+      "priority": "high",
+      "text_hi": "लग्नेश नीच राशि में होने से आत्मविश्वास में आ-जाकर कमी रहती है। शारीरिक एवं मानसिक थकान अधिक रह सकती है। यदि नवमांश अथवा किसी वर्ग में यही ग्रह उच्च/स्वराशि/वर्गोत्तम हो तो नीचत्व भंग होता है और समय के साथ परिस्थितियाँ अनुकूल होती जाती हैं।",
+      "reason_tags": ["self", "confidence", "neechbang"]
+    },
+    {
+      "id": "GR_LAGNESH_DEBIL_D9_STRONG",
+      "scope": ["D9"],
+      "conditions": {"lagnesh_dignity": ["debilitated"], "lagnesh_vargottam_or_d9_strong": true},
+      "weight": 20,
+      "priority": "high",
+      "text_hi": "दी गई राशि में नीच दिखने पर भी नवमांश में ग्रह सुदृढ़ होने से भीतरी गुणों एवं पारिवारिक संस्कार के बल पर जातक धीरे-धीरे स्थिति सुधार लेता है। बाहरी कठिनाइयों के बावजूद अंततः प्रतिष्ठा एवं सुख प्राप्त होते हैं।",
+      "reason_tags": ["neechbang", "inner_strength"]
+    },
+    {
+      "id": "GR_LAGNESH_RETRO",
+      "scope": ["D1"],
+      "conditions": {"lagnesh_is_retro": true},
+      "weight": -20,
+      "priority": "mid",
+      "text_hi": "लग्नेश वक्री होने से व्यक्तित्व में आंतरिक खोजबीन एवं पुनर्विचार की प्रवृत्ति रहती है। कार्यों में पुनः प्रयास आवश्यक होते हैं परंतु दृढ़ संकल्प बना रहता है।",
+      "reason_tags": ["introspection", "persistence"]
+    },
+    {
+      "id": "GR_LAGNESH_COMBUST",
+      "scope": ["D1"],
+      "conditions": {"lagnesh_is_combust": true},
+      "weight": -25,
+      "priority": "mid",
+      "text_hi": "लग्नेश अस्त होने से आत्म-पहचान में सूर्य के प्रभाव से थोड़ी अस्पष्टता रहती है। पिता अथवा उच्च अधिकारियों से संबंधों में तनाव के संकेत मिलते हैं।",
+      "reason_tags": ["self", "father", "authority"]
+    },
+    {
+      "id": "GR_KARAKA_EXALT_10TH",
+      "scope": ["D1", "D10"],
+      "conditions": {"karakas_in_house": {"Sun": [10], "Saturn": [10], "Mercury": [10]}},
+      "weight": 75,
+      "priority": "high",
+      "text_hi": "दशम भाव में स्थित कर्मकारक ग्रह उच्च अथवा मूलत्रिकोण में होने से व्यावसायिक जीवन में उच्च पद एवं प्रतिष्ठा प्राप्त होती है। पिता अथवा उच्च अधिकारियों से सहयोग एवं मार्गदर्शन मिलता है।",
+      "reason_tags": ["career", "status", "father"]
+    },
+    {
+      "id": "GR_KARAKA_DEBIL_10TH",
+      "scope": ["D1", "D10"],
+      "conditions": {"karakas_in_house": {"Sun": [10], "Saturn": [10], "Mercury": [10]}, "karakas_dignity": ["debilitated"]},
+      "weight": -40,
+      "priority": "high",
+      "text_hi": "दशम भाव में नीच का कर्मकारक ग्रह होने से प्रारंभिक व्यवसायिक जीवन में बाधाएँ, पद-हानि अथवा अधिकारियों से मतभेद के संकेत रहते हैं। इसका प्रभाव धीरे-धीरे कम होता है यदि दशा अनुकूल हो।",
+      "reason_tags": ["career", "authority", "struggle"]
+    },
+    {
+      "id": "GR_YUTI_BUDH_CHANDRA",
+      "scope": ["D1"],
+      "conditions": {"yuti": ["Mercury", "Moon"]},
+      "weight": 55,
+      "priority": "high",
+      "text_hi": "बुध-चंद्र का योग बुद्धि एवं वाणी दोनों को प्रबल करता है। जातक स्पष्ट रूप से अपने विचार व्यक्त करने में सक्षम रहता है तथा लेखन, शिक्षण, परामर्श अथवा व्यवसाय में सफलता प्राप्त करता है।",
+      "reason_tags": ["communication", "intellect"]
+    },
+    {
+      "id": "GR_YUTI_SHUKRA_SHANI",
+      "scope": ["D1", "D9"],
+      "conditions": {"yuti": ["Venus", "Saturn"]},
+      "weight": 30,
+      "priority": "mid",
+      "text_hi": "शुक्र-शनि का योग प्रेम एवं वैवाहिक जीवन में देरी अथवा जिम्मेदारियों का गहरा भाव लाता है। संबंधों में स्थिरता बनी रहती है परंतु भावनात्मक अभिव्यक्ति में संयम रहता है।",
+      "reason_tags": ["marriage", "love", "delay"]
+    },
+    {
+      "id": "GR_YUTI_GURU_SHUKRA",
+      "scope": ["D1", "D9"],
+      "conditions": {"yuti": ["Jupiter", "Venus"]},
+      "weight": 60,
+      "priority": "high",
+      "text_hi": "गुरु-शुक्र का योग सुख, समृद्धि एवं सौंदर्यबोध का कारक बनता है। वैवाहिक जीवन सुखमय रहता है तथा सामाजिक मान-सम्मान में वृद्धि होती है।",
+      "reason_tags": ["marriage", "luxury", "harmony"]
+    },
+    {
+      "id": "GR_YUTI_MANGAL_SHUKRA",
+      "scope": ["D1", "D9"],
+      "conditions": {"yuti": ["Mars", "Venus"]},
+      "weight": 40,
+      "priority": "mid",
+      "text_hi": "मंगल-शुक्र का योग प्रेम एवं कामेच्छा में तीव्रता लाता है। संबंधों में उतार-चढ़ाव रह सकता है परंतु दृढ़ता बनी रहती है। सृजनात्मक कार्यों में विशेष सफलता मिलती है।",
+      "reason_tags": ["passion", "creativity", "marriage"]
+    },
+    {
+      "id": "GR_YUTI_SURIYA_SHANI",
+      "scope": ["D1"],
+      "conditions": {"yuti": ["Sun", "Saturn"]},
+      "weight": -30,
+      "priority": "high",
+      "text_hi": "सूर्य-शनि का योग पिता एवं अधिकारियों के साथ संबंधों में तनाव तथा कर्तव्य-पालन में अतिरिक्त बोझ लाता है। समय के साथ धैर्य एवं परिश्रम से स्थिति सुधरती है।",
+      "reason_tags": ["father", "authority", "duty"]
+    },
+    {
+      "id": "GR_YUTI_GURU_CHANDRA",
+      "scope": ["D1"],
+      "conditions": {"yuti": ["Jupiter", "Moon"]},
+      "weight": 70,
+      "priority": "high",
+      "text_hi": "गुरु-चंद्र का योग (गजकेसरी योग) मन को प्रसन्न, बुद्धिमान एवं दयालु बनाता है। जातक आध्यात्मिक, धार्मिक एवं सामाजिक कल्याण के क्षेत्रों में विशेष सफलता प्राप्त करता है।",
+      "reason_tags": ["mind", "wisdom", "spirituality"]
+    },
+    {
+      "id": "GR_YUTI_BUDH_GURU",
+      "scope": ["D1", "D9"],
+      "conditions": {"yuti": ["Mercury", "Jupiter"]},
+      "weight": 65,
+      "priority": "high",
+      "text_hi": "बुध-गुरु का योग (बुधादित्य योग के समान) ज्ञान, विवेक एवं वाक्पटुता का कारक बनता है। शिक्षा, कानून, वित्त एवं परामर्श के क्षेत्रों में जातक को विशिष्ट सफलता मिलती है।",
+      "reason_tags": ["wisdom", "education", "finance"]
+    },
+    {
+      "id": "GR_YUTI_SHANI_CHANDRA",
+      "scope": ["D1", "D9"],
+      "conditions": {"yuti": ["Saturn", "Moon"]},
+      "weight": -35,
+      "priority": "high",
+      "text_hi": "शनि-चंद्र का योग (विष योग) मन में चिंता, भय एवं अकेलेपन की प्रवृत्ति लाता है। माता से संबंधों में दूरी अथवा सहयोग की कमी रहती है। ध्यान एवं अनुशासन से इसका प्रभाव कम होता है।",
+      "reason_tags": ["mind", "mother", "anxiety"]
+    },
+    {
+      "id": "GR_YUTI_SHUKRA_BUDH",
+      "scope": ["D1", "D9"],
+      "conditions": {"yuti": ["Venus", "Mercury"]},
+      "weight": 50,
+      "priority": "mid",
+      "text_hi": "शुक्र-बुध का योग कलात्मकता, सौंदर्यबोध एवं व्यावसायिक सूझबूझ का संगम लाता है। जातक व्यवसाय, कला, लेखन अथवा डिजाइन के क्षेत्रों में उत्कृष्ट प्रदर्शन करता है।",
+      "reason_tags": ["creativity", "business", "art"]
+    },
+    {
+      "id": "GR_MANGAL_IN_12TH",
+      "scope": ["D1"],
+      "conditions": {"planet_in_house": {"Mars": [12]}},
+      "weight": -30,
+      "priority": "mid",
+      "text_hi": "बारहवें भाव में मंगल विदेश यात्रा, आध्यात्मिक साधना एवं अकेले में कार्य करने की प्रवृत्ति देता है। खर्च अधिक रह सकता है परंतु परिश्रम से सफलता मिलती है।",
+      "reason_tags": ["foreign", "expenditure", "spirituality"]
+    },
+    {
+      "id": "GR_SHUKRA_IN_7TH_STRONG",
+      "scope": ["D1", "D9"],
+      "conditions": {"planet_in_house": {"Venus": [7]}, "d9_navamsha_support": true},
+      "weight": 75,
+      "priority": "high",
+      "text_hi": "सप्तम भाव में शुक्र तथा नवमांश में समर्थन मिलने से वैवाहिक जीवन सुखमय, स्थिर एवं समृद्ध रहता है। जीवनसाथी से सहयोग एवं सांसारिक सुखों में वृद्धि होती है।",
+      "reason_tags": ["marriage", "spouse", "harmony"]
+    },
+    {
+      "id": "GR_SHUKRA_IN_7TH_WEAK",
+      "scope": ["D1", "D9"],
+      "conditions": {"planet_in_house": {"Venus": [7]}, "d9_navamsha_support": false},
+      "weight": 10,
+      "priority": "mid",
+      "text_hi": "सप्तम भाव में शुक्र होने पर भी नवमांश में कमजोर स्थिति होने से वैवाहिक सुख में विलंब अथवा संघर्ष के संकेत रहते हैं। संबंधों में सावधानी एवं परस्पर समझ आवश्यक रहती है।",
+      "reason_tags": ["marriage", "delay", "challenge"]
+    },
+    {
+      "id": "GR_IN_5TH_STRONG_LORD",
+      "scope": ["D1", "D9"],
+      "conditions": {"planet_in_house": {"Jupiter": [5], "Mercury": [5]}},
+      "weight": 60,
+      "priority": "high",
+      "text_hi": "पंचम भाव में गुरु अथवा बुध की स्थिति बुद्धि, विद्या एवं संतान सुख का कारक बनती है। जातक विद्वान, विवेकी एवं पुत्र-पुत्री के सुख से युक्त रहता है।",
+      "reason_tags": ["education", "children", "intellect"]
+    },
+    {
+      "id": "GR_IN_4TH_STRONG",
+      "scope": ["D1", "D4"],
+      "conditions": {"planet_in_house": {"Moon": [4], "Venus": [4], "Jupiter": [4]}},
+      "weight": 55,
+      "priority": "high",
+      "text_hi": "चतुर्थ भाव में चंद्र, शुक्र अथवा गुरु की स्थिति माता, वाहन, भूमि एवं घर-परिवार का सुख देती है। जातक को भौतिक सुखों में वृद्धि होती है।",
+      "reason_tags": ["mother", "property", "home"]
+    },
+    {
+      "id": "GR_IN_9TH_STRONG",
+      "scope": ["D1", "D9"],
+      "conditions": {"planet_in_house": {"Jupiter": [9], "Sun": [9]}},
+      "weight": 65,
+      "priority": "high",
+      "text_hi": "नवम भाव में गुरु अथवा सूर्य की स्थिति भाग्य, धर्म, पिता एवं उच्च शिक्षा का कारक बनती है। जातक धर्म-कर्म में आस्था रखने वाला तथा भाग्यशाली माना जाता है।",
+      "reason_tags": ["fortune", "father", "religion"]
+    },
+    {
+      "id": "GR_IN_2ND_STRONG",
+      "scope": ["D1"],
+      "conditions": {"planet_in_house": {"Jupiter": [2], "Venus": [2], "Mercury": [2]}},
+      "weight": 50,
+      "priority": "mid",
+      "text_hi": "द्वितीय भाव में गुरु, शुक्र अथवा बुध की स्थिति धन, कुटुंब एवं वाणी का सुख देती है। जातक परिवार में सम्मानित तथा आर्थिक रूप से सुदृढ़ रहता है।",
+      "reason_tags": ["wealth", "family", "speech"]
+    },
+    {
+      "id": "GR_IN_11TH_STRONG",
+      "scope": ["D1"],
+      "conditions": {"planet_in_house": {"Jupiter": [11], "Venus": [11], "Mercury": [11]}},
+      "weight": 55,
+      "priority": "mid",
+      "text_hi": "ग्यारहवें भाव में गुरु, शुक्र अथवा बुध आय, लाभ एवं मित्रों का सुख देते हैं। जातक को अपने प्रयासों से उत्तम आर्थिक लाभ होता है।",
+      "reason_tags": ["income", "friends", "gains"]
+    },
+    {
+      "id": "GR_MARAKA_SIGNIFICATOR_STRONG",
+      "scope": ["D1"],
+      "conditions": {"maraka_significator_strength": "strong"},
+      "weight": 40,
+      "priority": "mid",
+      "text_hi": "मारक स्थान के कारक ग्रह बलवान होने से जीवन में परिवर्तन, परिव्रजन अथवा स्थान-परिवर्तन के योग बनते हैं। इन परिवर्तनों से नवीन अवसर प्राप्त होते हैं।",
+      "reason_tags": ["change", "transition"]
+    },
+    {
+      "id": "GR_SAV_10_STRONG",
+      "scope": ["D1"],
+      "conditions": {"min_sav": {"bhava": 10, "min_value": 30}},
+      "weight": 65,
+      "priority": "high",
+      "text_hi": "दशम भाव में अष्टकवर्ग के पर्याप्त बिंदु होने से कर्म क्षेत्र में स्थिरता, प्रतिष्ठा एवं निरंतर प्रगति के योग बनते हैं। परिश्रम का उचित फल प्राप्त होता है।",
+      "reason_tags": ["career", "karmasthana", "ashtakavarga"]
+    },
+    {
+      "id": "GR_SAV_7_STRONG",
+      "scope": ["D1"],
+      "conditions": {"min_sav": {"bhava": 7, "min_value": 28}},
+      "weight": 55,
+      "priority": "high",
+      "text_hi": "सप्तम भाव के अष्टकवर्ग बिंदु उत्तम होने से विवाह, व्यापार एवं साझेदारी में अनुकूलता रहती है। जीवनसाथी से सहयोग एवं सामाजिक प्रतिष्ठा में वृद्धि होती है।",
+      "reason_tags": ["marriage", "partnership", "ashtakavarga"]
+    },
+    {
+      "id": "GR_SAV_11_STRONG",
+      "scope": ["D1"],
+      "conditions": {"min_sav": {"bhava": 11, "min_value": 33}},
+      "weight": 60,
+      "priority": "high",
+      "text_hi": "ग्यारहवें भाव में सर्वाष्टकवर्ग के अधिक बिंदु होने से आय के नवीन स्रोत खुलते हैं, मित्रमंडल मजबूत होता है तथा इच्छाओं की पूर्ति होती है।",
+      "reason_tags": ["income", "gains", "friends", "ashtakavarga"]
+    },
+    {
+      "id": "GR_ASPECTS_ON_10",
+      "scope": ["D1"],
+      "conditions": {"aspects_on": [10]},
+      "weight": 45,
+      "priority": "high",
+      "text_hi": "दशम भाव पर शुभ ग्रहों की दृष्टि होने से कर्मक्षेत्र में गति एवं सामाजिक प्रतिष्ठा बढ़ती है। अधिकारियों का समर्थन प्राप्त होने के योग रहते हैं।",
+      "reason_tags": ["career", "aspects", "authority"]
+    },
+    {
+      "id": "GR_ASPECTS_ON_7",
+      "scope": ["D1"],
+      "conditions": {"aspects_on": [7]},
+      "weight": 40,
+      "priority": "high",
+      "text_hi": "सप्तम भाव पर ग्रह-दृष्टि होने से विवाह एवं साझेदारी संबंधी मामलों में स्पष्टता आती है। संबंधों में समझदारी बढ़ने के संकेत मिलते हैं।",
+      "reason_tags": ["marriage", "aspects", "partnership"]
+    },
+    {
+      "id": "GR_YUTI_SHUKRA_GURU_D9",
+      "scope": ["D9"],
+      "conditions": {"yuti": ["Jupiter", "Venus"]},
+      "weight": 65,
+      "priority": "high",
+      "text_hi": "नवमांश में गुरु-शुक्र युति होने से वैवाहिक जीवन में गहन सौहार्द, पारस्परिक सम्मान एवं भौतिक सुखों की प्राप्ति होती है। दाम्पत्य में स्थिरता प्रबल रहती है।",
+      "reason_tags": ["marriage", "d9", "harmony"]
+    },
+    {
+      "id": "GR_MD_GURU",
+      "scope": ["D1"],
+      "conditions": {"dasha_lord": "Jupiter"},
+      "weight": 40,
+      "priority": "mid",
+      "text_hi": "गुरु की महादशा में ज्ञान, धर्म, शिक्षा एवं भाग्य से संबंधित विषयों में प्रगति होती है। गुरुजनों का सहयोग एवं आशीर्वाद प्राप्त होता है।",
+      "reason_tags": ["dasha", "jupiter", "wisdom", "fortune"]
+    },
+    {
+      "id": "GR_MD_VENUS",
+      "scope": ["D1"],
+      "conditions": {"dasha_lord": "Venus"},
+      "weight": 40,
+      "priority": "mid",
+      "text_hi": "शुक्र की महादशा में कला, सौंदर्य, विवाह, भोग-सुख एवं आर्थिक उन्नति के योग बनते हैं। दाम्पत्य जीवन में सुख की वृद्धि होती है।",
+      "reason_tags": ["dasha", "venus", "marriage", "luxury"]
+    },
+    {
+      "id": "GR_D9_VARGOTTAMA_LAGNESH",
+      "scope": ["D9"],
+      "conditions": {"d9_vargottama": true},
+      "weight": 35,
+      "priority": "mid",
+      "text_hi": "नवमांश में वर्गोत्तम ग्रह होने से अंतर्निहित बल बढ़ता है। जीवन में आने वाली बाधाओं के बावजूद आत्मबल के द्वारा सफलता प्राप्त होती है।",
+      "reason_tags": ["d9", "vargottama", "strength"]
+    }
+  ]
+}

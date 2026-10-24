@@ -1,0 +1,14 @@
+{
+  "task_id": "7d97b06f",
+  "created_at": "2026-10-24 12:07:26",
+  "prompt": "is data ko compile karna hai.",
+  "status": "FAILED",
+  "intent_category": "SURGICAL_FEATURE_OR_REFACTOR",
+  "intent_contract_summary": {
+    "user_goal": "is data ko compile karna hai.",
+    "risk_level": "MEDIUM"
+  },
+  "snapshotted_files": {},
+  "created_files": [],
+  "completed_at": "2026-10-24 12:07:32"
+}

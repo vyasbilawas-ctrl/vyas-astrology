@@ -1,0 +1,155 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.tvai.assistant"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="34" />
+10
+11    <uses-feature
+11-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:4:5-86
+12        android:name="android.hardware.usb.host"
+12-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:4:19-59
+13        android:required="true" />
+13-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:4:60-83
+14    <uses-feature
+14-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:5:5-88
+15        android:name="android.hardware.microphone"
+15-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:5:19-61
+16        android:required="true" />
+16-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:5:62-85
+17
+18    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+18-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:6:5-71
+18-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:6:22-68
+19    <uses-permission android:name="android.permission.INTERNET" />
+19-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:7:5-67
+19-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:7:22-64
+20
+21    <permission
+21-->[androidx.core:core:1.13.0] G:\AndroidDev\gradle-home\caches\transforms-3\946df5faf5347904143b1a31fb0f63af\transformed\core-1.13.0\AndroidManifest.xml:22:5-24:47
+22        android:name="com.tvai.assistant.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+22-->[androidx.core:core:1.13.0] G:\AndroidDev\gradle-home\caches\transforms-3\946df5faf5347904143b1a31fb0f63af\transformed\core-1.13.0\AndroidManifest.xml:23:9-81
+23        android:protectionLevel="signature" />
+23-->[androidx.core:core:1.13.0] G:\AndroidDev\gradle-home\caches\transforms-3\946df5faf5347904143b1a31fb0f63af\transformed\core-1.13.0\AndroidManifest.xml:24:9-44
+24
+25    <uses-permission android:name="com.tvai.assistant.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+25-->[androidx.core:core:1.13.0] G:\AndroidDev\gradle-home\caches\transforms-3\946df5faf5347904143b1a31fb0f63af\transformed\core-1.13.0\AndroidManifest.xml:26:5-97
+25-->[androidx.core:core:1.13.0] G:\AndroidDev\gradle-home\caches\transforms-3\946df5faf5347904143b1a31fb0f63af\transformed\core-1.13.0\AndroidManifest.xml:26:22-94
+26
+27    <application
+27-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:8:5-22:19
+28        android:allowBackup="true"
+28-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:9:9-35
+29        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+29-->[androidx.core:core:1.13.0] G:\AndroidDev\gradle-home\caches\transforms-3\946df5faf5347904143b1a31fb0f63af\transformed\core-1.13.0\AndroidManifest.xml:28:18-86
+30        android:debuggable="true"
+31        android:extractNativeLibs="false"
+32        android:icon="@drawable/ic_launcher"
+32-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:11:9-45
+33        android:label="AI TV Assistant"
+33-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:10:9-40
+34        android:roundIcon="@drawable/ic_launcher"
+34-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:12:9-50
+35        android:supportsRtl="true"
+35-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:13:9-35
+36        android:theme="@style/Theme.AppCompat.DayNight" >
+36-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:14:9-56
+37        <activity
+37-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:15:9-20:20
+38            android:name="com.tvai.assistant.MainActivity"
+38-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:15:19-47
+39            android:exported="true"
+39-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:15:77-100
+40            android:label="AI Assistant" >
+40-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:15:48-76
+41            <intent-filter>
+41-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:16:13-19:29
+42                <action android:name="android.intent.action.MAIN" />
+42-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:17:17-69
+42-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:17:25-66
+43
+44                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+44-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:18:17-86
+44-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:18:27-83
+45            </intent-filter>
+46        </activity>
+47        <activity
+47-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:21:9-104
+48            android:name="com.tvai.assistant.SettingsActivity"
+48-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:21:19-51
+49            android:exported="false"
+49-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:21:77-101
+50            android:label="Settings" />
+50-->G:\software\simpa\VYAS\tv-ai-assistant\app\src\main\AndroidManifest.xml:21:52-76
+51
+52        <provider
+52-->[androidx.emoji2:emoji2:1.3.0] G:\AndroidDev\gradle-home\caches\transforms-3\ff6b98e01d8e8c3027abb9533959cab6\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
+53            android:name="androidx.startup.InitializationProvider"
+53-->[androidx.emoji2:emoji2:1.3.0] G:\AndroidDev\gradle-home\caches\transforms-3\ff6b98e01d8e8c3027abb9533959cab6\transformed\emoji2-1.3.0\AndroidManifest.xml:25:13-67
+54            android:authorities="com.tvai.assistant.androidx-startup"
+54-->[androidx.emoji2:emoji2:1.3.0] G:\AndroidDev\gradle-home\caches\transforms-3\ff6b98e01d8e8c3027abb9533959cab6\transformed\emoji2-1.3.0\AndroidManifest.xml:26:13-68
+55            android:exported="false" >
+55-->[androidx.emoji2:emoji2:1.3.0] G:\AndroidDev\gradle-home\caches\transforms-3\ff6b98e01d8e8c3027abb9533959cab6\transformed\emoji2-1.3.0\AndroidManifest.xml:27:13-37
+56            <meta-data
+56-->[androidx.emoji2:emoji2:1.3.0] G:\AndroidDev\gradle-home\caches\transforms-3\ff6b98e01d8e8c3027abb9533959cab6\transformed\emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
+57                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+57-->[androidx.emoji2:emoji2:1.3.0] G:\AndroidDev\gradle-home\caches\transforms-3\ff6b98e01d8e8c3027abb9533959cab6\transformed\emoji2-1.3.0\AndroidManifest.xml:30:17-75
+58                android:value="androidx.startup" />
+58-->[androidx.emoji2:emoji2:1.3.0] G:\AndroidDev\gradle-home\caches\transforms-3\ff6b98e01d8e8c3027abb9533959cab6\transformed\emoji2-1.3.0\AndroidManifest.xml:31:17-49
+59            <meta-data
+59-->[androidx.lifecycle:lifecycle-process:2.6.2] G:\AndroidDev\gradle-home\caches\transforms-3\ddea97bf7f94566fdd82ccf9ca16fbb3\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:29:13-31:52
+60                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+60-->[androidx.lifecycle:lifecycle-process:2.6.2] G:\AndroidDev\gradle-home\caches\transforms-3\ddea97bf7f94566fdd82ccf9ca16fbb3\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:30:17-78
+61                android:value="androidx.startup" />
+61-->[androidx.lifecycle:lifecycle-process:2.6.2] G:\AndroidDev\gradle-home\caches\transforms-3\ddea97bf7f94566fdd82ccf9ca16fbb3\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:31:17-49
+62            <meta-data
+62-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
+63                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+63-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
+64                android:value="androidx.startup" />
+64-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
+65        </provider>
+66
+67        <receiver
+67-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
+68            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+68-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
+69            android:directBootAware="false"
+69-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
+70            android:enabled="true"
+70-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
+71            android:exported="true"
+71-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
+72            android:permission="android.permission.DUMP" >
+72-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
+73            <intent-filter>
+73-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
+74                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+74-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
+74-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
+75            </intent-filter>
+76            <intent-filter>
+76-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
+77                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+77-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
+77-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
+78            </intent-filter>
+79            <intent-filter>
+79-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
+80                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+80-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
+80-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
+81            </intent-filter>
+82            <intent-filter>
+82-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
+83                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+83-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
+83-->[androidx.profileinstaller:profileinstaller:1.3.1] G:\AndroidDev\gradle-home\caches\transforms-3\d0f58d1c476cddc5bf08aaded925b267\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:25-92
+84            </intent-filter>
+85        </receiver>
+86    </application>
+87
+88</manifest>

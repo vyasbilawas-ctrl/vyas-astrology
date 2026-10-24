@@ -1,0 +1,92 @@
+[
+  {
+    "decision_id": "dec_087799",
+    "task_id": "7d97b06f",
+    "timestamp": "2026-10-24 12:07:26",
+    "decision": "Selected OPT_B_SURGICAL_CONTRACT_GUARDED",
+    "rationale": "Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.",
+    "evidence_refs": "IntentContract:intent_7d97b06f",
+    "status": "ACTIVE"
+  },
+  {
+    "decision_id": "dec_3943b8",
+    "task_id": "1f2b5fff",
+    "timestamp": "2026-10-24 12:09:23",
+    "decision": "Selected OPT_B_SURGICAL_CONTRACT_GUARDED",
+    "rationale": "Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.",
+    "evidence_refs": "IntentContract:intent_1f2b5fff",
+    "status": "ACTIVE"
+  },
+  {
+    "decision_id": "dec_607879",
+    "task_id": "58a54d73",
+    "timestamp": "2026-10-24 12:13:03",
+    "decision": "Selected OPT_B_SURGICAL_CONTRACT_GUARDED",
+    "rationale": "Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.",
+    "evidence_refs": "IntentContract:intent_58a54d73",
+    "status": "ACTIVE"
+  },
+  {
+    "decision_id": "dec_eb2526",
+    "task_id": "37c2dd3e",
+    "timestamp": "2026-10-24 12:13:24",
+    "decision": "Selected OPT_B_SURGICAL_CONTRACT_GUARDED",
+    "rationale": "Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.",
+    "evidence_refs": "IntentContract:intent_37c2dd3e",
+    "status": "ACTIVE"
+  },
+  {
+    "decision_id": "dec_a5d996",
+    "task_id": "50407313",
+    "timestamp": "2026-10-24 13:51:33",
+    "decision": "Selected OPT_B_SURGICAL_CONTRACT_GUARDED",
+    "rationale": "Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.",
+    "evidence_refs": "IntentContract:intent_50407313",
+    "status": "ACTIVE"
+  },
+  {
+    "decision_id": "dec_b5f2f6",
+    "task_id": "3683af7b",
+    "timestamp": "2026-10-24 13:53:20",
+    "decision": "Selected OPT_B_SURGICAL_CONTRACT_GUARDED",
+    "rationale": "Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.",
+    "evidence_refs": "IntentContract:intent_3683af7b",
+    "status": "ACTIVE"
+  },
+  {
+    "decision_id": "dec_7ab2e6",
+    "task_id": "37ca1651",
+    "timestamp": "2026-10-24 13:53:58",
+    "decision": "Selected OPT_B_SURGICAL_CONTRACT_GUARDED",
+    "rationale": "Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.",
+    "evidence_refs": "IntentContract:intent_37ca1651",
+    "status": "ACTIVE"
+  },
+  {
+    "decision_id": "dec_a178ac",
+    "task_id": "2acaf07f",
+    "timestamp": "2026-10-24 13:54:48",
+    "decision": "Selected OPT_B_SURGICAL_CONTRACT_GUARDED",
+    "rationale": "Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.",
+    "evidence_refs": "IntentContract:intent_2acaf07f",
+    "status": "ACTIVE"
+  },
+  {
+    "decision_id": "dec_db23f4",
+    "task_id": "c19ce9e0",
+    "timestamp": "2026-10-24 14:12:27",
+    "decision": "Selected OPT_B_SURGICAL_CONTRACT_GUARDED",
+    "rationale": "Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.",
+    "evidence_refs": "IntentContract:intent_c19ce9e0",
+    "status": "ACTIVE"
+  },
+  {
+    "decision_id": "dec_1ae7cf",
+    "task_id": "9bf3fc4d",
+    "timestamp": "2026-10-24 14:24:38",
+    "decision": "Selected OPT_B_SURGICAL_CONTRACT_GUARDED",
+    "rationale": "Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.",
+    "evidence_refs": "IntentContract:intent_9bf3fc4d",
+    "status": "ACTIVE"
+  }
+]
