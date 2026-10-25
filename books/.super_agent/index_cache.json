@@ -1,0 +1,904 @@
+{
+  "files": {
+    "Advanced Techniques of Astrological Predictions.md": {
+      "mtime_ns": 1791217396116309400,
+      "size": 446091,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "Advanced Techniques of Astrological Predictions.md",
+          "ext": ".md",
+          "size": 446091,
+          "sha256": "a82b59e14ac3813c"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_2000.jsonl": {
+      "mtime_ns": 1791311388152881200,
+      "size": 1933639,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_2000.jsonl",
+          "ext": ".jsonl",
+          "size": 1933639,
+          "sha256": "295869dd038c7fcc"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_2000.txt": {
+      "mtime_ns": 1791313023291823900,
+      "size": 1933639,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_2000.txt",
+          "ext": ".txt",
+          "size": 1933639,
+          "sha256": "295869dd038c7fcc"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part10_apex.jsonl": {
+      "mtime_ns": 1791374454915298000,
+      "size": 599942,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part10_apex.jsonl",
+          "ext": ".jsonl",
+          "size": 599942,
+          "sha256": "5d773a65182d5591"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part11_ultimate.jsonl": {
+      "mtime_ns": 1791374427917415400,
+      "size": 562929,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part11_ultimate.jsonl",
+          "ext": ".jsonl",
+          "size": 562929,
+          "sha256": "a932ea8b55a2e0a1"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part12_transcendental.jsonl": {
+      "mtime_ns": 1791374866596988100,
+      "size": 561851,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part12_transcendental.jsonl",
+          "ext": ".jsonl",
+          "size": 561851,
+          "sha256": "bb897d35f47c5fac"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part13_codices.jsonl": {
+      "mtime_ns": 1791375082421037300,
+      "size": 543973,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part13_codices.jsonl",
+          "ext": ".jsonl",
+          "size": 543973,
+          "sha256": "69d33fbc2635ed89"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part14_transcendental.jsonl": {
+      "mtime_ns": 1791375529053585800,
+      "size": 581163,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part14_transcendental.jsonl",
+          "ext": ".jsonl",
+          "size": 581163,
+          "sha256": "63bd31fbb500371f"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part15_millennium.jsonl": {
+      "mtime_ns": 1791382941863874100,
+      "size": 732169,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part15_millennium.jsonl",
+          "ext": ".jsonl",
+          "size": 732169,
+          "sha256": "d997488dadbaac40"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part16_celestial.jsonl": {
+      "mtime_ns": 1791383625115533500,
+      "size": 632702,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part16_celestial.jsonl",
+          "ext": ".jsonl",
+          "size": 632702,
+          "sha256": "26a82f85212e8e22"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part17_transcendence.jsonl": {
+      "mtime_ns": 1791384096436934700,
+      "size": 652694,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part17_transcendence.jsonl",
+          "ext": ".jsonl",
+          "size": 652694,
+          "sha256": "348d162744dd3289"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part18_remedies.jsonl": {
+      "mtime_ns": 1791384894025533400,
+      "size": 687958,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part18_remedies.jsonl",
+          "ext": ".jsonl",
+          "size": 687958,
+          "sha256": "51acb21022b032dd"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part19_sovereign_remedies.jsonl": {
+      "mtime_ns": 1791385659381564300,
+      "size": 660685,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part19_sovereign_remedies.jsonl",
+          "ext": ".jsonl",
+          "size": 660685,
+          "sha256": "e27638815b87ce66"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part20_monumental.jsonl": {
+      "mtime_ns": 1791386397283217400,
+      "size": 658805,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part20_monumental.jsonl",
+          "ext": ".jsonl",
+          "size": 658805,
+          "sha256": "154649c5dc7b5b99"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part22_transcendental.jsonl": {
+      "mtime_ns": 1791388987194251700,
+      "size": 665761,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part22_transcendental.jsonl",
+          "ext": ".jsonl",
+          "size": 665761,
+          "sha256": "3d5f0da5cccf08a0"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part2_esoteric.jsonl": {
+      "mtime_ns": 1791345326737222000,
+      "size": 1502497,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part2_esoteric.jsonl",
+          "ext": ".jsonl",
+          "size": 1502497,
+          "sha256": "34a8083fd1376117"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part3_advanced.jsonl": {
+      "mtime_ns": 1791345338771765300,
+      "size": 1216475,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part3_advanced.jsonl",
+          "ext": ".jsonl",
+          "size": 1216475,
+          "sha256": "415078b3331e6c10"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part4_remedies_mundane.jsonl": {
+      "mtime_ns": 1791351084504528500,
+      "size": 761695,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part4_remedies_mundane.jsonl",
+          "ext": ".jsonl",
+          "size": 761695,
+          "sha256": "7bbabc217b8aff29"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part5_apex.jsonl": {
+      "mtime_ns": 1791374511053476300,
+      "size": 609090,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part5_apex.jsonl",
+          "ext": ".jsonl",
+          "size": 609090,
+          "sha256": "cad53c5509d5a633"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part6_occult.jsonl": {
+      "mtime_ns": 1791374501050780600,
+      "size": 578968,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part6_occult.jsonl",
+          "ext": ".jsonl",
+          "size": 578968,
+          "sha256": "415b15e0b50d9bc7"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part7_astrovastu.jsonl": {
+      "mtime_ns": 1791374486991000200,
+      "size": 570981,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part7_astrovastu.jsonl",
+          "ext": ".jsonl",
+          "size": 570981,
+          "sha256": "bc66073c2b716382"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part8_pinnacle.jsonl": {
+      "mtime_ns": 1791374466980657800,
+      "size": 663090,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part8_pinnacle.jsonl",
+          "ext": ".jsonl",
+          "size": 663090,
+          "sha256": "4b0f9d67150dde43"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ai_jyotish_knowledge_bank_part9_sovereign.jsonl": {
+      "mtime_ns": 1791374443870898200,
+      "size": 565806,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ai_jyotish_knowledge_bank_part9_sovereign.jsonl",
+          "ext": ".jsonl",
+          "size": 565806,
+          "sha256": "91655d96f2d13ac3"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "astrological-sutras-collection-en.md": {
+      "mtime_ns": 1791305740069647900,
+      "size": 29143,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "astrological-sutras-collection-en.md",
+          "ext": ".md",
+          "size": 29143,
+          "sha256": "06d3ac33725f6429"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "bhav sindu.md": {
+      "mtime_ns": 1791211304934382100,
+      "size": 0,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "bhav sindu.md",
+          "ext": ".md",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c14"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "bhrigu nadi sangrah.md": {
+      "mtime_ns": 1791217396185846500,
+      "size": 179121,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "bhrigu nadi sangrah.md",
+          "ext": ".md",
+          "size": 179121,
+          "sha256": "430fd6cfa4aebee2"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "bhrigu nandi nadi book.md": {
+      "mtime_ns": 1791217396196844400,
+      "size": 845102,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "bhrigu nandi nadi book.md",
+          "ext": ".md",
+          "size": 845102,
+          "sha256": "52040e3a9abbb304"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "bhrigu sanhita falit.md": {
+      "mtime_ns": 1791211225707744100,
+      "size": 0,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "bhrigu sanhita falit.md",
+          "ext": ".md",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c14"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "bhrigu sutram.md": {
+      "mtime_ns": 1791217396203841200,
+      "size": 362726,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "bhrigu sutram.md",
+          "ext": ".md",
+          "size": 362726,
+          "sha256": "d3c884659d5ee134"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "brihad jatak saar-compressed.md": {
+      "mtime_ns": 1791211185625741300,
+      "size": 0,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "brihad jatak saar-compressed.md",
+          "ext": ".md",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c14"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "chamatkar chintamani.md": {
+      "mtime_ns": 1791212056858257600,
+      "size": 0,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "chamatkar chintamani.md",
+          "ext": ".md",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c14"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "Everyday astrology- practical guide to Indian and Western astrology.md": {
+      "mtime_ns": 1791217396156598600,
+      "size": 1149007,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "Everyday astrology- practical guide to Indian and Western astrology.md",
+          "ext": ".md",
+          "size": 1149007,
+          "sha256": "74de269841482302"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "hindu predictive astrology.md": {
+      "mtime_ns": 1791211700356809300,
+      "size": 0,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "hindu predictive astrology.md",
+          "ext": ".md",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c14"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "jamini char dasha.md": {
+      "mtime_ns": 1791217396208847900,
+      "size": 337690,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "jamini char dasha.md",
+          "ext": ".md",
+          "size": 337690,
+          "sha256": "edc5f1d402b3212a"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "jyotish koumudi.md": {
+      "mtime_ns": 1791211160705835400,
+      "size": 0,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "jyotish koumudi.md",
+          "ext": ".md",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c14"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "jyotish manthan.md": {
+      "mtime_ns": 1791217396214846300,
+      "size": 460820,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "jyotish manthan.md",
+          "ext": ".md",
+          "size": 460820,
+          "sha256": "bd1f8803b1c1c4a8"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "jyotish prabodh.md": {
+      "mtime_ns": 1791217396231432900,
+      "size": 1404757,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "jyotish prabodh.md",
+          "ext": ".md",
+          "size": 1404757,
+          "sha256": "f21ea49bdad38cb9"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "Jyotish Vigyan - Dr. Hari Krishan Chandani.md": {
+      "mtime_ns": 1791211195935634200,
+      "size": 0,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "Jyotish Vigyan - Dr. Hari Krishan Chandani.md",
+          "ext": ".md",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c14"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "Jyotish-Dwara-Rog-Upachar.md": {
+      "mtime_ns": 1791217396160595900,
+      "size": 99305,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "Jyotish-Dwara-Rog-Upachar.md",
+          "ext": ".md",
+          "size": 99305,
+          "sha256": "91c8d3c9d7034acb"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "Lal Kitab.md": {
+      "mtime_ns": 1791217396176844200,
+      "size": 1247544,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "Lal Kitab.md",
+          "ext": ".md",
+          "size": 1247544,
+          "sha256": "ec261ac9453409df"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "Maharshi_Bhrigu_-_Bhrigu_Samhita.md": {
+      "mtime_ns": 1791211207494450800,
+      "size": 0,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "Maharshi_Bhrigu_-_Bhrigu_Samhita.md",
+          "ext": ".md",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c14"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "mansagri.md": {
+      "mtime_ns": 1791211175036605100,
+      "size": 0,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "mansagri.md",
+          "ext": ".md",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c14"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "MATHEMATICAL ASTROLOGY.md": {
+      "mtime_ns": 1791217396182838800,
+      "size": 300669,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "MATHEMATICAL ASTROLOGY.md",
+          "ext": ".md",
+          "size": 300669,
+          "sha256": "2e3900ff11c9e8ff"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "medical astrology book1.md": {
+      "mtime_ns": 1791217396236992100,
+      "size": 349957,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "medical astrology book1.md",
+          "ext": ".md",
+          "size": 349957,
+          "sha256": "a068af283b26ea10"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "medical astrology.md": {
+      "mtime_ns": 1791217396241994300,
+      "size": 391655,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "medical astrology.md",
+          "ext": ".md",
+          "size": 391655,
+          "sha256": "1dd8a2f8960fbfe1"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "Notable Horoscopes By Bangalore Venkata Raman (English, IBHP Astrology Series) - IBH Prakashana, Bangalore.md": {
+      "mtime_ns": 1791211075647000800,
+      "size": 26447,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "Notable Horoscopes By Bangalore Venkata Raman (English, IBHP Astrology Series) - IBH Prakashana, Bangalore.md",
+          "ext": ".md",
+          "size": 26447,
+          "sha256": "ad83fca62e6d5308"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "Notable Horoscopes By Bangalore Venkata Raman (English, IBHP Astrology Series) - IBH Prakashana, Bangalore_compressed (1).md": {
+      "mtime_ns": 1791211156886934900,
+      "size": 26447,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "Notable Horoscopes By Bangalore Venkata Raman (English, IBHP Astrology Series) - IBH Prakashana, Bangalore_compressed (1).md",
+          "ext": ".md",
+          "size": 26447,
+          "sha256": "ad83fca62e6d5308"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "predictive astrology.md": {
+      "mtime_ns": 1791217396255986500,
+      "size": 1177279,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "predictive astrology.md",
+          "ext": ".md",
+          "size": 1177279,
+          "sha256": "2188c8638ab17425"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "README.md": {
+      "mtime_ns": 1791132024778926400,
+      "size": 1523,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "README.md",
+          "ext": ".md",
+          "size": 1523,
+          "sha256": "b13417652fd9eb9a"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "saral jyotish.md": {
+      "mtime_ns": 1791217396261989700,
+      "size": 345742,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "saral jyotish.md",
+          "ext": ".md",
+          "size": 345742,
+          "sha256": "1577091297bd54f5"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "sarvatobhadra chakra.md": {
+      "mtime_ns": 1791217396266513100,
+      "size": 427749,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "sarvatobhadra chakra.md",
+          "ext": ".md",
+          "size": 427749,
+          "sha256": "05d8d8ebc9cd01b9"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "vedic astrology 2.md": {
+      "mtime_ns": 1791217396277132700,
+      "size": 851771,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "vedic astrology 2.md",
+          "ext": ".md",
+          "size": 851771,
+          "sha256": "84437b218790fbd1"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "vedic astrology.md": {
+      "mtime_ns": 1791217396284134400,
+      "size": 533920,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "vedic astrology.md",
+          "ext": ".md",
+          "size": 533920,
+          "sha256": "9f09c8bc50004b10"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "vedic-astrology-sutras-encyclopedia.md": {
+      "mtime_ns": 1791305761253393900,
+      "size": 33321,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "vedic-astrology-sutras-encyclopedia.md",
+          "ext": ".md",
+          "size": 33321,
+          "sha256": "5e2dc61dee61b4ea"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "vrihat jatakam sanskrit.md": {
+      "mtime_ns": 1791217396300135100,
+      "size": 1532983,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "vrihat jatakam sanskrit.md",
+          "ext": ".md",
+          "size": 1532983,
+          "sha256": "e9aff0b6021ae9d3"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "·Core of Nadi Astrology.md": {
+      "mtime_ns": 1791217396309147800,
+      "size": 656006,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "·Core of Nadi Astrology.md",
+          "ext": ".md",
+          "size": 656006,
+          "sha256": "0772c5520682ec81"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "कुण्डली_दर्पण_डा_नारायण_दत्त_श्री_माली1.md": {
+      "mtime_ns": 1791211708645268200,
+      "size": 0,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "कुण्डली_दर्पण_डा_नारायण_दत्त_श्री_माली1.md",
+          "ext": ".md",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c14"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "ज ्योतिषशास्त्र में तितिध व्यातध योग.md": {
+      "mtime_ns": 1791217396322279500,
+      "size": 852684,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "ज ्योतिषशास्त्र में तितिध व्यातध योग.md",
+          "ext": ".md",
+          "size": 852684,
+          "sha256": "7abf7de9f3b121a7"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "जातक शा  एवं फलादेश के िस ा त.md": {
+      "mtime_ns": 1791217396338881100,
+      "size": 1500245,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "जातक शा  एवं फलादेश के िस ा त.md",
+          "ext": ".md",
+          "size": 1500245,
+          "sha256": "219a265db4c08ac9"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    },
+    "वर्षफल विचार.md": {
+      "mtime_ns": 1791217396382252000,
+      "size": 1007899,
+      "twin_parsed": {
+        "file_meta": {
+          "path": "वर्षफल विचार.md",
+          "ext": ".md",
+          "size": 1007899,
+          "sha256": "c232f97c9e91952c"
+        },
+        "functions": {},
+        "dom_elements": {},
+        "js_dom_refs": {}
+      }
+    }
+  }
+}

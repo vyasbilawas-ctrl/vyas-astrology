@@ -1,0 +1,37 @@
+{
+  "version": "7.0",
+  "project_name": "books",
+  "autonomy_level": "AUTONOMOUS_WITH_GATES",
+  "coding_style_rules": [
+    "Use surgical str_replace edits; never overwrite existing files with boilerplate templates.",
+    "Preserve all existing function signatures, HTML DOM IDs (#id), and form input[name] bindings.",
+    "Maintain UTF-8 encoding and clean modular structure."
+  ],
+  "forbidden_patterns": [
+    "eval(",
+    "os.system(",
+    "subprocess.Popen(..., shell=True)"
+  ],
+  "protected_files": [
+    ".env",
+    ".agentic_coder_vault.key",
+    ".agentic_coder_signing.key"
+  ],
+  "protected_functions": [],
+  "mandatory_tests": [
+    "python_ast_compile",
+    "html_dom_validator",
+    "js_syntax_validator",
+    "formula_integrity_contracts"
+  ],
+  "design_tokens": {
+    "min_body_font_px": 12,
+    "require_responsive_viewport": true,
+    "require_accessible_labels": true
+  },
+  "performance_budgets": {
+    "status_endpoint_max_ms": 50.0,
+    "twin_cached_max_ms": 50.0,
+    "max_single_file_size_kb": 2048
+  }
+}

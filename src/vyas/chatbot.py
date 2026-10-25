@@ -21,6 +21,7 @@ import os
 import re
 
 from vyas import constants
+from vyas import sutra_synthesizer
 
 class VyasChatbotEngine:
     """Authentic Vedic Astrological Dialogue Engine."""

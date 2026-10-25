@@ -1,0 +1,1012 @@
+[
+  {
+    "contract_id": "intent_7d97b06f",
+    "schema_version": "2.0",
+    "task_id": "7d97b06f",
+    "created_at": "2026-10-24 12:07:26",
+    "raw_prompt": "is data ko compile karna hai.",
+    "objective": "is data ko compile karna hai.",
+    "category": "SURGICAL_FEATURE_OR_REFACTOR",
+    "risk_level": "MEDIUM",
+    "is_read_only": false,
+    "explicit_calculation_change_approved": false,
+    "user_goal": "is data ko compile karna hai.",
+    "target_users": "Software Engineers, Domain Practitioners & End Users of Workspace Application",
+    "current_pain_points": [
+      "User identified engineering requirement in workspace 'books': is data ko compile karna hai."
+    ],
+    "required_outcomes": [
+      "Fulfill user goal ('is data ko compile karna hai.') with verified code changes and zero regressions."
+    ],
+    "acceptance_criteria": [
+      "AC-1 (Requirement Coverage): Every required outcome in the Intent Contract is mapped to concrete file diffs or audit evidence.",
+      "AC-2 (Functional & Syntax Verification): All modified Python/HTML/JS files pass AST, DOM, JS, and automated unit checks.",
+      "AC-3 (Regression & Formula Invariants): Zero symbol loss and zero unauthorized formula contract drift.",
+      "AC-4 (Security & Performance): Zero security policy violations and all performance budgets satisfied.",
+      "AC-5 (Independent Assurance): Outcome Assurance Engine (OAE) and HMAC-SHA256 Proof Bundle both evaluate to PASS."
+    ],
+    "non_goals": [
+      "Never overwrite existing project files with dummy or placeholder templates.",
+      "Do not alter unrelated modules outside the simulated blast radius.",
+      "Do not modify any locked mathematical, financial, or astrological calculation formulas."
+    ],
+    "design_constraints": [
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "security_constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses."
+    ],
+    "performance_budget": {
+      "status_endpoint_max_ms": 50.0,
+      "twin_cached_max_ms": 50.0,
+      "max_single_file_size_kb": 2048
+    },
+    "regression_invariants": [
+      "100% of pre-existing Python function/class symbols and JS function symbols must remain defined.",
+      "All locked Calculation Integrity Contracts (AST SHA-256 + Golden I/O probes) must remain PASS.",
+      "Every modified file must have a verified pre-edit SHA-256 backup and baseline snapshot."
+    ],
+    "risk_register": [
+      {
+        "risk_id": "RISK-01",
+        "description": "Accidental deletion or mutation of domain calculation formulas or DOM bindings.",
+        "severity": "HIGH",
+        "mitigation": "Automatic AST SHA-256 + Golden I/O contract verification with instant backup restore on violation."
+      },
+      {
+        "risk_id": "RISK-02",
+        "description": "Syntax error or broken HTML/JS tag balance introduced during patching.",
+        "severity": "MEDIUM",
+        "mitigation": "Mandatory Pre-Mortem AST + StrictDOMValidator + V8/recursive JS syntax gate."
+      }
+    ],
+    "verification_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "rollback_plan": {
+      "strategy": "Transactional Time-Travel Checkpoint + Per-Edit SHA-256 Verified Backups",
+      "checkpoint_dir": ".super_agent/time_travel/7d97b06f",
+      "recovery_journal": ".super_agent/time_travel/7d97b06f/rollback_journal.json",
+      "post_rollback_verification": "Re-verify file SHA-256 hashes and Formula Integrity Contracts immediately after rollback."
+    },
+    "definition_of_done": [
+      "All 7 Outcome Assurance Engine (OAE) gates achieve PASS (no FAIL, BLOCKED, or unverified mandatory gates).",
+      "Cryptographic HMAC-SHA256 Proof Bundle is generated, signed, and verified against disk SHA-256 hashes.",
+      "Evidence-Linked Delivery Report is persisted in `.super_agent/delivery_reports/`."
+    ],
+    "constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses.",
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "test_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "budget": {
+      "max_steps": 25,
+      "max_files_modified": 10
+    }
+  },
+  {
+    "contract_id": "intent_1f2b5fff",
+    "schema_version": "2.0",
+    "task_id": "1f2b5fff",
+    "created_at": "2026-10-24 12:09:23",
+    "raw_prompt": "try again",
+    "objective": "try again",
+    "category": "SURGICAL_FEATURE_OR_REFACTOR",
+    "risk_level": "MEDIUM",
+    "is_read_only": false,
+    "explicit_calculation_change_approved": false,
+    "user_goal": "try again",
+    "target_users": "Software Engineers, Domain Practitioners & End Users of Workspace Application",
+    "current_pain_points": [
+      "User identified engineering requirement in workspace 'books': try again"
+    ],
+    "required_outcomes": [
+      "Fulfill user goal ('try again') with verified code changes and zero regressions."
+    ],
+    "acceptance_criteria": [
+      "AC-1 (Requirement Coverage): Every required outcome in the Intent Contract is mapped to concrete file diffs or audit evidence.",
+      "AC-2 (Functional & Syntax Verification): All modified Python/HTML/JS files pass AST, DOM, JS, and automated unit checks.",
+      "AC-3 (Regression & Formula Invariants): Zero symbol loss and zero unauthorized formula contract drift.",
+      "AC-4 (Security & Performance): Zero security policy violations and all performance budgets satisfied.",
+      "AC-5 (Independent Assurance): Outcome Assurance Engine (OAE) and HMAC-SHA256 Proof Bundle both evaluate to PASS."
+    ],
+    "non_goals": [
+      "Never overwrite existing project files with dummy or placeholder templates.",
+      "Do not alter unrelated modules outside the simulated blast radius.",
+      "Do not modify any locked mathematical, financial, or astrological calculation formulas."
+    ],
+    "design_constraints": [
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "security_constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses."
+    ],
+    "performance_budget": {
+      "status_endpoint_max_ms": 50.0,
+      "twin_cached_max_ms": 50.0,
+      "max_single_file_size_kb": 2048
+    },
+    "regression_invariants": [
+      "100% of pre-existing Python function/class symbols and JS function symbols must remain defined.",
+      "All locked Calculation Integrity Contracts (AST SHA-256 + Golden I/O probes) must remain PASS.",
+      "Every modified file must have a verified pre-edit SHA-256 backup and baseline snapshot."
+    ],
+    "risk_register": [
+      {
+        "risk_id": "RISK-01",
+        "description": "Accidental deletion or mutation of domain calculation formulas or DOM bindings.",
+        "severity": "HIGH",
+        "mitigation": "Automatic AST SHA-256 + Golden I/O contract verification with instant backup restore on violation."
+      },
+      {
+        "risk_id": "RISK-02",
+        "description": "Syntax error or broken HTML/JS tag balance introduced during patching.",
+        "severity": "MEDIUM",
+        "mitigation": "Mandatory Pre-Mortem AST + StrictDOMValidator + V8/recursive JS syntax gate."
+      }
+    ],
+    "verification_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "rollback_plan": {
+      "strategy": "Transactional Time-Travel Checkpoint + Per-Edit SHA-256 Verified Backups",
+      "checkpoint_dir": ".super_agent/time_travel/1f2b5fff",
+      "recovery_journal": ".super_agent/time_travel/1f2b5fff/rollback_journal.json",
+      "post_rollback_verification": "Re-verify file SHA-256 hashes and Formula Integrity Contracts immediately after rollback."
+    },
+    "definition_of_done": [
+      "All 7 Outcome Assurance Engine (OAE) gates achieve PASS (no FAIL, BLOCKED, or unverified mandatory gates).",
+      "Cryptographic HMAC-SHA256 Proof Bundle is generated, signed, and verified against disk SHA-256 hashes.",
+      "Evidence-Linked Delivery Report is persisted in `.super_agent/delivery_reports/`."
+    ],
+    "constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses.",
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "test_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "budget": {
+      "max_steps": 25,
+      "max_files_modified": 10
+    }
+  },
+  {
+    "contract_id": "intent_58a54d73",
+    "schema_version": "2.0",
+    "task_id": "58a54d73",
+    "created_at": "2026-10-24 12:13:02",
+    "raw_prompt": "try",
+    "objective": "try",
+    "category": "SURGICAL_FEATURE_OR_REFACTOR",
+    "risk_level": "MEDIUM",
+    "is_read_only": false,
+    "explicit_calculation_change_approved": false,
+    "user_goal": "try",
+    "target_users": "Software Engineers, Domain Practitioners & End Users of Workspace Application",
+    "current_pain_points": [
+      "User identified engineering requirement in workspace 'books': try"
+    ],
+    "required_outcomes": [
+      "Fulfill user goal ('try') with verified code changes and zero regressions."
+    ],
+    "acceptance_criteria": [
+      "AC-1 (Requirement Coverage): Every required outcome in the Intent Contract is mapped to concrete file diffs or audit evidence.",
+      "AC-2 (Functional & Syntax Verification): All modified Python/HTML/JS files pass AST, DOM, JS, and automated unit checks.",
+      "AC-3 (Regression & Formula Invariants): Zero symbol loss and zero unauthorized formula contract drift.",
+      "AC-4 (Security & Performance): Zero security policy violations and all performance budgets satisfied.",
+      "AC-5 (Independent Assurance): Outcome Assurance Engine (OAE) and HMAC-SHA256 Proof Bundle both evaluate to PASS."
+    ],
+    "non_goals": [
+      "Never overwrite existing project files with dummy or placeholder templates.",
+      "Do not alter unrelated modules outside the simulated blast radius.",
+      "Do not modify any locked mathematical, financial, or astrological calculation formulas."
+    ],
+    "design_constraints": [
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "security_constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses."
+    ],
+    "performance_budget": {
+      "status_endpoint_max_ms": 50.0,
+      "twin_cached_max_ms": 50.0,
+      "max_single_file_size_kb": 2048
+    },
+    "regression_invariants": [
+      "100% of pre-existing Python function/class symbols and JS function symbols must remain defined.",
+      "All locked Calculation Integrity Contracts (AST SHA-256 + Golden I/O probes) must remain PASS.",
+      "Every modified file must have a verified pre-edit SHA-256 backup and baseline snapshot."
+    ],
+    "risk_register": [
+      {
+        "risk_id": "RISK-01",
+        "description": "Accidental deletion or mutation of domain calculation formulas or DOM bindings.",
+        "severity": "HIGH",
+        "mitigation": "Automatic AST SHA-256 + Golden I/O contract verification with instant backup restore on violation."
+      },
+      {
+        "risk_id": "RISK-02",
+        "description": "Syntax error or broken HTML/JS tag balance introduced during patching.",
+        "severity": "MEDIUM",
+        "mitigation": "Mandatory Pre-Mortem AST + StrictDOMValidator + V8/recursive JS syntax gate."
+      }
+    ],
+    "verification_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "rollback_plan": {
+      "strategy": "Transactional Time-Travel Checkpoint + Per-Edit SHA-256 Verified Backups",
+      "checkpoint_dir": ".super_agent/time_travel/58a54d73",
+      "recovery_journal": ".super_agent/time_travel/58a54d73/rollback_journal.json",
+      "post_rollback_verification": "Re-verify file SHA-256 hashes and Formula Integrity Contracts immediately after rollback."
+    },
+    "definition_of_done": [
+      "All 7 Outcome Assurance Engine (OAE) gates achieve PASS (no FAIL, BLOCKED, or unverified mandatory gates).",
+      "Cryptographic HMAC-SHA256 Proof Bundle is generated, signed, and verified against disk SHA-256 hashes.",
+      "Evidence-Linked Delivery Report is persisted in `.super_agent/delivery_reports/`."
+    ],
+    "constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses.",
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "test_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "budget": {
+      "max_steps": 25,
+      "max_files_modified": 10
+    }
+  },
+  {
+    "contract_id": "intent_37c2dd3e",
+    "schema_version": "2.0",
+    "task_id": "37c2dd3e",
+    "created_at": "2026-10-24 12:13:24",
+    "raw_prompt": "try",
+    "objective": "try",
+    "category": "SURGICAL_FEATURE_OR_REFACTOR",
+    "risk_level": "MEDIUM",
+    "is_read_only": false,
+    "explicit_calculation_change_approved": false,
+    "user_goal": "try",
+    "target_users": "Software Engineers, Domain Practitioners & End Users of Workspace Application",
+    "current_pain_points": [
+      "User identified engineering requirement in workspace 'books': try"
+    ],
+    "required_outcomes": [
+      "Fulfill user goal ('try') with verified code changes and zero regressions."
+    ],
+    "acceptance_criteria": [
+      "AC-1 (Requirement Coverage): Every required outcome in the Intent Contract is mapped to concrete file diffs or audit evidence.",
+      "AC-2 (Functional & Syntax Verification): All modified Python/HTML/JS files pass AST, DOM, JS, and automated unit checks.",
+      "AC-3 (Regression & Formula Invariants): Zero symbol loss and zero unauthorized formula contract drift.",
+      "AC-4 (Security & Performance): Zero security policy violations and all performance budgets satisfied.",
+      "AC-5 (Independent Assurance): Outcome Assurance Engine (OAE) and HMAC-SHA256 Proof Bundle both evaluate to PASS."
+    ],
+    "non_goals": [
+      "Never overwrite existing project files with dummy or placeholder templates.",
+      "Do not alter unrelated modules outside the simulated blast radius.",
+      "Do not modify any locked mathematical, financial, or astrological calculation formulas."
+    ],
+    "design_constraints": [
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "security_constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses."
+    ],
+    "performance_budget": {
+      "status_endpoint_max_ms": 50.0,
+      "twin_cached_max_ms": 50.0,
+      "max_single_file_size_kb": 2048
+    },
+    "regression_invariants": [
+      "100% of pre-existing Python function/class symbols and JS function symbols must remain defined.",
+      "All locked Calculation Integrity Contracts (AST SHA-256 + Golden I/O probes) must remain PASS.",
+      "Every modified file must have a verified pre-edit SHA-256 backup and baseline snapshot."
+    ],
+    "risk_register": [
+      {
+        "risk_id": "RISK-01",
+        "description": "Accidental deletion or mutation of domain calculation formulas or DOM bindings.",
+        "severity": "HIGH",
+        "mitigation": "Automatic AST SHA-256 + Golden I/O contract verification with instant backup restore on violation."
+      },
+      {
+        "risk_id": "RISK-02",
+        "description": "Syntax error or broken HTML/JS tag balance introduced during patching.",
+        "severity": "MEDIUM",
+        "mitigation": "Mandatory Pre-Mortem AST + StrictDOMValidator + V8/recursive JS syntax gate."
+      }
+    ],
+    "verification_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "rollback_plan": {
+      "strategy": "Transactional Time-Travel Checkpoint + Per-Edit SHA-256 Verified Backups",
+      "checkpoint_dir": ".super_agent/time_travel/37c2dd3e",
+      "recovery_journal": ".super_agent/time_travel/37c2dd3e/rollback_journal.json",
+      "post_rollback_verification": "Re-verify file SHA-256 hashes and Formula Integrity Contracts immediately after rollback."
+    },
+    "definition_of_done": [
+      "All 7 Outcome Assurance Engine (OAE) gates achieve PASS (no FAIL, BLOCKED, or unverified mandatory gates).",
+      "Cryptographic HMAC-SHA256 Proof Bundle is generated, signed, and verified against disk SHA-256 hashes.",
+      "Evidence-Linked Delivery Report is persisted in `.super_agent/delivery_reports/`."
+    ],
+    "constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses.",
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "test_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "budget": {
+      "max_steps": 25,
+      "max_files_modified": 10
+    }
+  },
+  {
+    "contract_id": "intent_50407313",
+    "schema_version": "2.0",
+    "task_id": "50407313",
+    "created_at": "2026-10-24 13:51:33",
+    "raw_prompt": "dekho",
+    "objective": "dekho",
+    "category": "SURGICAL_FEATURE_OR_REFACTOR",
+    "risk_level": "MEDIUM",
+    "is_read_only": false,
+    "explicit_calculation_change_approved": false,
+    "user_goal": "dekho",
+    "target_users": "Software Engineers, Domain Practitioners & End Users of Workspace Application",
+    "current_pain_points": [
+      "User identified engineering requirement in workspace 'books': dekho"
+    ],
+    "required_outcomes": [
+      "Fulfill user goal ('dekho') with verified code changes and zero regressions."
+    ],
+    "acceptance_criteria": [
+      "AC-1 (Requirement Coverage): Every required outcome in the Intent Contract is mapped to concrete file diffs or audit evidence.",
+      "AC-2 (Functional & Syntax Verification): All modified Python/HTML/JS files pass AST, DOM, JS, and automated unit checks.",
+      "AC-3 (Regression & Formula Invariants): Zero symbol loss and zero unauthorized formula contract drift.",
+      "AC-4 (Security & Performance): Zero security policy violations and all performance budgets satisfied.",
+      "AC-5 (Independent Assurance): Outcome Assurance Engine (OAE) and HMAC-SHA256 Proof Bundle both evaluate to PASS."
+    ],
+    "non_goals": [
+      "Never overwrite existing project files with dummy or placeholder templates.",
+      "Do not alter unrelated modules outside the simulated blast radius.",
+      "Do not modify any locked mathematical, financial, or astrological calculation formulas."
+    ],
+    "design_constraints": [
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "security_constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses."
+    ],
+    "performance_budget": {
+      "status_endpoint_max_ms": 50.0,
+      "twin_cached_max_ms": 50.0,
+      "max_single_file_size_kb": 2048
+    },
+    "regression_invariants": [
+      "100% of pre-existing Python function/class symbols and JS function symbols must remain defined.",
+      "All locked Calculation Integrity Contracts (AST SHA-256 + Golden I/O probes) must remain PASS.",
+      "Every modified file must have a verified pre-edit SHA-256 backup and baseline snapshot."
+    ],
+    "risk_register": [
+      {
+        "risk_id": "RISK-01",
+        "description": "Accidental deletion or mutation of domain calculation formulas or DOM bindings.",
+        "severity": "HIGH",
+        "mitigation": "Automatic AST SHA-256 + Golden I/O contract verification with instant backup restore on violation."
+      },
+      {
+        "risk_id": "RISK-02",
+        "description": "Syntax error or broken HTML/JS tag balance introduced during patching.",
+        "severity": "MEDIUM",
+        "mitigation": "Mandatory Pre-Mortem AST + StrictDOMValidator + V8/recursive JS syntax gate."
+      }
+    ],
+    "verification_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "rollback_plan": {
+      "strategy": "Transactional Time-Travel Checkpoint + Per-Edit SHA-256 Verified Backups",
+      "checkpoint_dir": ".super_agent/time_travel/50407313",
+      "recovery_journal": ".super_agent/time_travel/50407313/rollback_journal.json",
+      "post_rollback_verification": "Re-verify file SHA-256 hashes and Formula Integrity Contracts immediately after rollback."
+    },
+    "definition_of_done": [
+      "All 7 Outcome Assurance Engine (OAE) gates achieve PASS (no FAIL, BLOCKED, or unverified mandatory gates).",
+      "Cryptographic HMAC-SHA256 Proof Bundle is generated, signed, and verified against disk SHA-256 hashes.",
+      "Evidence-Linked Delivery Report is persisted in `.super_agent/delivery_reports/`."
+    ],
+    "constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses.",
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "test_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "budget": {
+      "max_steps": 25,
+      "max_files_modified": 10
+    }
+  },
+  {
+    "contract_id": "intent_3683af7b",
+    "schema_version": "2.0",
+    "task_id": "3683af7b",
+    "created_at": "2026-10-24 13:53:19",
+    "raw_prompt": "now check",
+    "objective": "now check",
+    "category": "EMPIRICAL_AUDIT_READONLY",
+    "risk_level": "LOW",
+    "is_read_only": true,
+    "explicit_calculation_change_approved": false,
+    "user_goal": "now check",
+    "target_users": "Software Engineers, Domain Practitioners & End Users of Workspace Application",
+    "current_pain_points": [
+      "User identified engineering requirement in workspace 'books': now check"
+    ],
+    "required_outcomes": [
+      "Fulfill user goal ('now check') with verified code changes and zero regressions."
+    ],
+    "acceptance_criteria": [
+      "AC-1 (Requirement Coverage): Every required outcome in the Intent Contract is mapped to concrete file diffs or audit evidence.",
+      "AC-2 (Functional & Syntax Verification): All modified Python/HTML/JS files pass AST, DOM, JS, and automated unit checks.",
+      "AC-3 (Regression & Formula Invariants): Zero symbol loss and zero unauthorized formula contract drift.",
+      "AC-4 (Security & Performance): Zero security policy violations and all performance budgets satisfied.",
+      "AC-5 (Independent Assurance): Outcome Assurance Engine (OAE) and HMAC-SHA256 Proof Bundle both evaluate to PASS."
+    ],
+    "non_goals": [
+      "Never overwrite existing project files with dummy or placeholder templates.",
+      "Do not alter unrelated modules outside the simulated blast radius.",
+      "Do not modify any locked mathematical, financial, or astrological calculation formulas."
+    ],
+    "design_constraints": [
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "security_constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses."
+    ],
+    "performance_budget": {
+      "status_endpoint_max_ms": 50.0,
+      "twin_cached_max_ms": 50.0,
+      "max_single_file_size_kb": 2048
+    },
+    "regression_invariants": [
+      "100% of pre-existing Python function/class symbols and JS function symbols must remain defined.",
+      "All locked Calculation Integrity Contracts (AST SHA-256 + Golden I/O probes) must remain PASS.",
+      "Every modified file must have a verified pre-edit SHA-256 backup and baseline snapshot."
+    ],
+    "risk_register": [
+      {
+        "risk_id": "RISK-01",
+        "description": "Accidental deletion or mutation of domain calculation formulas or DOM bindings.",
+        "severity": "HIGH",
+        "mitigation": "Automatic AST SHA-256 + Golden I/O contract verification with instant backup restore on violation."
+      },
+      {
+        "risk_id": "RISK-02",
+        "description": "Syntax error or broken HTML/JS tag balance introduced during patching.",
+        "severity": "MEDIUM",
+        "mitigation": "Mandatory Pre-Mortem AST + StrictDOMValidator + V8/recursive JS syntax gate."
+      }
+    ],
+    "verification_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "rollback_plan": {
+      "strategy": "Transactional Time-Travel Checkpoint + Per-Edit SHA-256 Verified Backups",
+      "checkpoint_dir": ".super_agent/time_travel/3683af7b",
+      "recovery_journal": ".super_agent/time_travel/3683af7b/rollback_journal.json",
+      "post_rollback_verification": "Re-verify file SHA-256 hashes and Formula Integrity Contracts immediately after rollback."
+    },
+    "definition_of_done": [
+      "All 7 Outcome Assurance Engine (OAE) gates achieve PASS (no FAIL, BLOCKED, or unverified mandatory gates).",
+      "Cryptographic HMAC-SHA256 Proof Bundle is generated, signed, and verified against disk SHA-256 hashes.",
+      "Evidence-Linked Delivery Report is persisted in `.super_agent/delivery_reports/`."
+    ],
+    "constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses.",
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "test_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "budget": {
+      "max_steps": 15,
+      "max_files_modified": 0
+    }
+  },
+  {
+    "contract_id": "intent_37ca1651",
+    "schema_version": "2.0",
+    "task_id": "37ca1651",
+    "created_at": "2026-10-24 13:53:58",
+    "raw_prompt": "try",
+    "objective": "try",
+    "category": "SURGICAL_FEATURE_OR_REFACTOR",
+    "risk_level": "MEDIUM",
+    "is_read_only": false,
+    "explicit_calculation_change_approved": false,
+    "user_goal": "try",
+    "target_users": "Software Engineers, Domain Practitioners & End Users of Workspace Application",
+    "current_pain_points": [
+      "User identified engineering requirement in workspace 'books': try"
+    ],
+    "required_outcomes": [
+      "Fulfill user goal ('try') with verified code changes and zero regressions."
+    ],
+    "acceptance_criteria": [
+      "AC-1 (Requirement Coverage): Every required outcome in the Intent Contract is mapped to concrete file diffs or audit evidence.",
+      "AC-2 (Functional & Syntax Verification): All modified Python/HTML/JS files pass AST, DOM, JS, and automated unit checks.",
+      "AC-3 (Regression & Formula Invariants): Zero symbol loss and zero unauthorized formula contract drift.",
+      "AC-4 (Security & Performance): Zero security policy violations and all performance budgets satisfied.",
+      "AC-5 (Independent Assurance): Outcome Assurance Engine (OAE) and HMAC-SHA256 Proof Bundle both evaluate to PASS."
+    ],
+    "non_goals": [
+      "Never overwrite existing project files with dummy or placeholder templates.",
+      "Do not alter unrelated modules outside the simulated blast radius.",
+      "Do not modify any locked mathematical, financial, or astrological calculation formulas."
+    ],
+    "design_constraints": [
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "security_constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses."
+    ],
+    "performance_budget": {
+      "status_endpoint_max_ms": 50.0,
+      "twin_cached_max_ms": 50.0,
+      "max_single_file_size_kb": 2048
+    },
+    "regression_invariants": [
+      "100% of pre-existing Python function/class symbols and JS function symbols must remain defined.",
+      "All locked Calculation Integrity Contracts (AST SHA-256 + Golden I/O probes) must remain PASS.",
+      "Every modified file must have a verified pre-edit SHA-256 backup and baseline snapshot."
+    ],
+    "risk_register": [
+      {
+        "risk_id": "RISK-01",
+        "description": "Accidental deletion or mutation of domain calculation formulas or DOM bindings.",
+        "severity": "HIGH",
+        "mitigation": "Automatic AST SHA-256 + Golden I/O contract verification with instant backup restore on violation."
+      },
+      {
+        "risk_id": "RISK-02",
+        "description": "Syntax error or broken HTML/JS tag balance introduced during patching.",
+        "severity": "MEDIUM",
+        "mitigation": "Mandatory Pre-Mortem AST + StrictDOMValidator + V8/recursive JS syntax gate."
+      }
+    ],
+    "verification_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "rollback_plan": {
+      "strategy": "Transactional Time-Travel Checkpoint + Per-Edit SHA-256 Verified Backups",
+      "checkpoint_dir": ".super_agent/time_travel/37ca1651",
+      "recovery_journal": ".super_agent/time_travel/37ca1651/rollback_journal.json",
+      "post_rollback_verification": "Re-verify file SHA-256 hashes and Formula Integrity Contracts immediately after rollback."
+    },
+    "definition_of_done": [
+      "All 7 Outcome Assurance Engine (OAE) gates achieve PASS (no FAIL, BLOCKED, or unverified mandatory gates).",
+      "Cryptographic HMAC-SHA256 Proof Bundle is generated, signed, and verified against disk SHA-256 hashes.",
+      "Evidence-Linked Delivery Report is persisted in `.super_agent/delivery_reports/`."
+    ],
+    "constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses.",
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "test_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "budget": {
+      "max_steps": 25,
+      "max_files_modified": 10
+    }
+  },
+  {
+    "contract_id": "intent_2acaf07f",
+    "schema_version": "2.0",
+    "task_id": "2acaf07f",
+    "created_at": "2026-10-24 13:54:48",
+    "raw_prompt": "now",
+    "objective": "now",
+    "category": "SURGICAL_FEATURE_OR_REFACTOR",
+    "risk_level": "MEDIUM",
+    "is_read_only": false,
+    "explicit_calculation_change_approved": false,
+    "user_goal": "now",
+    "target_users": "Software Engineers, Domain Practitioners & End Users of Workspace Application",
+    "current_pain_points": [
+      "User identified engineering requirement in workspace 'books': now"
+    ],
+    "required_outcomes": [
+      "Fulfill user goal ('now') with verified code changes and zero regressions."
+    ],
+    "acceptance_criteria": [
+      "AC-1 (Requirement Coverage): Every required outcome in the Intent Contract is mapped to concrete file diffs or audit evidence.",
+      "AC-2 (Functional & Syntax Verification): All modified Python/HTML/JS files pass AST, DOM, JS, and automated unit checks.",
+      "AC-3 (Regression & Formula Invariants): Zero symbol loss and zero unauthorized formula contract drift.",
+      "AC-4 (Security & Performance): Zero security policy violations and all performance budgets satisfied.",
+      "AC-5 (Independent Assurance): Outcome Assurance Engine (OAE) and HMAC-SHA256 Proof Bundle both evaluate to PASS."
+    ],
+    "non_goals": [
+      "Never overwrite existing project files with dummy or placeholder templates.",
+      "Do not alter unrelated modules outside the simulated blast radius.",
+      "Do not modify any locked mathematical, financial, or astrological calculation formulas."
+    ],
+    "design_constraints": [
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "security_constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses."
+    ],
+    "performance_budget": {
+      "status_endpoint_max_ms": 50.0,
+      "twin_cached_max_ms": 50.0,
+      "max_single_file_size_kb": 2048
+    },
+    "regression_invariants": [
+      "100% of pre-existing Python function/class symbols and JS function symbols must remain defined.",
+      "All locked Calculation Integrity Contracts (AST SHA-256 + Golden I/O probes) must remain PASS.",
+      "Every modified file must have a verified pre-edit SHA-256 backup and baseline snapshot."
+    ],
+    "risk_register": [
+      {
+        "risk_id": "RISK-01",
+        "description": "Accidental deletion or mutation of domain calculation formulas or DOM bindings.",
+        "severity": "HIGH",
+        "mitigation": "Automatic AST SHA-256 + Golden I/O contract verification with instant backup restore on violation."
+      },
+      {
+        "risk_id": "RISK-02",
+        "description": "Syntax error or broken HTML/JS tag balance introduced during patching.",
+        "severity": "MEDIUM",
+        "mitigation": "Mandatory Pre-Mortem AST + StrictDOMValidator + V8/recursive JS syntax gate."
+      }
+    ],
+    "verification_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "rollback_plan": {
+      "strategy": "Transactional Time-Travel Checkpoint + Per-Edit SHA-256 Verified Backups",
+      "checkpoint_dir": ".super_agent/time_travel/2acaf07f",
+      "recovery_journal": ".super_agent/time_travel/2acaf07f/rollback_journal.json",
+      "post_rollback_verification": "Re-verify file SHA-256 hashes and Formula Integrity Contracts immediately after rollback."
+    },
+    "definition_of_done": [
+      "All 7 Outcome Assurance Engine (OAE) gates achieve PASS (no FAIL, BLOCKED, or unverified mandatory gates).",
+      "Cryptographic HMAC-SHA256 Proof Bundle is generated, signed, and verified against disk SHA-256 hashes.",
+      "Evidence-Linked Delivery Report is persisted in `.super_agent/delivery_reports/`."
+    ],
+    "constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses.",
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "test_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "budget": {
+      "max_steps": 25,
+      "max_files_modified": 10
+    }
+  },
+  {
+    "contract_id": "intent_c19ce9e0",
+    "schema_version": "2.0",
+    "task_id": "c19ce9e0",
+    "created_at": "2026-10-24 14:12:27",
+    "raw_prompt": "hi",
+    "objective": "hi",
+    "category": "SURGICAL_FEATURE_OR_REFACTOR",
+    "risk_level": "MEDIUM",
+    "is_read_only": false,
+    "explicit_calculation_change_approved": false,
+    "user_goal": "hi",
+    "target_users": "Software Engineers, Domain Practitioners & End Users of Workspace Application",
+    "current_pain_points": [
+      "User identified engineering requirement in workspace 'books': hi"
+    ],
+    "required_outcomes": [
+      "Fulfill user goal ('hi') with verified code changes and zero regressions."
+    ],
+    "acceptance_criteria": [
+      "AC-1 (Requirement Coverage): Every required outcome in the Intent Contract is mapped to concrete file diffs or audit evidence.",
+      "AC-2 (Functional & Syntax Verification): All modified Python/HTML/JS files pass AST, DOM, JS, and automated unit checks.",
+      "AC-3 (Regression & Formula Invariants): Zero symbol loss and zero unauthorized formula contract drift.",
+      "AC-4 (Security & Performance): Zero security policy violations and all performance budgets satisfied.",
+      "AC-5 (Independent Assurance): Outcome Assurance Engine (OAE) and HMAC-SHA256 Proof Bundle both evaluate to PASS."
+    ],
+    "non_goals": [
+      "Never overwrite existing project files with dummy or placeholder templates.",
+      "Do not alter unrelated modules outside the simulated blast radius.",
+      "Do not modify any locked mathematical, financial, or astrological calculation formulas."
+    ],
+    "design_constraints": [
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "security_constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses."
+    ],
+    "performance_budget": {
+      "status_endpoint_max_ms": 50.0,
+      "twin_cached_max_ms": 50.0,
+      "max_single_file_size_kb": 2048
+    },
+    "regression_invariants": [
+      "100% of pre-existing Python function/class symbols and JS function symbols must remain defined.",
+      "All locked Calculation Integrity Contracts (AST SHA-256 + Golden I/O probes) must remain PASS.",
+      "Every modified file must have a verified pre-edit SHA-256 backup and baseline snapshot."
+    ],
+    "risk_register": [
+      {
+        "risk_id": "RISK-01",
+        "description": "Accidental deletion or mutation of domain calculation formulas or DOM bindings.",
+        "severity": "HIGH",
+        "mitigation": "Automatic AST SHA-256 + Golden I/O contract verification with instant backup restore on violation."
+      },
+      {
+        "risk_id": "RISK-02",
+        "description": "Syntax error or broken HTML/JS tag balance introduced during patching.",
+        "severity": "MEDIUM",
+        "mitigation": "Mandatory Pre-Mortem AST + StrictDOMValidator + V8/recursive JS syntax gate."
+      }
+    ],
+    "verification_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "rollback_plan": {
+      "strategy": "Transactional Time-Travel Checkpoint + Per-Edit SHA-256 Verified Backups",
+      "checkpoint_dir": ".super_agent/time_travel/c19ce9e0",
+      "recovery_journal": ".super_agent/time_travel/c19ce9e0/rollback_journal.json",
+      "post_rollback_verification": "Re-verify file SHA-256 hashes and Formula Integrity Contracts immediately after rollback."
+    },
+    "definition_of_done": [
+      "All 7 Outcome Assurance Engine (OAE) gates achieve PASS (no FAIL, BLOCKED, or unverified mandatory gates).",
+      "Cryptographic HMAC-SHA256 Proof Bundle is generated, signed, and verified against disk SHA-256 hashes.",
+      "Evidence-Linked Delivery Report is persisted in `.super_agent/delivery_reports/`."
+    ],
+    "constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses.",
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "test_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "budget": {
+      "max_steps": 25,
+      "max_files_modified": 10
+    }
+  },
+  {
+    "contract_id": "intent_9bf3fc4d",
+    "schema_version": "2.0",
+    "task_id": "9bf3fc4d",
+    "created_at": "2026-10-24 14:24:38",
+    "raw_prompt": "hi",
+    "objective": "hi",
+    "category": "SURGICAL_FEATURE_OR_REFACTOR",
+    "risk_level": "MEDIUM",
+    "is_read_only": false,
+    "explicit_calculation_change_approved": false,
+    "user_goal": "hi",
+    "target_users": "Software Engineers, Domain Practitioners & End Users of Workspace Application",
+    "current_pain_points": [
+      "User identified engineering requirement in workspace 'books': hi"
+    ],
+    "required_outcomes": [
+      "Fulfill user goal ('hi') with verified code changes and zero regressions."
+    ],
+    "acceptance_criteria": [
+      "AC-1 (Requirement Coverage): Every required outcome in the Intent Contract is mapped to concrete file diffs or audit evidence.",
+      "AC-2 (Functional & Syntax Verification): All modified Python/HTML/JS files pass AST, DOM, JS, and automated unit checks.",
+      "AC-3 (Regression & Formula Invariants): Zero symbol loss and zero unauthorized formula contract drift.",
+      "AC-4 (Security & Performance): Zero security policy violations and all performance budgets satisfied.",
+      "AC-5 (Independent Assurance): Outcome Assurance Engine (OAE) and HMAC-SHA256 Proof Bundle both evaluate to PASS."
+    ],
+    "non_goals": [
+      "Never overwrite existing project files with dummy or placeholder templates.",
+      "Do not alter unrelated modules outside the simulated blast radius.",
+      "Do not modify any locked mathematical, financial, or astrological calculation formulas."
+    ],
+    "design_constraints": [
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "security_constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses."
+    ],
+    "performance_budget": {
+      "status_endpoint_max_ms": 50.0,
+      "twin_cached_max_ms": 50.0,
+      "max_single_file_size_kb": 2048
+    },
+    "regression_invariants": [
+      "100% of pre-existing Python function/class symbols and JS function symbols must remain defined.",
+      "All locked Calculation Integrity Contracts (AST SHA-256 + Golden I/O probes) must remain PASS.",
+      "Every modified file must have a verified pre-edit SHA-256 backup and baseline snapshot."
+    ],
+    "risk_register": [
+      {
+        "risk_id": "RISK-01",
+        "description": "Accidental deletion or mutation of domain calculation formulas or DOM bindings.",
+        "severity": "HIGH",
+        "mitigation": "Automatic AST SHA-256 + Golden I/O contract verification with instant backup restore on violation."
+      },
+      {
+        "risk_id": "RISK-02",
+        "description": "Syntax error or broken HTML/JS tag balance introduced during patching.",
+        "severity": "MEDIUM",
+        "mitigation": "Mandatory Pre-Mortem AST + StrictDOMValidator + V8/recursive JS syntax gate."
+      }
+    ],
+    "verification_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "rollback_plan": {
+      "strategy": "Transactional Time-Travel Checkpoint + Per-Edit SHA-256 Verified Backups",
+      "checkpoint_dir": ".super_agent/time_travel/9bf3fc4d",
+      "recovery_journal": ".super_agent/time_travel/9bf3fc4d/rollback_journal.json",
+      "post_rollback_verification": "Re-verify file SHA-256 hashes and Formula Integrity Contracts immediately after rollback."
+    },
+    "definition_of_done": [
+      "All 7 Outcome Assurance Engine (OAE) gates achieve PASS (no FAIL, BLOCKED, or unverified mandatory gates).",
+      "Cryptographic HMAC-SHA256 Proof Bundle is generated, signed, and verified against disk SHA-256 hashes.",
+      "Evidence-Linked Delivery Report is persisted in `.super_agent/delivery_reports/`."
+    ],
+    "constraints": [
+      "Enforce Deny-by-Default Permission Firewall: inspect files via `view` or `inspect_code_evidence` before `str_replace`.",
+      "Block path traversal, symlink/junction escapes, and unauthorized CLI execution.",
+      "Never expose plaintext API keys or session tokens in logs, URLs, or responses.",
+      "Maintain responsive layout across Desktop (1440px), Tablet (768px), and Mobile (375px) viewports.",
+      "Preserve all existing HTML element IDs (#id), form input[name] attributes, and JS event handlers.",
+      "Ensure accessible contrast, keyboard navigation, and zero external font-blocking dependencies."
+    ],
+    "test_plan": [
+      "Step 1 (Product & Architecture): Compile Intent Contract v2, run Counterfactual Engineering Lab, and simulate Blast Radius.",
+      "Step 2 (Surgical Implementation): Inspect target files (`view` / `inspect_code_evidence`) and apply surgical `str_replace` diffs.",
+      "Step 3 (Automated Testing): Run Pre-Mortem AST/DOM/JS checks, Formula Contract audit, and sandboxed CLI verification.",
+      "Step 4 (Outcome Assurance Engine): Execute all 7 OAE gates (Requirement, Functional, Regression, Security, Design, Performance, User Outcome) and sign Proof Bundle."
+    ],
+    "budget": {
+      "max_steps": 25,
+      "max_files_modified": 10
+    }
+  }
+]

@@ -165,8 +165,6 @@ def compute_ashtakavarga(planet_signs: Dict[str, int], asc_sign: int) -> dict:
                     pts[s2] = 0
                 elif v1 > v2:
                     pts[s1] = v2
-                    # keep smaller or reduce larger to smaller
-                    pts[s1] = pts[s2]
                 else:
                     pts[s2] = pts[s1]
             elif occ1 and not occ2:

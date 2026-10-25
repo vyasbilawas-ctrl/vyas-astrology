@@ -1,0 +1,18 @@
+{
+  "project_name": "books",
+  "discovered_symbols": [],
+  "preserved_calculations": [],
+  "architectural_decisions": [
+    "[dec_087799] Selected OPT_B_SURGICAL_CONTRACT_GUARDED (Reason: Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.)",
+    "[dec_3943b8] Selected OPT_B_SURGICAL_CONTRACT_GUARDED (Reason: Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.)",
+    "[dec_607879] Selected OPT_B_SURGICAL_CONTRACT_GUARDED (Reason: Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.)",
+    "[dec_eb2526] Selected OPT_B_SURGICAL_CONTRACT_GUARDED (Reason: Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.)",
+    "[dec_a5d996] Selected OPT_B_SURGICAL_CONTRACT_GUARDED (Reason: Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.)",
+    "[dec_b5f2f6] Selected OPT_B_SURGICAL_CONTRACT_GUARDED (Reason: Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.)",
+    "[dec_7ab2e6] Selected OPT_B_SURGICAL_CONTRACT_GUARDED (Reason: Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.)",
+    "[dec_a178ac] Selected OPT_B_SURGICAL_CONTRACT_GUARDED (Reason: Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.)",
+    "[dec_db23f4] Selected OPT_B_SURGICAL_CONTRACT_GUARDED (Reason: Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.)",
+    "[dec_1ae7cf] Selected OPT_B_SURGICAL_CONTRACT_GUARDED (Reason: Selected 'Surgical AST/DOM-Preserving Patch with Formula & Baseline Locks' (Dynamic Evidence Score 44/50; locked_formulas=0, dom_elements=0, functions=0) to guarantee regression safety and satisfy Project Constitution invariants.)"
+  ],
+  "known_files": []
+}

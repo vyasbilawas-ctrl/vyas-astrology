@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#101418"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="48dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Settings"
+        android:textColor="#FFFFFF"
+        android:textSize="32sp"
+        android:paddingBottom="24dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Gemini API Key"
+        android:textColor="#E8EAED"
+        android:textSize="22sp"
+        android:paddingBottom="12dp" />
+
+    <EditText
+        android:id="@+id/etApiKey"
+        android:layout_width="720dp"
+        android:layout_height="84dp"
+        android:background="#1F2328"
+        android:hint="AIza..."
+        android:inputType="textPassword"
+        android:padding="16dp"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#9AA0A6"
+        android:textSize="22sp" />
+
+    <Button
+        android:id="@+id/btnSave"
+        android:layout_width="240dp"
+        android:layout_height="84dp"
+        android:layout_marginTop="24dp"
+        android:text="Save"
+        android:textSize="24sp" />
+
+    <TextView
+        android:id="@+id/txtStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:textColor="#9AA0A6"
+        android:textSize="18sp" />
+</LinearLayout>

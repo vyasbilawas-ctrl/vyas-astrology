@@ -11,6 +11,7 @@ Provides persistent storage for:
 - Profile switching, creation, editing, and deletion
 """
 import hashlib
+import hmac
 import os
 import re
 import sqlite3

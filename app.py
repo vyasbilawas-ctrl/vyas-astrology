@@ -1838,8 +1838,10 @@ with st.sidebar:
     if is_logged_in:
         with st.expander("⚙️ Google Cloud API Credentials (Admin Only)", expanded=False):
             g_cfg = google_drive_sync.load_google_config()
-            cfg_cid = st.text_input("Google Client ID", value=g_cfg.get("client_id", ""), key="cfg_cid_in", placeholder="...apps.googleusercontent.com")
-            cfg_csec = st.text_input("Google Client Secret", value=g_cfg.get("client_secret", ""), type="password", key="cfg_csec_in")
+            # Never render stored OAuth secrets in the browser.
+            cfg_cid = st.text_input("Google Client ID", value="", key="cfg_cid_in", placeholder="Leave blank to keep current Client ID")
+            cfg_csec = st.text_input("Google Client Secret", value="", type="password", key="cfg_csec_in", placeholder="Leave blank to keep current secret")
+            st.caption("Stored credentials remain server-side. Enter new values only when rotating them.")
             cfg_ruri = st.text_input("Redirect URI", value=g_cfg.get("redirect_uri", "http://localhost:8501"), key="cfg_ruri_in")
             if st.button("💾 Save Credentials", key="save_g_cfg_btn", use_container_width=True):
                 if google_drive_sync.save_google_config(cfg_cid, cfg_csec, cfg_ruri):
@@ -1912,9 +1914,30 @@ with st.sidebar:
 
     # ---------------- SAVED KUNDLIS VAULT (FULL MANAGEMENT) ----------------
     if is_logged_in_now:
-        saved_list = auth_vault.get_saved_kundlis(u["id"])
+        saved_list = auth_vault.get_saved_kundlis(u["id"])  # retrieve saved profiles
+# Quick open saved Kundli button (outside expander)
+if is_logged_in_now:
+    if st.button("🔓 Open Saved Kundli", use_container_width=True):
+        if not saved_list:
+            st.info("कोई सुरक्षित कुण्डली नहीं है। पहले 'कुण्डली सुरक्षित करें' बटन से सेव करें.")
+        else:
+            k_map = {f"{k['name']} ({k['dob']})": k for k in saved_list}
+            sel = st.selectbox("कुण्डली चुनें:", list(k_map.keys()))
+            chosen = k_map[sel]
+            st.session_state['loaded_profile'] = dict(chosen)
+            st.session_state['lat'] = float(chosen.get('lat', 28.6139))
+            st.session_state['lon'] = float(chosen.get('lon', 77.2090))
+            st.session_state['city_name'] = chosen.get('city', 'New Delhi, India')
+            st.session_state['city_search_input'] = chosen.get('city', 'New Delhi, India')
+            st.session_state['_last_chosen_city'] = chosen.get('city', 'New Delhi, India')
+            st.session_state.pop('selected_city_dropdown', None)
+            st.session_state['data_generated'] = False
+            for _stale_key in ('chart', 'birth', 'kp_cusps', 'dasha_engine', 'vargas_matrix', 'panchang', 'gochar', 'predictions', '_birth_input_sig'):
+                st.session_state.pop(_stale_key, None)
+            st.success(f"'{chosen['name']}' की कुण्डली लोड हो गई! अब 'Generate' दबाएँ.")
+            st.rerun()
         
-        with st.expander(f"📁 मेरी सुरक्षित कुण्डलियाँ ({len(saved_list)})", expanded=False):
+        with st.expander(f"📁 मेरी सुरक्षित कुण्डलियाँ ({len(saved_list)}) — खोलें / Open saved Kundli", expanded=True):
             if saved_list:
                 k_display_map = {f"{k['name']} ({k['dob']} - {k.get('city', '')})": k for k in saved_list}
                 chosen_k_label = st.selectbox("कुण्डली चुनें:", list(k_display_map.keys()), key="saved_k_picker")
@@ -1923,7 +1946,7 @@ with st.sidebar:
                 col_kv1, col_kv2 = st.columns(2)
                 with col_kv1:
                     if st.button("📂 खोलें (Open)", key="open_k_btn", use_container_width=True):
-                        st.session_state['loaded_profile'] = chosen_k
+                        st.session_state['loaded_profile'] = dict(chosen_k)
                         st.session_state['lat'] = float(chosen_k.get('lat', 28.6139))
                         st.session_state['lon'] = float(chosen_k.get('lon', 77.2090))
                         st.session_state['city_name'] = chosen_k.get('city', 'New Delhi, India')
@@ -1931,7 +1954,8 @@ with st.sidebar:
                         st.session_state['_last_chosen_city'] = chosen_k.get('city', 'New Delhi, India')
                         st.session_state.pop('selected_city_dropdown', None)
                         st.session_state['data_generated'] = False
-                        st.success(f"'{chosen_k['name']}' की कुण्डली लोड हो गई!")
+                        for _stale_key in ('chart', 'birth', 'kp_cusps', 'dasha_engine', 'vargas_matrix', 'panchang', 'gochar', 'predictions', '_birth_input_sig'):
+                            st.session_state.pop(_stale_key, None)
                         st.rerun()
                 with col_kv2:
                     if st.button("🗑️ हटाएं (Delete)", key="del_k_btn", use_container_width=True):
@@ -1961,6 +1985,9 @@ st.markdown("""
     </div>
 </div>
 """, unsafe_allow_html=True)
+
+if is_logged_in_now and saved_list:
+    st.info("📂 आपकी सुरक्षित कुण्डलियाँ ऊपर खुली हैं। सूची से कुण्डली चुनकर **खोलें / Open** दबाएँ; नई कुण्डली नीचे बनाएं।")
 
 ui_lang = st.radio("🌐 भाषा / Language", ["हिन्दी (Hindi)", "English"], horizontal=True)
 is_hi = "हिन्दी" in ui_lang
@@ -4227,6 +4254,7 @@ if st.session_state.get('data_generated'):
                 chat_history=st.session_state["dialog_chat_history"]
             )
             st.session_state["dialog_chat_history"].append({"role": "assistant", "content": bot_reply})
+            st.session_state["show_acharya_dialog"] = True
             st.rerun()
 
         col_act1, col_act2 = st.columns([4, 1])
